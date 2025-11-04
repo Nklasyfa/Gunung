@@ -1,32 +1,28 @@
-import os # <-- WAJIB ADA
+import os 
 from flask import Flask, get_flashed_messages, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL
 from config import Config
 
-# --- INI BAGIAN PERBAIKANNYA ---
-# 1. Dapatkan path absolut (lokasi pasti) dari folder 'gunung' kamu
+
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-# 2. Beri tahu Flask secara EKSPLISIT di mana foldernya
 STATIC_FOLDER = os.path.join(APP_ROOT, 'static')
 TEMPLATE_FOLDER = os.path.join(APP_ROOT, 'templates')
 
-# 3. Masukkan path itu saat membuat aplikasi Flask
+
 app = Flask(__name__,
             template_folder=TEMPLATE_FOLDER,
             static_folder=STATIC_FOLDER)
-# --- AKHIR PERBAIKAN ---
+
 
 app.config.from_object(Config)
 
-# Konfigurasi session key (WAJIB diatur untuk keamanan)
-app.secret_key = 'super_secret_key_anda' # Ganti dengan kunci rahasia yang kuat
+app.secret_key = 'super_secret_key_anda' 
 
 mysql = MySQL(app)
 
-# --- READ: Menampilkan Form Login ---
+# LOGIN: Halaman Login 
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    # Jika sudah login, redirect ke home
     if 'user_id' in session:
         return redirect(url_for('home'))
 
@@ -35,7 +31,6 @@ def login():
         password = request.form['password']
 
         cur = mysql.connection.cursor()
-        # Mengambil data user untuk login
         result = cur.execute("SELECT user_id, email, password, nama FROM user WHERE email = %s AND password = %s", (email, password))
         
         if result > 0:
@@ -50,7 +45,7 @@ def login():
 
     return render_template('login.html')
 
-# --- CREATE: Halaman Registrasi (Membuat Akun Baru) ---
+# REGISTER: Halaman Registrasi
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -62,7 +57,7 @@ def register():
 
         cur = mysql.connection.cursor()
         try:
-            # Query INSERT INTO (CREATE)
+            # Query CREATE (INSERT) data user
             cur.execute("INSERT INTO user (email, password, nama, no_hp, alamat) VALUES (%s, %s, %s, %s, %s)",
                         (email, password, nama, no_hp, alamat))
             mysql.connection.commit()
@@ -70,19 +65,16 @@ def register():
             return redirect(url_for('login'))
         except Exception as e:
             mysql.connection.rollback()
-            # Logika untuk menampilkan pesan error spesifik (misal Duplicate entry)
             error_message = 'Email sudah terdaftar. Silakan gunakan email lain atau masuk.'
             if '1062' not in str(e):
                 error_message = f'Registrasi Gagal karena kesalahan sistem. ({str(e)})'
                 
             flash(error_message, 'danger')
-            # Jika gagal, tampilkan form register lagi
             return render_template('login.html', show_register=True) 
             
-    # Mode GET: Tampilkan form registrasi
     return render_template('login.html', show_register=True)
 
-# --- READ: Halaman Home (Dashboard) ---
+# READ: Halaman Home (Dashboard) 
 @app.route('/home')
 def home():
     if 'user_id' not in session:
@@ -92,7 +84,7 @@ def home():
     user_id = session['user_id']
     cur = mysql.connection.cursor()
     
-    # 1. Query READ data user
+    # 1. Query READ data User
     cur.execute("SELECT user_id, email, nama, no_hp, alamat FROM user WHERE user_id = %s", [user_id])
     user_data = cur.fetchone()
     
@@ -101,12 +93,11 @@ def home():
         cur.execute("SELECT gunung_id, nama_gunung, lokasi, status_pendakian FROM gunung LIMIT 5")
         gunung_list = cur.fetchall()
     except Exception as e:
-        gunung_list = [] # Jika tabel gunung tidak ada, jadikan list kosong
-        print(f"Error mengambil data gunung: {e}") # Debug di terminal
+        gunung_list = [] 
+        print(f"Error mengambil data gunung: {e}") 
     
     cur.close()
 
-    # Mengambil pesan flash
     flashed_messages = [{'category': category, 'message': message} for category, message in get_flashed_messages(with_categories=True)]
         
     return render_template('home.html',
@@ -114,7 +105,7 @@ def home():
                            messages=flashed_messages,
                            gunung_list=gunung_list)
 
-# --- UPDATE: Mengubah Data Profil Pengguna ---
+# --- UPDATE: Mengedit Profil Pengguna ---
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
     if 'user_id' not in session:
@@ -133,7 +124,7 @@ def edit_profile():
             cur.execute("UPDATE user SET nama=%s, no_hp=%s, alamat=%s WHERE user_id=%s",
                         (nama, no_hp, alamat, user_id))
             mysql.connection.commit()
-            session['nama'] = nama # Update session dengan nama baru
+            session['nama'] = nama 
             flash('Profil berhasil diperbarui!', 'success')
             return redirect(url_for('home'))
         except Exception as e:
@@ -141,7 +132,7 @@ def edit_profile():
             flash(f'Pembaruan Profil Gagal: {str(e)}', 'danger')
             return redirect(url_for('edit_profile'))
     
-    # Mode GET: Ambil data user untuk diisi di form
+    # GET request: Ambil data user untuk ditampilkan di form edit
     cur.execute("SELECT user_id, email, nama, no_hp, alamat FROM user WHERE user_id = %s", [user_id])
     user_data = cur.fetchone()
     cur.close()
@@ -149,7 +140,7 @@ def edit_profile():
     return render_template('edit_profile.html', user=user_data)
 
 
-# --- DELETE: Menghapus Akun Pengguna (Logout dan Delete) ---
+# DELETE: Menghapus Akun Pengguna 
 @app.route('/delete_account', methods=['POST'])
 def delete_account():
     if 'user_id' not in session:
@@ -171,7 +162,7 @@ def delete_account():
         flash(f'Gagal menghapus akun: {str(e)}', 'danger')
         return redirect(url_for('home'))
 
-# --- Logout ---
+# LOGOUT: Halaman Logout
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)

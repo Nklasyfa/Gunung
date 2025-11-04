@@ -1,5 +1,5 @@
 import os 
-from flask import Flask, get_flashed_messages, render_template, request, redirect, url_for, session, flash
+from flask import Flask, get_flashed_messages, render_template, request, redirect, url_for, session, flash # pyright: ignore[reportMissingImports]
 from flask_mysqldb import MySQL
 from config import Config
 from functools import wraps # Penting untuk decorator

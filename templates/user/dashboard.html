@@ -1,0 +1,41 @@
+{% extends "user/base.html" %}
+
+{% block title %}Dashboard Pengguna{% endblock %}
+
+{% block content %}
+<header>
+    <h1>Dashboard Utama</h1>
+    <p>Halo, {{ user_nama }}! Lihat informasi terbaru mengenai pendakian.</p>
+</header>
+
+<div class="content-card">
+    <h2>Daftar Gunung yang Sedang Dibuka</h2>
+    
+    {% if gunung_list %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nama Gunung</th>
+                <th>Lokasi</th>
+                <th>Status</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for gunung in gunung_list %}
+            <tr>
+                <td><strong>{{ gunung.nama_gunung }}</strong></td>
+                <td>{{ gunung.lokasi }}</td>
+                <td><strong style="color: green;">{{ gunung.status_pendakian | upper }}</strong></td>
+                <td>
+                    <a href="#" class="btn secondary" style="padding: 5px 10px; font-size: 13px;">Lihat Tiket</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Tidak ada data gunung yang sedang dibuka saat ini.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+.profile-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 40px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+}
+
+.profile-container h2 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.button-group .btn {
+    flex: 1;
+}
+
+@media (max-width: 600px) {
+    .profile-container {
+        margin: 20px;
+        padding: 20px;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+}

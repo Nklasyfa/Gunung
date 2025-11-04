@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %} - TICKET MOUNT</title> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* === GAYA DARI base.css (Digabung) === */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+
+        :root {
+            --primary-color: #7A39E0; 
+            --secondary-color: #A27EDD; 
+            --bg-color: #ECE9F7; 
+            --text-dark: #2B2B2B;
+            --text-light: #F0F0F0;
+            --shadow-main: rgba(122, 57, 224, 0.25);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            position: relative;
+            overflow-x: hidden;
+            display: flex;
+        }
+        .main-wrapper { display: flex; width: 100vw; min-height: 100vh; }
+        .sidebar {
+            width: 250px;
+            background-color: #ffffff; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            position: fixed; 
+            height: 100%;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+        .logo {
+            font-size: 24px; font-weight: 800; color: var(--primary-color);
+            text-align: center; margin-bottom: 30px; display: flex;
+            align-items: center; justify-content: center; gap: 10px;
+        }
+        .logo i { font-size: 32px; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
+        .sidebar ul li a {
+            display: flex; align-items: center; padding: 12px 15px;
+            margin-bottom: 10px; color: var(--text-dark); text-decoration: none;
+            font-weight: 600; border-radius: 8px;
+        }
+        .sidebar ul li a i { margin-right: 10px; width: 20px; text-align: center;}
+        .sidebar ul li a:hover, .sidebar ul li a.active {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+        }
+        .sidebar ul .logout-link { margin-top: auto; }
+        .content-area { 
+            margin-left: 250px; 
+            flex-grow: 1; 
+            padding: 30px; 
+            overflow-y: auto;
+            height: 100vh;
+        }
+        header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #ddd; }
+        header h1 {
+            font-size: 32px; color: var(--primary-color);
+            text-align: left; margin: 0;
+        }
+        .content-card {
+            background: #ffffff; padding: 30px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        /* Style Form */
+        .form-group { margin-bottom: 15px; }
+        .form-group label {
+            display: block; margin-bottom: 5px; color: var(--text-dark);
+            font-weight: 600; font-size: 14px;
+        }
+        .form-control {
+            width: 100%; padding: 12px 15px; border: 1px solid #ddd;
+            border-radius: 8px; font-size: 15px; color: var(--text-dark);
+        }
+        textarea.form-control { min-height: 80px; resize: vertical; }
+        /* Style Tombol */
+        .btn {
+            padding: 14px 25px; border: none; border-radius: 8px;
+            font-size: 15px; font-weight: 700; cursor: pointer; text-align: center;
+            text-decoration: none; display: inline-block;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            width: auto;
+        }
+        .btn.primary { background-color: var(--primary-color); color: white; box-shadow: 0 4px 12px var(--shadow-main); }
+        .btn.primary:hover { background-color: var(--secondary-color); }
+        .btn.danger { background-color: #f44336; color: white; }
+        .btn.danger:hover { background-color: #d32f2f; }
+        .btn.secondary { background-color: #ddd; color: var(--text-dark); }
+        .btn.secondary:hover { background-color: #ccc; }
+        .button-group { display: flex; justify-content: flex-start; gap: 15px; margin-top: 25px; }
+        /* Style Alert */
+        .alert {
+            padding: 12px 15px; margin-bottom: 20px; border-radius: 8px;
+            font-size: 14px; text-align: left;
+            position: relative; width: 100%; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-width: 1px; border-style: solid;
+        }
+        .alert.success { background-color: #e6ffed; color: #28a745; border-color: #c3e6cb; }
+        .alert.danger { background-color: #ffebe6; color: #dc3545; border-color: #f5c6cb; }
+        .alert.warning { background-color: #fff8e6; color: #ffc107; border-color: #ffeeba; }
+        /* Style Tabel */
+        table { width: 100%; border-collapse: collapse; }
+        table th { 
+            padding: 12px 10px; 
+            border-bottom: 2px solid #ddd; 
+            background-color: #f9f9f9;
+            text-align: left; font-size: 14px; color: #333;
+        }
+        table td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 15px; }
+        table.profile-table td:first-child { font-weight: 600; color: #555; width: 30%; }
+        .table-actions { display: flex; gap: 5px; }
+        .table-actions .btn { padding: 5px 10px; font-size: 13px; text-transform: none; }
+        
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .content-area { margin-left: 0; padding: 20px 15px; height: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        {% block sidebar %}{% endblock %}
+        
+        <div class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div> 
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</body>
+</html>

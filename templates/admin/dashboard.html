@@ -1,0 +1,21 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<header>
+    <h1>Admin Dashboard</h1>
+    <p>Selamat datang, {{ session.nama }}! Anda login sebagai Admin.</p>
+</header>
+
+<div style="display: flex; gap: 20px;">
+    <div class="content-card" style="flex: 1;">
+        <h3 style="margin-top: 0;">Total Gunung</h3>
+        <h1 style="font-size: 48px; color: var(--primary-color); margin: 0;">{{ total_gunung }}</h1>
+    </div>
+    <div class="content-card" style="flex: 1;">
+        <h3 style="margin-top: 0;">Total User (Pendaki)</h3>
+        <h1 style="font-size: 48px; color: var(--primary-color); margin: 0;">{{ total_user }}</h1>
+    </div>
+</div>
+{% endblock %}

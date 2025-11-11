@@ -128,17 +128,45 @@ def user_dashboard():
     # Ambil data gunung untuk dashboard user
     cur = mysql.connection.cursor()
     try:
-        cur.execute("SELECT gunung_id, nama_gunung, lokasi, status_pendakian FROM gunung WHERE status_pendakian = 'Dibuka' LIMIT 5")
+        # Mengambil SEMUA data gunung untuk tampilan card baru
+        cur.execute("SELECT * FROM gunung ORDER BY nama_gunung")
         gunung_list = cur.fetchall()
     except Exception as e:
         gunung_list = [] 
-        print(f"Error mengambil data gunung: {e}") 
+        flash(f"Error mengambil data gunung: {e}", "danger") 
     cur.close()
         
     return render_template('user/dashboard.html',
                            gunung_list=gunung_list,
                            user_nama=session.get('nama'),
                            active_page='home') # Kirim active_page
+
+# HALAMAN BARU: DETAIL GUNUNG
+@app.route('/gunung/<int:id>')
+@login_required
+def detail_gunung(id):
+    cur = mysql.connection.cursor()
+    try:
+        # Ambil data lengkap gunung dari tabel 'gunung'
+        cur.execute("SELECT * FROM gunung WHERE gunung_id = %s", [id])
+        gunung_data = cur.fetchone()
+        
+        if not gunung_data:
+            flash("Gunung tidak ditemukan.", "danger")
+            return redirect(url_for('user_dashboard'))
+            
+        # (TODO: Anda bisa tambahkan query untuk ambil data tiket, jalur, dll terkait gunung_id ini)
+        
+    except Exception as e:
+        gunung_data = None
+        flash(f"Error mengambil detail gunung: {e}", "danger")
+        return redirect(url_for('user_dashboard'))
+    finally:
+        cur.close()
+        
+    return render_template('user/detail_gunung.html',
+                           gunung=gunung_data,
+                           active_page='home') # Tetap tandai 'home' sebagai aktif
 
 @app.route('/profile')
 @login_required
@@ -156,6 +184,7 @@ def profile():
 @app.route('/profile/edit', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
+    # Rute ini tetap ada, tapi link dari sidebar dihapus
     user_id = session['user_id']
     cur = mysql.connection.cursor()
 
@@ -181,9 +210,10 @@ def edit_profile():
     user_data = cur.fetchone()
     cur.close()
     
+    # Arahkan ke template edit_profile.html (jika masih mau dipakai)
     return render_template('user/edit_profile.html',
                            user=user_data,
-                           active_page='edit_profile')
+                           active_page='profile') # Aktifkan 'profile'
 
 @app.route('/profile/delete', methods=['POST'])
 @login_required
@@ -209,7 +239,6 @@ def delete_account():
 @admin_required
 def admin_dashboard():
     # Halaman dashboard admin
-    # Bisa diisi statistik jumlah user, jumlah gunung, dll.
     cur = mysql.connection.cursor()
     cur.execute("SELECT COUNT(*) as total_gunung FROM gunung")
     total_gunung = cur.fetchone()['total_gunung']
@@ -223,6 +252,7 @@ def admin_dashboard():
                            total_user=total_user)
 
 # --- DATA MASTER GUNUNG (CRUD) ---
+# (PENTING: Kita harus update form-nya untuk menerima data baru)
 
 # READ (Tampil List Gunung)
 @app.route('/admin/gunung')
@@ -241,15 +271,23 @@ def gunung():
 @admin_required
 def tambah_gunung():
     if request.method == 'POST':
+        # Ambil data baru dari form
         nama_gunung = request.form['nama_gunung']
         lokasi = request.form['lokasi']
+        ketinggian = request.form['ketinggian']
         status = request.form['status_pendakian']
         deskripsi = request.form['deskripsi']
+        sejarah = request.form['sejarah']
+        estimasi_waktu = request.form['estimasi_waktu']
+        kuota_harian = request.form['kuota_harian']
         
         cur = mysql.connection.cursor()
         try:
-            cur.execute("INSERT INTO gunung (nama_gunung, lokasi, status_pendakian, deskripsi) VALUES (%s, %s, %s, %s)",
-                        (nama_gunung, lokasi, status, deskripsi))
+            # Masukkan data baru ke DB
+            cur.execute("""
+                INSERT INTO gunung (nama_gunung, lokasi, ketinggian, status_pendakian, deskripsi, sejarah, estimasi_waktu, kuota_harian) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, estimasi_waktu, kuota_harian))
             mysql.connection.commit()
             flash(f'Gunung {nama_gunung} berhasil ditambahkan!', 'success')
             return redirect(url_for('gunung'))
@@ -268,16 +306,23 @@ def edit_gunung(id):
     cur = mysql.connection.cursor()
     
     if request.method == 'POST':
+        # Ambil data baru dari form
         nama_gunung = request.form['nama_gunung']
         lokasi = request.form['lokasi']
+        ketinggian = request.form['ketinggian']
         status = request.form['status_pendakian']
         deskripsi = request.form['deskripsi']
+        sejarah = request.form['sejarah']
+        estimasi_waktu = request.form['estimasi_waktu']
+        kuota_harian = request.form['kuota_harian']
         
         try:
             cur.execute("""
-                UPDATE gunung SET nama_gunung=%s, lokasi=%s, status_pendakian=%s, deskripsi=%s
+                UPDATE gunung SET 
+                nama_gunung=%s, lokasi=%s, ketinggian=%s, status_pendakian=%s, 
+                deskripsi=%s, sejarah=%s, estimasi_waktu=%s, kuota_harian=%s
                 WHERE gunung_id=%s
-            """, (nama_gunung, lokasi, status, deskripsi, id))
+            """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, estimasi_waktu, kuota_harian, id))
             mysql.connection.commit()
             flash(f'Data Gunung {nama_gunung} berhasil diperbarui!', 'success')
             return redirect(url_for('gunung'))

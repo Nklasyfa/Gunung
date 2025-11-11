@@ -12,8 +12,8 @@
     <ul>
         <li><a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if active_page == 'admin_dashboard' }}"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
         
-        <li style="padding: 0 15px; font-size: 12px; color: #999; margin-top: 15px; margin-bottom: 5px;">DATA MASTER</li>
-        <li><a href="{{ url_for('gunung') }}" class="{{ 'active' if active_page == 'gunung' }}"><i class="fas fa-map-marked-alt"></i> Master Gunung</a></li>
+        <li style="padding: 0 15px; font-size: 12px; color: #999; margin-top: 15px; margin-bottom: 5px;">DATA</li>
+        <li><a href="{{ url_for('gunung') }}" class="{{ 'active' if active_page == 'gunung' }}"><i class="fas fa-map-marked-alt"></i> Data Gunung</a></li>
         <li class="logout-link"><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>
 </nav>

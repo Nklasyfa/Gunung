@@ -8,7 +8,7 @@
     <p>Perbarui informasi gunung di bawah ini.</p>
 </header>
 
-<div class="content-card" style="max-width: 700px;">
+<div class="content-card" style="max-width: 800px;">
     
     <form action="{{ url_for('edit_gunung', id=gunung.gunung_id) }}" method="post">
         
@@ -17,23 +17,45 @@
             <input type="text" id="nama_gunung" name="nama_gunung" class="form-control" value="{{ gunung.nama_gunung }}" required>
         </div>
         
-        <div class="form-group">
-            <label for="lokasi">Lokasi</label>
-            <input type="text" id="lokasi" name="lokasi" class="form-control" value="{{ gunung.lokasi }}" required>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label for="lokasi">Lokasi</label>
+                <input type="text" id="lokasi" name="lokasi" class="form-control" value="{{ gunung.lokasi }}" required>
+            </div>
+            <div class="form-group">
+                <label for="ketinggian">Ketinggian (MDPL)</label>
+                <input type="number" id="ketinggian" name="ketinggian" class="form-control" value="{{ gunung.ketinggian | default(0) }}" required>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label for="status_pendakian">Status Pendakian</label>
+                <select id="status_pendakian" name="status_pendakian" class="form-control" required>
+                    <option value="Dibuka" {{ 'selected' if gunung.status_pendakian == 'Dibuka' }}>Dibuka</option>
+                    <option value="Ditutup" {{ 'selected' if gunung.status_pendakian == 'Ditutup' }}>Ditutup</option>
+                    <option value="Ditutup Sebagian" {{ 'selected' if gunung.status_pendakian == 'Ditutup Sebagian' }}>Ditutup Sebagian</option>
+                </select>
+            </div>
+             <div class="form-group">
+                <label for="kuota_harian">Kuota Harian</label>
+                <input type="number" id="kuota_harian" name="kuota_harian" class="form-control" value="{{ gunung.kuota_harian | default(100) }}" required>
+            </div>
         </div>
 
         <div class="form-group">
-            <label for="status_pendakian">Status Pendakian</label>
-            <select id="status_pendakian" name="status_pendakian" class="form-control" required>
-                <option value="Dibuka" {{ 'selected' if gunung.status_pendakian == 'Dibuka' }}>Dibuka</option>
-                <option value="Ditutup" {{ 'selected' if gunung.status_pendakian == 'Ditutup' }}>Ditutup</option>
-                <option value="Ditutup Sebagian" {{ 'selected' if gunung.status_pendakian == 'Ditutup Sebagian' }}>Ditutup Sebagian</option>
-            </select>
+            <label for="estimasi_waktu">Estimasi Waktu Pendakian</label>
+            <input type="text" id="estimasi_waktu" name="estimasi_waktu" class="form-control" value="{{ gunung.estimasi_waktu | default('') }}" placeholder="Contoh: 2 hari 1 malam">
         </div>
         
         <div class="form-group">
             <label for="deskripsi">Deskripsi Singkat</label>
             <textarea id="deskripsi" name="deskripsi" class="form-control">{{ gunung.deskripsi | default('', true) }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="sejarah">Sejarah Singkat</label>
+            <textarea id="sejarah" name="sejarah" class="form-control">{{ gunung.sejarah | default('', true) }}</textarea>
         </div>
         
         <div class="button-group">
@@ -42,3 +64,4 @@
         </div>
     </form>
 </div>
+{% endblock %}

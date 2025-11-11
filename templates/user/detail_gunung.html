@@ -1,0 +1,92 @@
+{% extends "user/base.html" %}
+
+{% block title %}{{ gunung.nama_gunung }}{% endblock %}
+
+{% block content_area_class %}content-area-bg{% endblock %}
+
+{% block content %}
+
+<div class="detail-header">
+    <h1>{{ gunung.nama_gunung }}</h1>
+    <p><i class="fas fa-map-marker-alt"></i> {{ gunung.lokasi }}</p>
+</div>
+
+<div class="detail-grid">
+    
+    <div class="detail-info-card">
+        
+        <div class="detail-stats">
+            <div class="stat-item">
+                <h4>Status</h4>
+                {% if gunung.status_pendakian == 'Dibuka' %}
+                    <p class="dibuka">{{ gunung.status_pendakian | upper }}</p>
+                {% elif gunung.status_pendakian == 'Ditutup' %}
+                    <p class="ditutup">{{ gunung.status_pendakian | upper }}</p>
+                {% else %}
+                    <p class="lainnya">{{ gunung.status_pendakian | upper }}</p>
+                {% endif %}
+            </div>
+            <div class="stat-item">
+                <h4>Ketinggian</h4>
+                <p>{{ "{:,.0f}".format(gunung.ketinggian) }} MDPL</p>
+            </div>
+            <div class="stat-item">
+                <h4>Estimasi</h4>
+                <p>{{ gunung.estimasi_waktu }}</p>
+            </div>
+        </div>
+        
+        <h3>Deskripsi Gunung</h3>
+        <p style="white-space: pre-wrap;">{{ gunung.deskripsi | default('Belum ada deskripsi.', true) }}</p>
+        
+        <h3 style="margin-top: 25px;">Sejarah Singkat</h3>
+        <p style="white-space: pre-wrap;">{{ gunung.sejarah | default('Belum ada info sejarah.', true) }}</p>
+        
+    </div>
+    
+    <div class="booking-card">
+        <div class="detail-info-card">
+            <h3>Booking Tiket Pendakian</h3>
+            
+            <form action="#" method="POST">
+                
+                <div class="form-group">
+                    <label for="tanggal_pendakian">Tanggal Pendakian</label>
+                    <input type="date" id="tanggal_pendakian" name="tanggal_pendakian" class="form-control" required>
+                </div>
+                
+                <p style="font-weight: 600; font-size: 15px; margin-bottom: 10px;">Tambah Anggota (Panggil ID)</p>
+                
+                <div class="anggota-input">
+                    <label for="id_1">1.</label>
+                    <input type="text" id="id_1" name="anggota_id_1" class="form-control" placeholder="Masukkan ID User Anggota">
+                </div>
+                <div class="anggota-input">
+                    <label for="id_2">2.</label>
+                    <input type="text" id="id_2" name="anggota_id_2" class="form-control" placeholder="Masukkan ID User Anggota">
+                </div>
+                <div class="anggota-input">
+                    <label for="id_3">3.</label>
+                    <input type="text" id="id_3" name="anggota_id_3" class="form-control" placeholder="Masukkan ID User Anggota">
+                </div>
+                <div class="anggota-input">
+                    <label for="id_4">4.</label>
+                    <input type="text" id="id_4" name="anggota_id_4" class="form-control" placeholder="Masukkan ID User Anggota">
+                </div>
+                <div class="anggota-input">
+                    <label for="id_5">5.</label>
+                    <input type="text" id="id_5" name="anggota_id_5" class="form-control" placeholder="Masukkan ID User Anggota">
+                </div>
+
+                <button type="submit" class="btn primary" {% if gunung.status_pendakian != 'Dibuka' %}disabled{% endif %}>
+                    {% if gunung.status_pendakian == 'Dibuka' %}
+                        Book Sekarang Juga!
+                    {% else %}
+                        Pendakian Ditutup
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -12,7 +12,6 @@
     <ul>
         <li><a href="{{ url_for('user_dashboard') }}" class="{{ 'active' if active_page == 'home' }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
         <li><a href="{{ url_for('profile') }}" class="{{ 'active' if active_page == 'profile' }}"><i class="fas fa-user-circle"></i> Akun Saya</a></li>
-        <li><a href="{{ url_for('edit_profile') }}" class="{{ 'active' if active_page == 'edit_profile' }}"><i class="fas fa-user-edit"></i> Edit Profil</a></li>
         <li class="logout-link"><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>
 </nav>

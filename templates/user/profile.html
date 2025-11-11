@@ -3,28 +3,55 @@
 {% block title %}Akun Saya{% endblock %}
 
 {% block content %}
-<header>
-    <h1>Profil Akun Saya</h1>
-    <p>Lihat dan kelola data pribadi Anda.</p>
-</header>
+<div class="profile-wrapper">
 
-<div class="content-card" style="max-width: 700px;">
-    <h2>Data Profil Anda</h2>
-    <table class="profile-table" style="margin-bottom: 25px;">
-        <tr><td>ID Pengguna</td><td>: {{ user.user_id }}</td></tr>
-        <tr><td>Nama</td><td>: {{ user.nama }}</td></tr>
-        <tr><td>Email</td><td>: {{ user.email }}</td></tr>
-        <tr><td>No. HP</td><td>: {{ user.no_hp }}</td></tr>
-        <tr><td>Alamat</td><td>: {{ user.alamat }}</td></tr>
-        <tr><td>Role</td><td>: <strong style="text-transform: capitalize;">{{ user.role }}</strong></td></tr>
-    </table>
-    
-    <div class="button-group">
-        <a href="{{ url_for('edit_profile') }}" class="btn primary">Edit Profil</a>
+    <div class="profile-card">
         
-        <form action="{{ url_for('delete_account') }}" method="POST" onsubmit="return confirm('❗ PERINGATAN: Apakah Anda YAKIN ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan.');" style="display:inline-block; margin:0;">
-            <button type="submit" class="btn danger">Hapus Akun</button>
-        </form>
+        <div class="profile-pic-container">
+            <div class="profile-pic">
+                <i class="fas fa-user"></i>
+            </div>
+            <a href="{{ url_for('edit_profile') }}" class="btn secondary">Ubah Profil</a>
+        </div>
+        
+        <div class="profile-details">
+            <h2>Profil Akun Saya</h2>
+            <p style="margin-top: -20px; margin-bottom: 20px; font-size: 15px; color: #555;">Lihat dan kelola data pribadi Anda.</p>
+            
+            <table class="profile-table">
+                <tr>
+                    <td><i class="fas fa-id-card" style="width: 20px; margin-right: 5px;"></i> ID Pengguna</td>
+                    <td>: <strong>{{ user.user_id }}</strong></td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-user" style="width: 20px; margin-right: 5px;"></i> Nama</td>
+                    <td>: {{ user.nama }}</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-envelope" style="width: 20px; margin-right: 5px;"></i> Email</td>
+                    <td>: {{ user.email }}</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-phone" style="width: 20px; margin-right: 5px;"></i> No. HP</td>
+                    <td>: {{ user.no_hp }}</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-home" style="width: 20px; margin-right: 5px;"></i> Alamat</td>
+                    <td>: {{ user.alamat }}</td>
+                </tr>
+                <tr>
+                    <td><i class="fas fa-tag" style="width: 20px; margin-right: 5px;"></i> Role</td>
+                    <td>: <strong style="text-transform: capitalize;">{{ user.role }}</strong></td>
+                </tr>
+            </table>
+            
+            <div class="button-group">
+                <form action="{{ url_for('delete_account') }}" method="POST" onsubmit="return confirm('❗ PERINGATAN: Apakah Anda YAKIN ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan.');" style="display:inline-block; margin:0;">
+                    <button type="submit" class="btn danger">Hapus Akun</button>
+                </form>
+            </div>
+        </div>
+        
     </div>
 </div>
 {% endblock %}

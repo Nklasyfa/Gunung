@@ -17,6 +17,8 @@
             --text-dark: #2B2B2B;
             --text-light: #F0F0F0;
             --shadow-main: rgba(122, 57, 224, 0.25);
+            /* --- INI PERBAIKANNYA: Memindahkan URL ke variable --- */
+            --gunung-image-url: url("{{ url_for('static', filename='images/kunung.jpg') }}");
         }
         * { box-sizing: border-box; }
         body {
@@ -131,13 +133,237 @@
             .sidebar { width: 100%; height: auto; position: relative; }
             .content-area { margin-left: 0; padding: 20px 15px; height: auto; }
         }
+        
+        /* === TAMBAHAN CSS BARU UNTUK DASHBOARD & PROFIL === */
+        
+        /* Background Tema seperti Login (MEMAKAI VARIABLE) */
+        .content-area-bg {
+            background-image: linear-gradient(rgba(236, 233, 247, 0.8), rgba(236, 233, 247, 1)), var(--gunung-image-url);
+            background-size: cover;
+            background-position: center bottom;
+            background-attachment: fixed;
+        }
+
+        /* Card Gunung di Dashboard (MEMAKAI VARIABLE) */
+        .gunung-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        .gunung-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .gunung-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(122, 57, 224, 0.2);
+        }
+        .gunung-card-image {
+            height: 180px;
+            background-image: var(--gunung-image-url);
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .gunung-card-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+        }
+        .gunung-card-status.dibuka { background-color: #28a745; }
+        .gunung-card-status.ditutup { background-color: #dc3545; }
+        .gunung-card-status.lainnya { background-color: #ffc107; color: #333; }
+        
+        .gunung-card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .gunung-card-content h3 {
+            margin: 0 0 5px 0;
+            color: var(--primary-color);
+            font-size: 20px;
+        }
+        .gunung-card-content p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+        .gunung-card-content .btn { width: 100%; }
+
+        /* Profil Halaman Akun Saya (Tengah) */
+        .profile-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 20px;
+        }
+        .profile-card {
+            max-width: 800px;
+            width: 100%;
+            background: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        .profile-pic-container {
+            flex-shrink: 0;
+            text-align: center;
+        }
+        .profile-pic {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            border: 5px solid var(--bg-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 50px;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+        .profile-pic-container .btn {
+            font-size: 12px;
+            padding: 8px 15px;
+            text-transform: none;
+            width: 100%;
+        }
+        .profile-details { flex-grow: 1; }
+        .profile-details h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+        .profile-details .profile-table { margin-bottom: 25px; }
+        .profile-details .profile-table td { font-size: 16px; padding: 10px 0; }
+        
+        /* CSS Untuk Halaman Detail Gunung (MEMAKAI VARIABLE) */
+        .detail-header {
+            height: 350px;
+            background-image: var(--gunung-image-url); /* <-- INI PERBAIKANNYA */
+            background-size: cover;
+            background-position: center;
+            border-radius: 15px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 30px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .detail-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            border-radius: 15px;
+        }
+        .detail-header * { position: relative; z-index: 2; }
+        .detail-header h1 {
+            font-size: 48px;
+            margin: 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+        }
+        .detail-header p {
+            font-size: 20px;
+            margin: 0;
+            font-weight: 600;
+            color: #eee;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-top: 25px;
+        }
+        .detail-info-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        .detail-info-card h3 {
+            font-size: 22px;
+            color: var(--primary-color);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .detail-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .stat-item h4 {
+            font-size: 14px;
+            color: #888;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+        }
+        .stat-item p {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+        .stat-item p.dibuka { color: #28a745; }
+        .stat-item p.ditutup { color: #dc3545; }
+        .stat-item p.lainnya { color: #ffc107; }
+        
+        .booking-card h3 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+        .booking-card .btn.primary {
+            width: 100%;
+            margin-top: 15px;
+            font-size: 18px;
+            padding: 18px;
+        }
+        .anggota-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .anggota-input label {
+            flex-shrink: 0;
+            padding-top: 10px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="main-wrapper">
         {% block sidebar %}{% endblock %}
         
-        <div class="content-area">
+        <div class="content-area {% block content_area_class %}{% endblock %}">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}

@@ -1,19 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}{{ gunung.nama_gunung }}{% endblock %}
-
+{% block title %}{{ gunung.nama_gunung | default('Gunung Tidak Diketahui') }}{% endblock %}
 {% block content_area_class %}content-area-bg{% endblock %}
 
 {% block content %}
 
 <div class="detail-header">
-    <h1>{{ gunung.nama_gunung }}</h1>
-    <p><i class="fas fa-map-marker-alt"></i> {{ gunung.lokasi }}</p>
+    <h1>{{ gunung.nama_gunung | default('Gunung Tidak Diketahui') }}</h1>
+    <p><i class="fas fa-map-marker-alt"></i> {{ gunung.lokasi | default('Lokasi tidak tersedia') }}</p>
 </div>
 
 <div class="detail-grid">
 
     <div class="detail-info-card">
+
+        {% if gunung.gambar %}
+            <img src="{{ url_for('static', filename=gunung.gambar) }}" alt="{{ gunung.nama_gunung }}" style="width:100%; max-height:400px; object-fit:cover; margin-bottom:15px;">
+        {% else %}
+            <img src="{{ url_for('static', filename='default.jpg') }}" alt="No Image" style="width:100%; max-height:400px; object-fit:cover; margin-bottom:15px;">
+        {% endif %}
 
         <div class="detail-stats">
             <div class="stat-item">
@@ -23,16 +28,20 @@
                 {% elif gunung.status_pendakian == 'Ditutup' %}
                     <p class="ditutup">{{ gunung.status_pendakian | upper }}</p>
                 {% else %}
-                    <p class="lainnya">{{ gunung.status_pendakian | upper }}</p>
+                    <p class="lainnya">{{ gunung.status_pendakian | upper | default('Tidak diketahui') }}</p>
                 {% endif %}
             </div>
             <div class="stat-item">
                 <h4>Ketinggian</h4>
-                <p>{{ "{:,.0f}".format(gunung.ketinggian) }} MDPL</p>
+                {% if gunung.ketinggian %}
+                    <p>{{ "{:,.0f}".format(gunung.ketinggian) }} MDPL</p>
+                {% else %}
+                    <p>Ketinggian tidak tersedia</p>
+                {% endif %}
             </div>
             <div class="stat-item">
                 <h4>Estimasi</h4>
-                <p>{{ gunung.estimasi_waktu }}</p>
+                <p>{{ gunung.estimasi_waktu | default('Tidak tersedia') }}</p>
             </div>
         </div>
 
@@ -58,7 +67,7 @@
                             {% for tiket in tiket_for_jalur %}
                                 <div class="tiket-info" style="background: #f9f9f9; padding: 10px; margin: 5px 0; border-radius: 3px;">
                                     <p><strong>Harga:</strong> Rp {{ "{:,.0f}".format(tiket.harga) }}</p>
-                                    <p><strong>Kuota Harian:</strong> {{ tiket.kuota_harian }} orang</p>
+                                    <p><strong>Kuota Harian:</strong> {{ tiket.kuota_harian }}</p>
                                     <p><strong>Berlaku hingga:</strong> {{ tiket.tanggal_berlaku.strftime('%d-%m-%Y') if tiket.tanggal_berlaku else 'Tidak ditentukan' }}</p>
                                     <a href="{{ url_for('pemesanan_tiket', jalur_id=jalur.jalur_id) }}" class="btn primary" {% if gunung.status_pendakian != 'Dibuka' %}style="pointer-events: none; opacity: 0.5;"{% endif %}>
                                         {% if gunung.status_pendakian == 'Dibuka' %}

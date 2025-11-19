@@ -1,4 +1,4 @@
-{% extends "user/base.html" %}
+{% extends "base.html" %}
 
 {% block title %}{{ gunung.nama_gunung }}{% endblock %}
 
@@ -12,9 +12,9 @@
 </div>
 
 <div class="detail-grid">
-    
+
     <div class="detail-info-card">
-        
+
         <div class="detail-stats">
             <div class="stat-item">
                 <h4>Status</h4>
@@ -35,57 +35,48 @@
                 <p>{{ gunung.estimasi_waktu }}</p>
             </div>
         </div>
-        
+
         <h3>Deskripsi Gunung</h3>
         <p style="white-space: pre-wrap;">{{ gunung.deskripsi | default('Belum ada deskripsi.', true) }}</p>
-        
+
         <h3 style="margin-top: 25px;">Sejarah Singkat</h3>
         <p style="white-space: pre-wrap;">{{ gunung.sejarah | default('Belum ada info sejarah.', true) }}</p>
-        
+
     </div>
-    
+
     <div class="booking-card">
         <div class="detail-info-card">
-            <h3>Booking Tiket Pendakian</h3>
-            
-            <form action="#" method="POST">
-                
-                <div class="form-group">
-                    <label for="tanggal_pendakian">Tanggal Pendakian</label>
-                    <input type="date" id="tanggal_pendakian" name="tanggal_pendakian" class="form-control" required>
-                </div>
-                
-                <p style="font-weight: 600; font-size: 15px; margin-bottom: 10px;">Tambah Anggota (Panggil ID)</p>
-                
-                <div class="anggota-input">
-                    <label for="id_1">1.</label>
-                    <input type="text" id="id_1" name="anggota_id_1" class="form-control" placeholder="Masukkan ID User Anggota">
-                </div>
-                <div class="anggota-input">
-                    <label for="id_2">2.</label>
-                    <input type="text" id="id_2" name="anggota_id_2" class="form-control" placeholder="Masukkan ID User Anggota">
-                </div>
-                <div class="anggota-input">
-                    <label for="id_3">3.</label>
-                    <input type="text" id="id_3" name="anggota_id_3" class="form-control" placeholder="Masukkan ID User Anggota">
-                </div>
-                <div class="anggota-input">
-                    <label for="id_4">4.</label>
-                    <input type="text" id="id_4" name="anggota_id_4" class="form-control" placeholder="Masukkan ID User Anggota">
-                </div>
-                <div class="anggota-input">
-                    <label for="id_5">5.</label>
-                    <input type="text" id="id_5" name="anggota_id_5" class="form-control" placeholder="Masukkan ID User Anggota">
-                </div>
-
-                <button type="submit" class="btn primary" {% if gunung.status_pendakian != 'Dibuka' %}disabled{% endif %}>
-                    {% if gunung.status_pendakian == 'Dibuka' %}
-                        Book Sekarang Juga!
-                    {% else %}
-                        Pesan Sekarang
-                    {% endif %}
-                </button>
-            </form>
+            <h3>Jalur Pendakian</h3>
+            {% if jalur_list %}
+                {% for jalur in jalur_list %}
+                    <div class="jalur-item" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                        <h4>{{ jalur.nama_jalur }}</h4>
+                        <p style="white-space: pre-wrap;">{{ jalur.deskripsi | default('Belum ada deskripsi jalur.', true) }}</p>
+                        <h5>Tiket Tersedia:</h5>
+                        {% set tiket_for_jalur = tiket_list | selectattr('nama_jalur', 'equalto', jalur.nama_jalur) | list %}
+                        {% if tiket_for_jalur %}
+                            {% for tiket in tiket_for_jalur %}
+                                <div class="tiket-info" style="background: #f9f9f9; padding: 10px; margin: 5px 0; border-radius: 3px;">
+                                    <p><strong>Harga:</strong> Rp {{ "{:,.0f}".format(tiket.harga) }}</p>
+                                    <p><strong>Kuota Harian:</strong> {{ tiket.kuota_harian }} orang</p>
+                                    <p><strong>Berlaku hingga:</strong> {{ tiket.tanggal_berlaku.strftime('%d-%m-%Y') if tiket.tanggal_berlaku else 'Tidak ditentukan' }}</p>
+                                    <a href="{{ url_for('pemesanan_tiket', jalur_id=jalur.jalur_id) }}" class="btn primary" {% if gunung.status_pendakian != 'Dibuka' %}style="pointer-events: none; opacity: 0.5;"{% endif %}>
+                                        {% if gunung.status_pendakian == 'Dibuka' %}
+                                            Pesan Tiket
+                                        {% else %}
+                                            Tidak Tersedia
+                                        {% endif %}
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>Tidak ada tiket tersedia untuk jalur ini.</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Belum ada jalur pendakian yang tersedia.</p>
+            {% endif %}
         </div>
     </div>
 </div>

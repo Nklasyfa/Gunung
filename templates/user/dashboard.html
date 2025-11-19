@@ -1,4 +1,4 @@
-{% extends "user/base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Dashboard Pengguna{% endblock %}
 
@@ -10,13 +10,13 @@
     <p>Halo, {{ user_nama }}! Pilih destinasi pendakianmu berikutnya.</p>
 </header>
 
-<div class="gunung-card-grid">
+<div class="gunung-card-grid"> 
     
     {% if gunung_list %}
         {% for gunung in gunung_list %}
         <div class="gunung-card">
             
-            <div class="gunung-card-image" style="background-image: url('{{ url_for("static", filename="images/kunung.jpg") }}');">
+            <div class="gunung-card-image">
                 {% if gunung.status_pendakian == 'Dibuka' %}
                     <span class="gunung-card-status dibuka">Dibuka</span>
                 {% elif gunung.status_pendakian == 'Ditutup' %}
@@ -39,5 +39,6 @@
         <p>Tidak ada data gunung yang tersedia saat ini.</p>
     </div>
     {% endif %}
-</div>
+    
+</div> 
 {% endblock content %}

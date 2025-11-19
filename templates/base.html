@@ -11,13 +11,15 @@
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
 
         :root {
-            --primary-color: #7A39E0; 
-            --secondary-color: #A27EDD; 
-            --bg-color: #ECE9F7; 
-            --text-dark: #2B2B2B;
-            --text-light: #F0F0F0;
-            --shadow-main: rgba(122, 57, 224, 0.25);
-            /* --- INI PERBAIKANNYA: Memindahkan URL ke variable --- */
+            --primary-color: #7A39E0; /* Original purple color */
+            --secondary-color: #9C6ADE;
+            --accent-color: #FF9800;
+            --bg-color: #F5F5F5;
+            --text-dark: #212121;
+            --text-light: #FFFFFF;
+            --shadow-main: rgba(122, 57, 224, 0.3);
+            --gradient-primary: linear-gradient(135deg, #7A39E0, #9C6ADE);
+            --gradient-secondary: linear-gradient(135deg, #FF9800, #FFB74D);
             --gunung-image-url: url("{{ url_for('static', filename='images/kunung.jpg') }}");
         }
         * { box-sizing: border-box; }
@@ -76,6 +78,7 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             width: 100%;
             margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
         }
         /* Style Form */
         .form-group { margin-bottom: 15px; }
@@ -97,8 +100,8 @@
             text-transform: uppercase;
             width: auto;
         }
-        .btn.primary { background-color: var(--primary-color); color: white; box-shadow: 0 4px 12px var(--shadow-main); }
-        .btn.primary:hover { background-color: var(--secondary-color); }
+        .btn.primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 12px var(--shadow-main); }
+        .btn.primary:hover { background: var(--gradient-secondary); }
         .btn.danger { background-color: #f44336; color: white; }
         .btn.danger:hover { background-color: #d32f2f; }
         .btn.secondary { background-color: #ddd; color: var(--text-dark); }
@@ -138,7 +141,7 @@
         
         /* Background Tema seperti Login (MEMAKAI VARIABLE) */
         .content-area-bg {
-            background-image: linear-gradient(rgba(236, 233, 247, 0.8), rgba(236, 233, 247, 1)), var(--gunung-image-url);
+            background-image: linear-gradient(rgba(245, 245, 245, 0.8), rgba(245, 245, 245, 1)), var(--gunung-image-url);
             background-size: cover;
             background-position: center bottom;
             background-attachment: fixed;
@@ -361,17 +364,44 @@
 </head>
 <body>
     <div class="main-wrapper">
-        {% block sidebar %}{% endblock %}
-        
+        <nav class="sidebar">
+            <div class="logo">
+                {% if session.get('role') == 'admin' %}
+                    <i class="fas fa-shield-halved"></i>
+                    <span>ADMIN PANEL</span>
+                {% else %}
+                    <i class="fas fa-mountain"></i>
+                    <span>PEMESANAN TIKET GUNUNG</span>
+                {% endif %}
+            </div>
+
+            {% set active_page = active_page | default('home' if session.get('role') != 'admin' else 'admin_dashboard') %}
+
+            <ul>
+                {% if session.get('role') == 'admin' %}
+                    <li><a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if active_page == 'admin_dashboard' }}"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
+
+                    <li style="padding: 0 15px; font-size: 12px; color: #999; margin-top: 15px; margin-bottom: 5px;">DATA</li>
+                    <li><a href="{{ url_for('gunung') }}" class="{{ 'active' if active_page == 'gunung' }}"><i class="fas fa-map-marked-alt"></i> Data Gunung</a></li>
+                    <li><a href="{{ url_for('porter') }}" class="{{ 'active' if active_page == 'porter' }}"><i class="fas fa-users"></i> Data Porter</a></li>
+                    <li><a href="{{ url_for('peralatan') }}" class="{{ 'active' if active_page == 'peralatan' }}"><i class="fas fa-tools"></i> Data Peralatan Sewa</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('user_dashboard') }}" class="{{ 'active' if active_page == 'home' }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="{{ url_for('profile') }}" class="{{ 'active' if active_page == 'profile' }}"><i class="fas fa-user-circle"></i> Akun Saya</a></li>
+                {% endif %}
+                <li class="logout-link"><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+
         <div class="content-area {% block content_area_class %}{% endblock %}">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div> 
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
-        
+
             {% block content %}{% endblock %}
         </div>
     </div>

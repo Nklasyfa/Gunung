@@ -1,5 +1,5 @@
 import os 
-from flask import Flask, get_flashed_messages, render_template, request, redirect, url_for, session, flash # pyright: ignore[reportMissingImports]
+from flask import Flask, get_flashed_messages, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL
 from config import Config
 from functools import wraps # Penting untuk decorator
@@ -141,13 +141,17 @@ def user_dashboard():
                            user_nama=session.get('nama'),
                            active_page='home') # Kirim active_page
 
-# HALAMAN BARU: DETAIL GUNUNG
+# HALAMAN BARU: DETAIL GUNUNG (DIPERBARUI UNTUK MENGAMBIL DATA JALUR DAN PORTER)
 @app.route('/gunung/<int:id>')
 @login_required
 def detail_gunung(id):
     cur = mysql.connection.cursor()
+    gunung_data = None
+    jalur_list = []
+    porter_list = []
+    
     try:
-        # Ambil data lengkap gunung dari tabel 'gunung'
+        # 1. Ambil data lengkap gunung
         cur.execute("SELECT * FROM gunung WHERE gunung_id = %s", [id])
         gunung_data = cur.fetchone()
         
@@ -155,18 +159,38 @@ def detail_gunung(id):
             flash("Gunung tidak ditemukan.", "danger")
             return redirect(url_for('user_dashboard'))
             
-        # (TODO: Anda bisa tambahkan query untuk ambil data tiket, jalur, dll terkait gunung_id ini)
+        # 2. Ambil data Jalur Pendakian yang terkait dengan Gunung ini
+        cur.execute("SELECT * FROM jalur_pendakian WHERE gunung_id = %s", [id])
+        jalur_list = cur.fetchall()
+
+        # 3. Ambil data Tiket yang tersedia untuk jalur-jalur gunung ini
+        cur.execute("""
+            SELECT t.*, j.nama_jalur
+            FROM tiket t
+            JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id
+            WHERE j.gunung_id = %s
+            ORDER BY t.tanggal_berlaku DESC
+        """, [id])
+        tiket_list = cur.fetchall()
+
+        # 4. Ambil data Porter yang tersedia di Gunung ini
+        # Kita hanya ingin porter yang statusnya 'tersedia'
+        cur.execute("SELECT * FROM porter WHERE gunung_id = %s AND status = 'tersedia'", [id])
+        porter_list = cur.fetchall()
         
     except Exception as e:
-        gunung_data = None
         flash(f"Error mengambil detail gunung: {e}", "danger")
         return redirect(url_for('user_dashboard'))
     finally:
         cur.close()
         
+    # KIRIM SEMUA DATA PENTING KE TEMPLATE
     return render_template('user/detail_gunung.html',
                            gunung=gunung_data,
-                           active_page='home') # Tetap tandai 'home' sebagai aktif
+                           jalur_list=jalur_list, # <-- PENTING
+                           tiket_list=tiket_list, # <-- PENTING
+                           porter_list=porter_list, # <-- PENTING
+                           active_page='home')
 
 @app.route('/profile')
 @login_required
@@ -366,7 +390,388 @@ def hapus_gunung(id):
     
     return redirect(url_for('gunung'))
 
-# --- END OF DATA MASTER ---
+# -------------------------------------------------------------------------
+# === 2. RUTE BARU UNTUK PEMESANAN (USER BIASA) ===
+
+@app.route('/pemesanan/tiket/<int:jalur_id>', methods=['GET'])
+@login_required
+def pemesanan_tiket(jalur_id):
+    cur = mysql.connection.cursor()
+    
+    try:
+        # 1. Ambil data tiket, jalur, dan gunung yang sesuai
+        cur.execute("""
+            SELECT 
+                t.tiket_id, t.harga, t.kuota_harian, t.tanggal_berlaku,
+                j.jalur_id, j.nama_jalur, g.gunung_id, g.nama_gunung
+            FROM tiket t
+            JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id
+            JOIN gunung g ON j.gunung_id = g.gunung_id
+            WHERE t.jalur_id = %s
+            ORDER BY t.tanggal_berlaku DESC LIMIT 1
+        """, [jalur_id])
+        tiket_data = cur.fetchone()
+        
+        if not tiket_data:
+            flash("Tidak ada tiket yang tersedia untuk jalur ini.", "danger")
+            return redirect(url_for('user_dashboard'))
+
+        # 2. Ambil data peralatan sewa
+        cur.execute("SELECT * FROM peralatan_sewa WHERE stok > 0 ORDER BY nama_peralatan")
+        peralatan_list = cur.fetchall()
+        
+        # 3. Ambil data porter yang tersedia di gunung terkait
+        cur.execute("SELECT * FROM porter WHERE gunung_id = %s AND status = 'tersedia'", [tiket_data['gunung_id']])
+        porter_list = cur.fetchall()
+        
+    except Exception as e:
+        flash(f"Error saat mengambil data pemesanan: {e}", "danger")
+        return redirect(url_for('user_dashboard'))
+    finally:
+        cur.close()
+    
+    return render_template('user/pemesanan_tiket.html',
+                           tiket=tiket_data,
+                           peralatan_list=peralatan_list,
+                           porter_list=porter_list,
+                           active_page='home')
+
+@app.route('/pemesanan/submit', methods=['POST'])
+@login_required
+def submit_pemesanan():
+    user_id = session['user_id']
+    tiket_id = request.form.get('tiket_id', type=int)
+    jumlah_pendaki = request.form.get('jumlah_pendaki', type=int)
+    
+    # Data Sewa Peralatan
+    peralatan_ids = request.form.getlist('peralatan_id[]')
+    jumlah_peralatan = request.form.getlist('jumlah_peralatan[]')
+    
+    # Data Sewa Porter
+    porter_id = request.form.get('porter_id', type=int)
+    lama_sewa_hari = request.form.get('lama_sewa_hari', type=int)
+
+    if not tiket_id or jumlah_pendaki is None or jumlah_pendaki < 1:
+        flash('Data tiket atau jumlah pendaki tidak valid.', 'danger')
+        return redirect(url_for('user_dashboard'))
+    
+    cur = mysql.connection.cursor()
+    total_bayar = 0
+    jalur_id_for_redirect = None
+    
+    try:
+        # A. Cek ketersediaan dan harga tiket
+        cur.execute("SELECT harga, kuota_harian, jalur_id FROM tiket WHERE tiket_id = %s", [tiket_id])
+        tiket_info = cur.fetchone()
+        
+        if not tiket_info:
+            raise Exception("Tiket tidak ditemukan.")
+            
+        if jumlah_pendaki > tiket_info['kuota_harian']:
+            raise Exception(f"Jumlah pendaki melebihi kuota harian yang tersedia ({tiket_info['kuota_harian']} orang).")
+
+        jalur_id_for_redirect = tiket_info['jalur_id']
+        
+        # B. Hitung biaya tiket
+        biaya_tiket = tiket_info['harga'] * jumlah_pendaki
+        total_bayar += biaya_tiket
+        
+        # C. Insert ke tabel pemesanan
+        cur.execute("INSERT INTO pemesanan (user_id, tiket_id, tanggal_pesan, status) VALUES (%s, %s, NOW(), 'menunggu')",
+                    (user_id, tiket_id))
+        pemesanan_id = cur.lastrowid
+        
+        # D. Insert Data Pendaki (Simulasi untuk 1 pendaki utama / ketua rombongan)
+        # ⚠️ CATATAN: Anda harus memodifikasi ini untuk mengambil NIK, tgl_lahir, dll. dari form
+        nama_pendaki = session['nama']
+        cur.execute("""
+            INSERT INTO pendaki (pemesanan_id, nama_pendaki, nik, tgl_lahir, jenis_kelamin, kontak_darurat)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (pemesanan_id, nama_pendaki, '0', '2000-01-01', 'Laki', session.get('no_hp', '0')))
+
+        
+        # E. Proses Sewa Peralatan
+        # Asumsi lama sewa = lama sewa porter. Jika porter tidak disewa, lama sewa harus 1 hari (minimal).
+        lama_sewa_peralatan = lama_sewa_hari if lama_sewa_hari and lama_sewa_hari > 0 else 1 
+
+        for i, alat_id_str in enumerate(peralatan_ids):
+            try:
+                alat_id = int(alat_id_str)
+                jumlah = int(jumlah_peralatan[i])
+            except ValueError:
+                # Lewati jika ada data yang tidak valid
+                continue 
+
+            if jumlah > 0:
+                cur.execute("SELECT harga_sewa, stok, nama_peralatan FROM peralatan_sewa WHERE peralatan_id = %s", [alat_id])
+                alat_info = cur.fetchone()
+                
+                if not alat_info:
+                     raise Exception("Peralatan tidak ditemukan.")
+                if jumlah > alat_info['stok']:
+                     raise Exception(f"Stok peralatan '{alat_info['nama_peralatan']}' tidak cukup. Tersedia: {alat_info['stok']}")
+                    
+                subtotal = alat_info['harga_sewa'] * jumlah * lama_sewa_peralatan
+                total_bayar += subtotal
+                
+                cur.execute("INSERT INTO detail_sewa (pemesanan_id, peralatan_id, jumlah, subtotal) VALUES (%s, %s, %s, %s)",
+                            (pemesanan_id, alat_id, jumlah, subtotal))
+                # Kurangi stok
+                cur.execute("UPDATE peralatan_sewa SET stok = stok - %s WHERE peralatan_id = %s", (jumlah, alat_id))
+        
+        # F. Proses Sewa Porter
+        if porter_id and lama_sewa_hari and lama_sewa_hari > 0:
+            cur.execute("SELECT harga_per_hari, status FROM porter WHERE porter_id = %s", [porter_id])
+            porter_info = cur.fetchone()
+            
+            if not porter_info or porter_info['status'] != 'tersedia':
+                raise Exception("Porter tidak tersedia atau tidak valid.")
+                
+            total_biaya_porter = porter_info['harga_per_hari'] * lama_sewa_hari
+            total_bayar += total_biaya_porter
+            
+            cur.execute("INSERT INTO sewa_porter (pemesanan_id, porter_id, lama_sewa_hari, total_biaya) VALUES (%s, %s, %s, %s)",
+                        (pemesanan_id, porter_id, lama_sewa_hari, total_biaya_porter))
+            # Ubah status porter
+            cur.execute("UPDATE porter SET status = 'sedang bertugas' WHERE porter_id = %s", [porter_id])
+
+        # G. Update total pembayaran di tabel pembayaran (status 'menunggu')
+        cur.execute("""
+            INSERT INTO pembayaran (pemesanan_id, metode_bayar, jumlah, tanggal_bayar, status_bayar) 
+            VALUES (%s, 'transfer', %s, NOW(), 'menunggu')
+        """, (pemesanan_id, total_bayar))
+        
+        mysql.connection.commit()
+        flash(f'Pemesanan Tiket dan layanan berhasil! Total yang harus dibayar: Rp {total_bayar:,.0f}. Segera lakukan pembayaran.', 'success')
+        
+        return redirect(url_for('user_dashboard')) 
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Pemesanan Gagal: {str(e)}', 'danger')
+        
+        if jalur_id_for_redirect:
+             return redirect(url_for('pemesanan_tiket', jalur_id=jalur_id_for_redirect))
+        return redirect(url_for('user_dashboard'))
+    finally:
+        cur.close()
+
+# -------------------------------------------------------------------------
+# === 3. RUTE BARU UNTUK ADMIN - DATA MASTER PORTER (CRUD) ===
+
+@app.route('/admin/porter')
+@admin_required
+def porter():
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT p.*, g.nama_gunung 
+        FROM porter p
+        JOIN gunung g ON p.gunung_id = g.gunung_id
+        ORDER BY p.porter_id DESC
+    """)
+    porter_list = cur.fetchall()
+    cur.close()
+    return render_template('admin/porter.html',
+                           porter_list=porter_list,
+                           active_page='porter')
+
+@app.route('/admin/porter/tambah', methods=['GET', 'POST'])
+@admin_required
+def tambah_porter():
+    cur = mysql.connection.cursor()
+    
+    if request.method == 'POST':
+        gunung_id = request.form['gunung_id']
+        nama_porter = request.form['nama_porter']
+        umur = request.form['umur']
+        pengalaman = request.form['pengalaman_tahun']
+        kontak = request.form['kontak']
+        status = request.form['status']
+        harga = request.form['harga_per_hari']
+        
+        try:
+            cur.execute("""
+                INSERT INTO porter (gunung_id, nama_porter, umur, pengalaman_tahun, kontak, status, harga_per_hari) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (gunung_id, nama_porter, umur, pengalaman, kontak, status, harga))
+            mysql.connection.commit()
+            flash(f'Porter {nama_porter} berhasil ditambahkan!', 'success')
+            return redirect(url_for('porter'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Gagal menambah porter: {str(e)}', 'danger')
+        finally:
+            cur.close()
+            
+    # GET request: Ambil daftar gunung untuk dropdown
+    cur.execute("SELECT gunung_id, nama_gunung FROM gunung ORDER BY nama_gunung")
+    gunung_list = cur.fetchall()
+    cur.close()
+            
+    return render_template('admin/tambah_porter.html',
+                           gunung_list=gunung_list,
+                           active_page='porter')
+
+@app.route('/admin/porter/edit/<int:id>', methods=['GET', 'POST'])
+@admin_required
+def edit_porter(id):
+    cur = mysql.connection.cursor()
+    
+    if request.method == 'POST':
+        gunung_id = request.form['gunung_id']
+        nama_porter = request.form['nama_porter']
+        umur = request.form['umur']
+        pengalaman = request.form['pengalaman_tahun']
+        kontak = request.form['kontak']
+        status = request.form['status']
+        harga = request.form['harga_per_hari']
+        
+        try:
+            cur.execute("""
+                UPDATE porter SET 
+                gunung_id=%s, nama_porter=%s, umur=%s, pengalaman_tahun=%s, kontak=%s, status=%s, harga_per_hari=%s
+                WHERE porter_id=%s
+            """, (gunung_id, nama_porter, umur, pengalaman, kontak, status, harga, id))
+            mysql.connection.commit()
+            flash(f'Data Porter {nama_porter} berhasil diperbarui!', 'success')
+            return redirect(url_for('porter'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Gagal memperbarui porter: {str(e)}', 'danger')
+        finally:
+            cur.close()
+
+    # GET request
+    cur.execute("SELECT * FROM porter WHERE porter_id = %s", [id])
+    porter_data = cur.fetchone()
+    cur.execute("SELECT gunung_id, nama_gunung FROM gunung ORDER BY nama_gunung")
+    gunung_list = cur.fetchall()
+    cur.close()
+    
+    if not porter_data:
+        flash('Data porter tidak ditemukan.', 'danger')
+        return redirect(url_for('porter'))
+        
+    return render_template('admin/edit_porter.html',
+                           porter=porter_data,
+                           gunung_list=gunung_list,
+                           active_page='porter')
+
+@app.route('/admin/porter/hapus/<int:id>', methods=['POST'])
+@admin_required
+def hapus_porter(id):
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM porter WHERE porter_id = %s", [id])
+        mysql.connection.commit()
+        flash('Data porter berhasil dihapus.', 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        if '1451' in str(e):
+            flash('Gagal menghapus porter. Data ini sudah terhubung dengan data pemesanan/sewa porter.', 'danger')
+        else:
+            flash(f'Gagal menghapus porter: {str(e)}', 'danger')
+    finally:
+        cur.close()
+    
+    return redirect(url_for('porter'))
+
+# -------------------------------------------------------------------------
+# === 4. RUTE BARU UNTUK ADMIN - DATA MASTER PERALATAN SEWA (CRUD) ===
+
+@app.route('/admin/peralatan')
+@admin_required
+def peralatan():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM peralatan_sewa ORDER BY nama_peralatan")
+    peralatan_list = cur.fetchall()
+    cur.close()
+    return render_template('admin/peralatan.html',
+                           peralatan_list=peralatan_list,
+                           active_page='peralatan')
+
+@app.route('/admin/peralatan/tambah', methods=['GET', 'POST'])
+@admin_required
+def tambah_peralatan():
+    if request.method == 'POST':
+        nama_peralatan = request.form['nama_peralatan']
+        harga_sewa = request.form['harga_sewa']
+        stok = request.form['stok']
+        
+        cur = mysql.connection.cursor()
+        try:
+            cur.execute("""
+                INSERT INTO peralatan_sewa (nama_peralatan, harga_sewa, stok) 
+                VALUES (%s, %s, %s)
+            """, (nama_peralatan, harga_sewa, stok))
+            mysql.connection.commit()
+            flash(f'Peralatan {nama_peralatan} berhasil ditambahkan!', 'success')
+            return redirect(url_for('peralatan'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Gagal menambah peralatan: {str(e)}', 'danger')
+        finally:
+            cur.close()
+            
+    return render_template('admin/tambah_peralatan.html', active_page='peralatan')
+
+@app.route('/admin/peralatan/edit/<int:id>', methods=['GET', 'POST'])
+@admin_required
+def edit_peralatan(id):
+    cur = mysql.connection.cursor()
+    
+    if request.method == 'POST':
+        nama_peralatan = request.form['nama_peralatan']
+        harga_sewa = request.form['harga_sewa']
+        stok = request.form['stok']
+        
+        try:
+            cur.execute("""
+                UPDATE peralatan_sewa SET 
+                nama_peralatan=%s, harga_sewa=%s, stok=%s
+                WHERE peralatan_id=%s
+            """, (nama_peralatan, harga_sewa, stok, id))
+            mysql.connection.commit()
+            flash(f'Data Peralatan {nama_peralatan} berhasil diperbarui!', 'success')
+            return redirect(url_for('peralatan'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Gagal memperbarui peralatan: {str(e)}', 'danger')
+        finally:
+            cur.close()
+
+    # GET request
+    cur.execute("SELECT * FROM peralatan_sewa WHERE peralatan_id = %s", [id])
+    peralatan_data = cur.fetchone()
+    cur.close()
+    
+    if not peralatan_data:
+        flash('Data peralatan tidak ditemukan.', 'danger')
+        return redirect(url_for('peralatan'))
+        
+    return render_template('admin/edit_peralatan.html',
+                           peralatan=peralatan_data,
+                           active_page='peralatan')
+
+@app.route('/admin/peralatan/hapus/<int:id>', methods=['POST'])
+@admin_required
+def hapus_peralatan(id):
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM peralatan_sewa WHERE peralatan_id = %s", [id])
+        mysql.connection.commit()
+        flash('Data peralatan berhasil dihapus.', 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        if '1451' in str(e):
+            flash('Gagal menghapus peralatan. Data ini sudah terhubung dengan data pemesanan/detail sewa.', 'danger')
+        else:
+            flash(f'Gagal menghapus peralatan: {str(e)}', 'danger')
+    finally:
+        cur.close()
+    
+    return redirect(url_for('peralatan'))
 
 if __name__ == '__main__':
     app.run(debug=True)
+    

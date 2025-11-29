@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Tiket Gunung - Login / Registrasi</title>
+    
+    <style>
+        /* === DARI base.css === */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+
+        :root {
+            --primary-color: #7A39E0; 
+            --secondary-color: #A27EDD; 
+            --bg-color: #ECE9F7; 
+            --text-dark: #2B2B2B;
+            --text-light: #F0F0F0;
+            --shadow-main: rgba(122, 57, 224, 0.25);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color); 
+            position: relative;
+            overflow: auto; 
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            color: var(--text-dark);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 8px rgba(122, 57, 224, 0.3);
+        }
+
+        textarea.form-control { min-height: 80px; resize: vertical; }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s ease, transform 0.1s;
+            text-transform: uppercase;
+        }
+
+        .btn.primary {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px var(--shadow-main);
+        }
+        .btn.primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px var(--shadow-main);
+        }
+        .btn.danger { background-color: #f44336; color: white; }
+        .btn.danger:hover { background-color: #d32f2f; }
+        .btn.secondary { background-color: #ddd; color: var(--text-dark); }
+        .btn.secondary:hover { background-color: #ccc; }
+
+        .alert {
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            position: absolute; 
+            top: 20px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: fit-content;
+            max-width: 90%;
+            z-index: 2000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border-width: 1px;
+            border-style: solid;
+        }
+        .alert.success { background-color: #e6ffed; color: #28a745; border-color: #c3e6cb; }
+        .alert.danger { background-color: #ffebe6; color: #dc3545; border-color: #f5c6cb; }
+        .alert.warning { background-color: #fff8e6; color: #ffc107; border-color: #ffeeba; }
+
+        /* === DARI login.css === */
+        body {
+            /* Override body base.css untuk centering di halaman login */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1; 
+        }
+
+        #bg-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+        }
+
+        .login-page-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5); 
+            border-radius: 20px;
+        }
+
+        .login-page-wrapper {
+            display: flex;
+            max-width: 950px;
+            height: 600px;
+            background-color: transparent; 
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+            position: relative; 
+            z-index: 50;
+        }
+       .left-panel {
+            flex: 1;
+            background-color: #1a2a4b; 
+            background-image: url("{{ url_for('static', filename='images/kunung.jpg') }}"); 
+            background-size: cover; 
+            background-position: center bottom; 
+            background-repeat: no-repeat; 
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-light);
+            padding: 30px;
+            z-index: 2;
+
+            overflow: hidden; 
+        }
+
+       
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.4); /* Overlay gelap 40% */
+            z-index: 1; 
+        }
+
+       
+        .left-panel-content {
+            text-align: center;
+            position: relative; 
+            z-index: 2;
+        }
+       
+        .left-panel-content h3, .left-panel-content p {
+            color: #fff; 
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5); 
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; 
+            overflow-y: auto;
+            background-color: #ffffff; 
+            z-index: 2;
+        }
+
+        .right-panel h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .right-panel h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: -5px;
+            margin-bottom: 25px;
+        }
+
+        .forgot-password a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .auth-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .auth-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                align-items: flex-start;
+                padding: 20px 0;
+            }
+            .login-page-wrapper {
+                flex-direction: column;
+                width: 95%;
+                max-width: 500px;
+                height: auto;
+                margin-top: 50px;
+                margin-bottom: 50px;
+            }
+            .left-panel { min-height: 200px; }
+            .right-panel { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-background">
+        <video autoplay muted loop id="bg-video">
+            <source src="{{ url_for('static', filename='videos/background.mp4') }}" type="video/mp4">
+            Browser Anda tidak mendukung tag video.
+        </video>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="login-page-wrapper">
+        <div class="left-panel">
+            <div class="left-panel-content">
+                <h3>Ayo Mendaki Gunung Impian Anda!</h3>
+                <p>Kelola pemesanan tiket pendakian dan perlengkapan sewa Anda dengan mudah dan aman di sini.</p>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <h1 class="greeting">Selamat Datang!</h1>
+            
+            <div id="login-form-section" class="form-container">
+                <h2>Masuk ke Akun</h2>
+                <form action="{{ url_for('login') }}" method="post" id="form-login">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" name="email" class="form-control" placeholder="Masukkan email Anda" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" name="password" class="form-control" placeholder="Masukkan password" required>
+                    </div>
+                    <div class="forgot-password">
+                        <a href="#">Lupa Password?</a>
+                    </div>
+                    <button type="submit" class="btn primary">Masuk</button>
+                </form>
+                <div class="auth-link">
+                    Belum punya akun? <a href="#" onclick="showForm('register'); return false;">Daftar Sekarang</a>
+                </div>
+            </div>
+            
+            <div id="register-form-section" class="form-container" style="display:none;">
+                <h2>Buat Akun Baru</h2>
+                <form action="{{ url_for('register') }}" method="post" id="form-register">
+                    <div class="form-group">
+                        <label for="register-nama">Nama Lengkap</label>
+                        <input type="text" id="register-nama" name="nama" class="form-control" placeholder="Nama Anda" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" name="email" class="form-control" placeholder="Email Anda" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input type="password" id="register-password" name="password" class="form-control" placeholder="Buat password (min. 5 karakter)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-no_hp">Nomor HP</label>
+                        <input type="text" id="register-no_hp" name="no_hp" class="form-control" placeholder="Contoh: 081xxxxxx" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-alamat">Alamat</label>
+                        <textarea id="register-alamat" name="alamat" class="form-control" placeholder="Alamat lengkap Anda" required></textarea>
+                    </div>
+                    <button type="submit" class="btn primary">Daftar</button>
+                </form>
+                <div class="auth-link">
+                    Sudah punya akun? <a href="#" onclick="showForm('login'); return false;">Kembali ke Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="initial-form-data" data-show-register="{{ show_register | default('False') }}" style="display:none;"></div>
+
+    <script>
+        // === DARI login.js ===
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginSection = document.getElementById('login-form-section');
+            const registerSection = document.getElementById('register-form-section');
+            const formRegister = document.getElementById('form-register');
+            
+            // Fungsi utama untuk beralih tampilan form
+            window.showForm = function(formType) {
+                loginSection.style.display = formType === 'login' ? 'block' : 'none';
+                registerSection.style.display = formType === 'register' ? 'block' : 'none';
+            }
+            
+            // Tentukan form mana yang harus ditampilkan saat halaman dimuat (dari Flask context)
+            const showRegisterElement = document.getElementById('initial-form-data');
+            if (showRegisterElement && showRegisterElement.dataset.showRegister === 'True') {
+                showForm('register');
+            } else {
+                showForm('login');
+            }
+
+            // Client-side validation: Pastikan password minimal 5 karakter
+            if (formRegister) {
+                formRegister.addEventListener('submit', function(event) {
+                    const password = this.elements['password'].value;
+                    if (password.length < 5) {
+                        alert('Password harus memiliki minimal 5 karakter!');
+                        event.preventDefault(); 
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

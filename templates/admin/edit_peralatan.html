@@ -1,0 +1,35 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Edit Peralatan Sewa{% endblock %}
+
+{% block content %}
+<div class="card card-info">
+    <div class="card-header">
+        <h3 class="card-title">Form Edit Peralatan: {{ peralatan.nama_peralatan }}</h3>
+    </div>
+    <form action="{{ url_for('edit_peralatan', id=peralatan.peralatan_id) }}" method="POST">
+        <div class="card-body">
+            
+            <div class="form-group">
+                <label for="nama_peralatan">Nama Peralatan</label>
+                <input type="text" class="form-control" id="nama_peralatan" name="nama_peralatan" value="{{ peralatan.nama_peralatan }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="harga_sewa">Harga Sewa per Hari (Rp)</label>
+                <input type="number" class="form-control" id="harga_sewa" name="harga_sewa" value="{{ peralatan.harga_sewa }}" required min="0">
+            </div>
+            
+            <div class="form-group">
+                <label for="stok">Stok Tersedia</label>
+                <input type="number" class="form-control" id="stok" name="stok" value="{{ peralatan.stok }}" required min="0">
+            </div>
+            
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-info">Update Data</button>
+            <a href="{{ url_for('peralatan') }}" class="btn btn-secondary">Batal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+
+:root {
+    --primary-color: #7A39E0;
+    --secondary-color: #A27EDD;
+    --bg-color: #ECE9F7;
+    --text-dark: #2B2B2B;
+    --text-light: #F0F0F0;
+    --shadow-main: rgba(122, 57, 224, 0.25);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--bg-color);
+    position: relative;
+    overflow: auto;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-dark);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    color: var(--text-dark);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 8px var(--shadow-main);
+}
+
+.btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.btn.primary {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 12px var(--shadow-main);
+}
+
+.btn.primary:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.btn.secondary {
+    background-color: #ddd;
+    color: var(--text-dark);
+}
+
+.btn.secondary:hover {
+    background-color: #ccc;
+}
+
+.btn.danger {
+    background-color: #f44336;
+    color: white;
+}
+
+.btn.danger:hover {
+    background-color: #d32f2f;
+}
+
+.alert {
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: fit-content;
+    max-width: 90%;
+    z-index: 2000;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    border-width: 1px;
+    border-style: solid;
+}
+
+.alert.success {
+    background-color: #e6ffed;
+    color: #28a745;
+    border-color: #c3e6cb;
+}
+
+.alert.danger {
+    background-color: #ffebe6;
+    color: #dc3545;
+    border-color: #f5c6cb;
+}
+
+.alert.warning {
+    background-color: #fff8e6;
+    color: #ffc107;
+    border-color: #ffeeba;
+}

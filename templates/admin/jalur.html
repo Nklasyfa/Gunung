@@ -1,0 +1,56 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Jalur Pendakian{% endblock %}
+
+{% block content %}
+<header>
+    <h1>Kelola Jalur Pendakian</h1>
+    <p>Tambah, edit, atau hapus jalur pendakian untuk tiap gunung.</p>
+</header>
+
+<div class="content-card">
+    <div style="margin-bottom:12px;">
+        <a href="{{ url_for('admin.tambah_jalur') }}" class="btn primary">Tambah Jalur Baru</a>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Gunung</th>
+                <th>Nama Jalur</th>
+                <th>Estimasi</th>
+                <th>Kesulitan</th>
+                <th>Tersedia</th>
+                <th>Gambar</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for j in jalur_list %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ j.nama_gunung }}</td>
+                <td>{{ j.nama_jalur }}</td>
+                <td>{{ j.estimasi }}</td>
+                <td>{{ j.tingkat_kesulitan }}</td>
+                <td>{{ 'Ya' if j.tersedia == 1 else 'Tidak' }}</td>
+                <td>
+                    {% if j.gambar_jalur %}
+                        <img src="{{ url_for('static', filename='uploads/jalur/' ~ j.gambar_jalur) }}" alt="{{ j.nama_jalur }}" style="max-width:120px;" />
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('admin.edit_jalur', id=j.jalur_id) }}" class="btn small">Edit</a>
+                    <form action="{{ url_for('admin.hapus_jalur', id=j.jalur_id) }}" method="post" style="display:inline;" onsubmit="return confirm('Yakin hapus jalur ini?');">
+                        <button type="submit" class="btn danger small">Hapus</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

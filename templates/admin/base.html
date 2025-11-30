@@ -15,6 +15,7 @@
         <li style="padding: 0 15px; font-size: 12px; color: #999; margin-top: 15px; margin-bottom: 5px;">DATA</li>
         <li><a href="{{ url_for('gunung') }}" class="{{ 'active' if active_page == 'gunung' }}"><i class="fas fa-map-marked-alt"></i> Data Gunung</a></li>
         <li><a href="{{ url_for('porter') }}" class="{{ 'active' if active_page == 'porter' }}"><i class="fas fa-users"></i> Data Porter</a></li>
+    <li><a href="{{ url_for('jalur') }}" class="{{ 'active' if active_page == 'jalur' }}"><i class="fas fa-route"></i> Data Jalur</a></li>
         <li><a href="{{ url_for('peralatan') }}" class="{{ 'active' if active_page == 'peralatan' }}"><i class="fas fa-tools"></i> Data Peralatan Sewa</a></li>
         <li class="logout-link"><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>

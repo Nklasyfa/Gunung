@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Pemesanan Tiket - {{ gunung.nama_gunung }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <header>
+        <h1>Pemesanan Tiket Gunung {{ gunung.nama_gunung }}</h1>
+        <p>Isi formulir di bawah untuk melakukan pemesanan perjalanan.</p>
+    </header>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-top: 30px;">
+        
+        <!-- Main Form -->
+        <div class="content-card">
+            <form id="bookingForm" action="{{ url_for('user.pemesanan_tiket', gunung_id=gunung.gunung_id) }}" method="POST">
+                
+                <!-- Tanggal Pemesanan -->
+                <div class="form-group">
+                    <label for="tanggal_pesan">Tanggal Keberangkatan</label>
+                    <input type="date" id="tanggal_pesan" name="tanggal_pesan" class="form-control" required>
+                </div>
+
+                <!-- Durasi & Aktivitas -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="durasi">Durasi Pendakian</label>
+                        <select id="durasi" name="durasi" class="form-control" onchange="updatePrice()" required>
+                            <option value="">-- Pilih Durasi --</option>
+                            {% for i in range(gunung.min_days, gunung.max_days + 1) %}
+                                {% if i == 1 %}
+                                    <option value="{{ i }}">{{ i }} Hari</option>
+                                {% else %}
+                                    <option value="{{ i }}">{{ i }} Hari {{ i - 1 }} Malam</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Pilih Aktivitas</label>
+                        <div style="display: flex; gap: 15px; margin-top: 10px;">
+                            <label style="margin: 0;">
+                                <input type="radio" name="aktivitas" value="tektok" onchange="updatePrice()"> Tektok
+                            </label>
+                            <label style="margin: 0;">
+                                <input type="radio" name="aktivitas" value="camp" onchange="updatePrice()"> Camp
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anggota -->
+                <div class="form-group">
+                    <label>Pilih Anggota Rombongan (Minimal 1 orang)</label>
+                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; max-height: 300px; overflow-y: auto;">
+                        {% if users_list %}
+                            {% for user in users_list %}
+                                <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                                    <input type="checkbox" name="anggota_ids" value="{{ user.user_id }}" onchange="updatePrice()">
+                                    {{ user.nama }}
+                                </label>
+                            {% endfor %}
+                        {% else %}
+                            <p style="color: #999;">Tidak ada pengguna lain yang tersedia.</p>
+                        {% endif %}
+                    </div>
+                    <small style="color: #666;">Pilih anggota dari list di atas. Setiap anggota akan dikenakan biaya tiket.</small>
+                </div>
+
+                <!-- Porter -->
+                <div class="form-group">
+                    <label>Sewa Porter (Opsional)</label>
+                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; max-height: 250px; overflow-y: auto;">
+                        {% if porter_list %}
+                            {% for porter in porter_list %}
+                                <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                                    <input type="checkbox" name="porter_id" value="{{ porter.porter_id }}" onchange="updatePrice()">
+                                    <strong>{{ porter.nama_porter }}</strong> - Rp {{ "{:,.0f}".format(porter.harga_per_hari) }}/hari
+                                </label>
+                            {% endfor %}
+                        {% else %}
+                            <p style="color: #999;">Porter tidak tersedia untuk gunung ini.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Equipment -->
+                <div class="form-group">
+                    <label>Sewa Peralatan Pendakian (Opsional)</label>
+                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; max-height: 300px; overflow-y: auto;">
+                        {% if alat_list %}
+                            {% for alat in alat_list %}
+                                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                                    <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                        <input type="checkbox" class="alat-checkbox" value="{{ alat.peralatan_id }}" onchange="updatePrice()">
+                                        <strong>{{ alat.nama_peralatan }}</strong> - Rp {{ "{:,.0f}".format(alat.harga_sewa) }}/hari
+                                    </label>
+                                    <div style="margin-left: 20px;">
+                                        <label>Jumlah: </label>
+                                        <input type="number" class="alat-qty" data-alat-id="{{ alat.peralatan_id }}" name="alat_id" value="0" min="0" max="{{ alat.stok }}" onchange="updatePrice()" style="width: 60px;">
+                                        <span style="color: #999;">(Stok: {{ alat.stok }})</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p style="color: #999;">Tidak ada peralatan tersedia untuk disewa.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px;">
+                    <button type="submit" class="btn primary" style="width: 100%; padding: 12px;">Lanjutkan Pemesanan</button>
+                    <a href="{{ url_for('user.user_dashboard') }}" class="btn secondary" style="width: 100%; padding: 12px; text-align: center;">Batal</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Price Summary -->
+        <div class="content-card" style="height: fit-content; position: sticky; top: 20px;">
+            <h3>Ringkasan Harga</h3>
+            <hr>
+            
+            <div style="margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Harga Tiket/Orang:</span>
+                    <span>Rp {{ "{:,.0f}".format(gunung.harga_tiket) }}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Jumlah Anggota:</span>
+                    <span id="jumlahAnggota">0 orang</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; border-top: 1px solid #ddd; padding-top: 8px;">
+                    <span>Subtotal Tiket:</span>
+                    <span id="subtotalTiket">Rp 0</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px; border-top: 1px solid #ddd; padding-top: 15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Porter (<span id="jumlahPorter">0</span>):</span>
+                    <span id="totalPorter">Rp 0</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px; border-top: 1px solid #ddd; padding-top: 15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Peralatan:</span>
+                    <span id="totalAlat">Rp 0</span>
+                </div>
+            </div>
+
+            <div style="background: #f0f8ff; padding: 15px; border-radius: 5px; text-align: center;">
+                <div style="color: #666; font-size: 12px; margin-bottom: 8px;">Total Pembayaran</div>
+                <div style="font-size: 24px; font-weight: bold; color: #007bff;">
+                    <span id="totalHarga">Rp 0</span>
+                </div>
+                <div style="color: #999; font-size: 12px; margin-top: 8px;">
+                    Durasi: <span id="durasiDisplay">-</span> hari
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- embed price data safely (avoid Jinja inside JS expressions) -->
+<div id="priceDataRaw" data-price='{{ price_data | tojson | safe }}' style="display:none"></div>
+<script>
+// Format currency
+function formatCurrency(value) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(value);
+}
+
+// priceData will be read from the hidden element to keep editor linters happy
+var priceData = {};
+
+// Update price calculation
+function updatePrice() {
+    const durasi = parseInt(document.getElementById('durasi').value) || 0;
+
+    // Count members
+    const anggotaCheckboxes = document.querySelectorAll('input[name="anggota_ids"]:checked');
+    const jumlahAnggota = anggotaCheckboxes.length;
+
+    // Calculate ticket price
+    const subtotalTiket = (priceData.hargaTiket || 0) * jumlahAnggota;
+    document.getElementById('jumlahAnggota').textContent = jumlahAnggota + ' orang';
+    document.getElementById('subtotalTiket').textContent = formatCurrency(subtotalTiket);
+
+    // Calculate porter price
+    const porterCheckboxes = document.querySelectorAll('input[name="porter_id"]:checked');
+    let totalPorter = 0;
+    porterCheckboxes.forEach(function(cb) {
+        const porterId = cb.value;
+        const pPrice = priceData.porters && priceData.porters[porterId] ? priceData.porters[porterId] : 0;
+        totalPorter += pPrice * durasi;
+    });
+    document.getElementById('jumlahPorter').textContent = porterCheckboxes.length;
+    document.getElementById('totalPorter').textContent = formatCurrency(totalPorter);
+
+    // Calculate equipment price
+    let totalAlat = 0;
+    document.querySelectorAll('.alat-qty').forEach(function(input) {
+        const alatId = input.dataset.alatId;
+        const qty = parseInt(input.value) || 0;
+        const aPrice = priceData.alats && priceData.alats[alatId] ? priceData.alats[alatId] : 0;
+        if (qty > 0) {
+            totalAlat += aPrice * qty * durasi;
+        }
+    });
+    document.getElementById('totalAlat').textContent = formatCurrency(totalAlat);
+
+    // Calculate total
+    const total = subtotalTiket + totalPorter + totalAlat;
+    document.getElementById('totalHarga').textContent = formatCurrency(total);
+    document.getElementById('durasiDisplay').textContent = durasi;
+
+    // Update hidden input for equipment
+    const equipmentData = [];
+    document.querySelectorAll('.alat-qty').forEach(function(input) {
+        const qty = parseInt(input.value) || 0;
+        if (qty > 0) {
+            equipmentData.push(input.dataset.alatId + '_' + qty);
+        }
+    });
+
+    // Create or update hidden equipment input
+    let equipmentInput = document.getElementById('equipmentInput');
+    if (!equipmentInput) {
+        equipmentInput = document.createElement('input');
+        equipmentInput.type = 'hidden';
+        equipmentInput.id = 'equipmentInput';
+        equipmentInput.name = 'alat_id';
+        document.getElementById('bookingForm').appendChild(equipmentInput);
+    }
+    equipmentInput.value = JSON.stringify(equipmentData);
+}
+
+// Initialize and set minimum date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const tanggal = document.getElementById('tanggal_pesan');
+    if (tanggal) tanggal.min = today;
+
+    // read price data from hidden element
+    try {
+        var raw = document.getElementById('priceDataRaw').getAttribute('data-price');
+        priceData = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+        priceData = {};
+        console.error('Invalid price data', e);
+    }
+
+    // attach event listeners to update price dynamically
+    document.querySelectorAll('#durasi, input[name="aktivitas"], input[name="anggota_ids"], input[name="porter_id"], .alat-qty').forEach(function(el){
+        el.addEventListener('change', updatePrice);
+    });
+
+    // initial price calc
+    updatePrice();
+});
+</script>
+
+<style>
+    .btn {
+        display: inline-block;
+        padding: 8px 15px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn.primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn.primary:hover {
+        background-color: #0056b3;
+    }
+    
+    .btn.secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn.secondary:hover {
+        background-color: #545b62;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-family: inherit;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+    
+    .content-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}

@@ -10,7 +10,7 @@
 
 <div class="content-card" style="max-width: 800px;">
     
-    <form action="{{ url_for('admin.edit_gunung', id=gunung.gunung_id) }}" method="post">
+    <form action="{{ url_for('admin.edit_gunung', id=gunung.gunung_id) }}" method="post" enctype="multipart/form-data">
         
         <div class="form-group">
             <label for="nama_gunung">Nama Gunung</label>
@@ -38,15 +38,23 @@
                 </select>
             </div>
              <div class="form-group">
-                <label for="kuota_harian">Kuota Harian</label>
-                <input type="number" id="kuota_harian" name="kuota_harian" class="form-control" value="{{ gunung.kuota_harian | default(100) }}" required>
+                <label for="harga_tiket">Harga Tiket</label>
+                <input type="number" id="harga_tiket" name="harga_tiket" class="form-control" value="{{ gunung.harga_tiket | default(0) }}" required>
             </div>
         </div>
 
-        <div class="form-group">
-            <label for="estimasi_waktu">Estimasi Waktu Pendakian</label>
-            <input type="text" id="estimasi_waktu" name="estimasi_waktu" class="form-control" value="{{ gunung.estimasi_waktu | default('') }}" placeholder="Contoh: 2 hari 1 malam">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label for="min_days">Durasi Minimum (hari)</label>
+                <input type="number" id="min_days" name="min_days" class="form-control" value="{{ gunung.min_days | default(1) }}" min="1" required>
+            </div>
+            <div class="form-group">
+                <label for="max_days">Durasi Maksimum (hari)</label>
+                <input type="number" id="max_days" name="max_days" class="form-control" value="{{ gunung.max_days | default(2) }}" min="1" required>
+            </div>
         </div>
+
+        <!-- Estimasi dan kuota sekarang dikelola pada level jalur pendakian -->
         
         <div class="form-group">
             <label for="deskripsi">Deskripsi Singkat</label>
@@ -56,6 +64,16 @@
         <div class="form-group">
             <label for="sejarah">Sejarah Singkat</label>
             <textarea id="sejarah" name="sejarah" class="form-control">{{ gunung.sejarah | default('', true) }}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="gambar">Gambar Gunung (ubah jika perlu)</label>
+            {% if gunung.gambar %}
+                <div style="margin-bottom:8px;">
+                    <img src="{{ url_for('static', filename='uploads/gunung/' ~ gunung.gambar) }}" alt="Gambar {{ gunung.nama_gunung }}" style="max-width:200px; display:block;" />
+                </div>
+            {% endif %}
+            <input type="file" id="gambar" name="gambar" accept="image/*" class="form-control">
         </div>
         
         <div class="button-group">

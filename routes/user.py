@@ -133,45 +133,203 @@ def delete_account():
     finally:
         cur.close()
 
-@user_bp.route('/pemesanan/tiket/<int:jalur_id>', methods=['GET'])
+@user_bp.route('/pemesanan/<int:gunung_id>', methods=['GET', 'POST'])
 @login_required
-def pemesanan_tiket(jalur_id):
+def pemesanan_tiket(gunung_id):
+    """Form pemesanan dengan anggota, durasi, aktivitas, porter, dan alat"""
+    user_id = session['user_id']
     mysql = current_app.mysql
     cur = mysql.connection.cursor()
     
     try:
+        # Get gunung details dengan konfigurasi durasi
         cur.execute("""
-            SELECT 
-                t.tiket_id, t.harga, t.kuota_harian, t.tanggal_berlaku,
-                j.jalur_id, j.nama_jalur, g.gunung_id, g.nama_gunung
-            FROM tiket t
-            JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id
-            JOIN gunung g ON j.gunung_id = g.gunung_id
-            WHERE t.jalur_id = %s
-            ORDER BY t.tanggal_berlaku DESC LIMIT 1
-        """, [jalur_id])
-        tiket_data = cur.fetchone()
+            SELECT gunung_id, nama_gunung, harga_tiket, min_days, max_days 
+            FROM gunung WHERE gunung_id = %s
+        """, [gunung_id])
+        gunung_data = cur.fetchone()
         
-        if not tiket_data:
-            flash("Tidak ada tiket yang tersedia untuk jalur ini.", "danger")
+        if not gunung_data:
+            flash("Gunung tidak ditemukan.", "danger")
             return redirect(url_for('user.user_dashboard'))
-
-        cur.execute("SELECT * FROM peralatan_sewa WHERE stok > 0 ORDER BY nama_peralatan")
-        peralatan_list = cur.fetchall()
         
-        cur.execute("SELECT * FROM porter WHERE gunung_id = %s AND status = 'tersedia'", [tiket_data['gunung_id']])
+        # Get users (anggota) yang terdaftar
+        cur.execute("""
+            SELECT user_id, nama FROM user WHERE role = 'user' ORDER BY nama
+        """)
+        users_list = cur.fetchall()
+        
+        # Get porter tersedia
+        cur.execute("""
+            SELECT porter_id, nama_porter, harga_per_hari FROM porter 
+            WHERE gunung_id = %s AND status = 'tersedia' ORDER BY nama_porter
+        """, [gunung_id])
         porter_list = cur.fetchall()
         
+        # Get alat sewa dengan stok
+        cur.execute("""
+            SELECT peralatan_id, nama_peralatan, harga_sewa, stok 
+            FROM peralatan_sewa WHERE stok > 0 ORDER BY nama_peralatan
+        """)
+        alat_list = cur.fetchall()
+        
+        # Allow optional jalur_id in querystring so front-end can deep-link from a specific jalur
+        selected_jalur_id = request.args.get('jalur_id', type=int)
+
+        if request.method == 'POST':
+            # Process booking
+            tanggal_pesan = request.form.get('tanggal_pesan')
+            durasi = request.form.get('durasi', 1, type=int)
+            aktivitas = request.form.get('aktivitas')  # 'tektok' atau 'camp'
+            anggota_ids = request.form.getlist('anggota_ids')
+            porter_ids = request.form.getlist('porter_id')
+            alat_data_str = request.form.get('alat_id', '[]')
+            
+            # Parse equipment data from JSON
+            import json
+            try:
+                alat_data = json.loads(alat_data_str) if alat_data_str != '[]' else []
+            except:
+                alat_data = []
+            
+            # Validation
+            if not tanggal_pesan or not aktivitas:
+                flash("Tanggal dan aktivitas harus dipilih.", "warning")
+                return redirect(url_for('user.pemesanan_tiket', gunung_id=gunung_id))
+            
+            # Use safe defaults if min/max not present
+            min_days = int(gunung_data.get('min_days') or 1)
+            max_days = int(gunung_data.get('max_days') or max(1, min_days))
+
+            if durasi < min_days or durasi > max_days:
+                flash(f"Durasi harus antara {min_days} - {max_days} hari.", "warning")
+                return redirect(url_for('user.pemesanan_tiket', gunung_id=gunung_id))
+            
+            if not anggota_ids:
+                flash("Minimal pilih 1 anggota.", "warning")
+                return redirect(url_for('user.pemesanan_tiket', gunung_id=gunung_id))
+            
+            try:
+                # Calculate pricing
+                jumlah_anggota = len(anggota_ids)
+                harga_tiket = float(gunung_data.get('harga_tiket') or 0) * jumlah_anggota
+                harga_porter = 0
+                harga_alat = 0
+                
+                # Calculate porter cost
+                for porter_id in porter_ids:
+                    cur.execute("SELECT harga_per_hari FROM porter WHERE porter_id = %s", [porter_id])
+                    porter = cur.fetchone()
+                    if porter:
+                        harga_porter += float(porter['harga_per_hari']) * durasi
+                
+                # Calculate equipment cost (use peralatan_sewa table)
+                for alat_str in alat_data:
+                    if '_' in str(alat_str):
+                        alat_id, jumlah = str(alat_str).split('_')
+                        jumlah = int(jumlah) if jumlah else 0
+                        if jumlah > 0:
+                            cur.execute("SELECT harga_sewa FROM peralatan_sewa WHERE peralatan_id = %s", [alat_id])
+                            alat = cur.fetchone()
+                            if alat:
+                                harga_alat += float(alat['harga_sewa']) * jumlah * durasi
+                
+                total_harga = harga_tiket + harga_porter + harga_alat
+                
+                # Insert pemesanan
+                cur.execute("""
+                    INSERT INTO pemesanan_tiket 
+                    (user_id, gunung_id, tanggal_pesan, durasi, aktivitas, jumlah_anggota, 
+                     harga_tiket, harga_porter, harga_alat, total_harga, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                """, (user_id, gunung_id, tanggal_pesan, durasi, aktivitas, jumlah_anggota,
+                      harga_tiket, harga_porter, harga_alat, total_harga))
+                mysql.connection.commit()
+                pemesanan_id = cur.lastrowid
+                
+                # Insert anggota
+                for anggota_id in anggota_ids:
+                    cur.execute("""
+                        SELECT user_id, nama FROM user WHERE user_id = %s
+                    """, [anggota_id])
+                    anggota = cur.fetchone()
+                    if anggota:
+                        cur.execute("""
+                            INSERT INTO pemesanan_anggota (pemesanan_id, user_id, nama)
+                            VALUES (%s, %s, %s)
+                        """, (pemesanan_id, anggota['user_id'], anggota['nama']))
+                
+                # Insert porter assignments
+                for porter_id in porter_ids:
+                    cur.execute("SELECT harga_per_hari FROM porter WHERE porter_id = %s", [porter_id])
+                    porter = cur.fetchone()
+                    if porter:
+                        cur.execute("""
+                            INSERT INTO pemesanan_porter (pemesanan_id, porter_id, jumlah, harga_per_hari)
+                            VALUES (%s, %s, 1, %s)
+                        """, (pemesanan_id, porter_id, porter['harga_per_hari']))
+                
+                # Insert equipment (use peralatan_sewa table)
+                for alat_str in alat_data:
+                    if '_' in str(alat_str):
+                        alat_id, jumlah = str(alat_str).split('_')
+                        jumlah = int(jumlah) if jumlah else 0
+                        if jumlah > 0:
+                            cur.execute("SELECT harga_sewa FROM peralatan_sewa WHERE peralatan_id = %s", [alat_id])
+                            alat = cur.fetchone()
+                            if alat:
+                                cur.execute("""
+                                    INSERT INTO pemesanan_alat (pemesanan_id, alat_id, jumlah, harga_satuan)
+                                    VALUES (%s, %s, %s, %s)
+                                """, (pemesanan_id, alat_id, jumlah, alat['harga_sewa']))
+                
+                mysql.connection.commit()
+                flash(f"Pemesanan berhasil dibuat! Total: Rp {total_harga:,.0f}", "success")
+                return redirect(url_for('user.user_dashboard'))
+                
+            except Exception as e:
+                mysql.connection.rollback()
+                flash(f"Error saat membuat pemesanan: {str(e)}", "danger")
+        
     except Exception as e:
-        flash(f"Error saat mengambil data pemesanan: {e}", "danger")
+        flash(f"Error saat mengambil data: {e}", "danger")
         return redirect(url_for('user.user_dashboard'))
     finally:
         cur.close()
     
+    # Build safe price_data for client-side JS. Ensure only JSON-serializable primitives.
+    try:
+        harga_tiket_val = float(gunung_data.get('harga_tiket') or 0)
+    except Exception:
+        harga_tiket_val = 0.0
+
+    porters_map = {}
+    for p in (porter_list or []):
+        try:
+            porters_map[str(p.get('porter_id'))] = float(p.get('harga_per_hari') or 0)
+        except Exception:
+            porters_map[str(p.get('porter_id'))] = 0.0
+
+    alats_map = {}
+    for a in (alat_list or []):
+        try:
+            alats_map[str(a.get('peralatan_id'))] = float(a.get('harga_sewa') or 0)
+        except Exception:
+            alats_map[str(a.get('peralatan_id'))] = 0.0
+
+    price_data = {
+        'hargaTiket': harga_tiket_val,
+        'porters': porters_map,
+        'alats': alats_map
+    }
+
     return render_template('user/pemesanan_tiket.html',
-                           tiket=tiket_data,
-                           peralatan_list=peralatan_list,
+                           gunung=gunung_data,
+                           users_list=users_list,
                            porter_list=porter_list,
+                           alat_list=alat_list,
+                           selected_jalur_id=selected_jalur_id,
+                           price_data=price_data,
                            active_page='home')
 
 @user_bp.route('/bantuan')

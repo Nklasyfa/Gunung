@@ -1,7 +1,42 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from werkzeug.utils import secure_filename
+import os
+import time
 from utils.decorators import admin_required
 
 admin_bp = Blueprint('admin', __name__)
+
+# allowed extensions for uploaded images
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def save_uploaded_file(file_storage, subfolder):
+    """Save uploaded file to static/uploads/<subfolder> and return the saved relative filename.
+    Returns None if no file was saved or file is not allowed.
+    """
+    if not file_storage:
+        return None
+    filename = file_storage.filename
+    if filename == '':
+        return None
+    if not allowed_file(filename):
+        return None
+
+    uploads_dir = os.path.join(current_app.root_path, 'static', 'uploads', subfolder)
+    os.makedirs(uploads_dir, exist_ok=True)
+    # make filename safer and unique
+    filename = secure_filename(filename)
+    name, ext = os.path.splitext(filename)
+    timestamp = int(time.time())
+    saved_name = f"{name}_{timestamp}{ext}"
+    save_path = os.path.join(uploads_dir, saved_name)
+    file_storage.save(save_path)
+    # return only the saved filename (we'll prefix uploads/<subfolder>/ in templates)
+    return saved_name
 
 @admin_bp.route('/')
 @admin_required
@@ -42,16 +77,27 @@ def tambah_gunung():
         status = request.form['status_pendakian']
         deskripsi = request.form['deskripsi']
         sejarah = request.form['sejarah']
-        estimasi_waktu = request.form['estimasi_waktu']
-        kuota_harian = request.form['kuota_harian']
+        # estimasi_waktu and kuota_harian moved to jalur_pendakian level
+        harga_tiket = request.form.get('harga_tiket', 0)
+        min_days = request.form.get('min_days', 1, type=int)
+        max_days = request.form.get('max_days', 2, type=int)
+        # handle file upload
+        gambar_file = request.files.get('gambar')
+        gambar_path = save_uploaded_file(gambar_file, 'gunung')
         
         mysql = current_app.mysql
         cur = mysql.connection.cursor()
         try:
-            cur.execute("""
-                INSERT INTO gunung (nama_gunung, lokasi, ketinggian, status_pendakian, deskripsi, sejarah, estimasi_waktu, kuota_harian) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, estimasi_waktu, kuota_harian))
+            if gambar_path:
+                cur.execute("""
+                    INSERT INTO gunung (nama_gunung, lokasi, ketinggian, status_pendakian, deskripsi, sejarah, harga_tiket, min_days, max_days, gambar) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days, gambar_path))
+            else:
+                cur.execute("""
+                    INSERT INTO gunung (nama_gunung, lokasi, ketinggian, status_pendakian, deskripsi, sejarah, harga_tiket, min_days, max_days) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days))
             mysql.connection.commit()
             flash(f'Gunung {nama_gunung} berhasil ditambahkan!', 'success')
             return redirect(url_for('admin.gunung'))
@@ -67,25 +113,39 @@ def tambah_gunung():
 @admin_required
 def edit_gunung(id):
     mysql = current_app.mysql
-    cur = mysql.connection.cursor()
-    
+
     if request.method == 'POST':
+        # use a dedicated cursor for POST handling
+        cur = mysql.connection.cursor()
         nama_gunung = request.form['nama_gunung']
         lokasi = request.form['lokasi']
         ketinggian = request.form['ketinggian']
         status = request.form['status_pendakian']
         deskripsi = request.form['deskripsi']
         sejarah = request.form['sejarah']
-        estimasi_waktu = request.form['estimasi_waktu']
-        kuota_harian = request.form['kuota_harian']
-        
+        # estimasi_waktu and kuota_harian moved to jalur_pendakian level
+        harga_tiket = request.form.get('harga_tiket', 0)
+        min_days = request.form.get('min_days', 1, type=int)
+        max_days = request.form.get('max_days', 2, type=int)
+        # handle file upload
+        gambar_file = request.files.get('gambar')
+        gambar_path = save_uploaded_file(gambar_file, 'gunung')
+
         try:
-            cur.execute("""
-                UPDATE gunung SET 
-                nama_gunung=%s, lokasi=%s, ketinggian=%s, status_pendakian=%s, 
-                deskripsi=%s, sejarah=%s, estimasi_waktu=%s, kuota_harian=%s
-                WHERE gunung_id=%s
-            """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, estimasi_waktu, kuota_harian, id))
+            if gambar_path:
+                cur.execute("""
+                    UPDATE gunung SET 
+                    nama_gunung=%s, lokasi=%s, ketinggian=%s, status_pendakian=%s, 
+                    deskripsi=%s, sejarah=%s, harga_tiket=%s, min_days=%s, max_days=%s, gambar=%s
+                    WHERE gunung_id=%s
+                """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days, gambar_path, id))
+            else:
+                cur.execute("""
+                    UPDATE gunung SET 
+                    nama_gunung=%s, lokasi=%s, ketinggian=%s, status_pendakian=%s, 
+                    deskripsi=%s, sejarah=%s, harga_tiket=%s, min_days=%s, max_days=%s
+                    WHERE gunung_id=%s
+                """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days, id))
             mysql.connection.commit()
             flash(f'Data Gunung {nama_gunung} berhasil diperbarui!', 'success')
             return redirect(url_for('admin.gunung'))
@@ -95,9 +155,11 @@ def edit_gunung(id):
         finally:
             cur.close()
 
-    cur.execute("SELECT * FROM gunung WHERE gunung_id = %s", [id])
-    gunung_data = cur.fetchone()
-    cur.close()
+    # GET: fetch gunung data with its own cursor
+    cur_get = mysql.connection.cursor()
+    cur_get.execute("SELECT * FROM gunung WHERE gunung_id = %s", [id])
+    gunung_data = cur_get.fetchone()
+    cur_get.close()
     
     if not gunung_data:
         flash('Data gunung tidak ditemukan.', 'danger')
@@ -126,6 +188,133 @@ def hapus_gunung(id):
         cur.close()
     
     return redirect(url_for('admin.gunung'))
+
+
+# === JALUR PENDAKIAN CRUD ===
+@admin_bp.route('/jalur')
+@admin_required
+def jalur():
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT j.*, g.nama_gunung FROM jalur_pendakian j
+        JOIN gunung g ON j.gunung_id = g.gunung_id
+        ORDER BY j.jalur_id DESC
+    """)
+    jalur_list = cur.fetchall()
+    cur.close()
+    return render_template('admin/jalur.html', jalur_list=jalur_list, active_page='jalur')
+
+
+@admin_bp.route('/jalur/tambah', methods=['GET', 'POST'])
+@admin_required
+def tambah_jalur():
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    if request.method == 'POST':
+        gunung_id = request.form['gunung_id']
+        nama_jalur = request.form['nama_jalur']
+        deskripsi = request.form.get('deskripsi', '')
+        estimasi = request.form.get('estimasi', '')
+        kuota_harian = request.form.get('kuota_harian') or 0
+        tingkat_kesulitan = request.form.get('tingkat_kesulitan', 'sedang')
+        # tersedia expected as '1' or '0' from form
+        tersedia = int(request.form.get('tersedia', '1'))
+        gambar_file = request.files.get('gambar_jalur')
+        gambar_path = save_uploaded_file(gambar_file, 'jalur')
+
+        try:
+            if gambar_path:
+                cur.execute("""
+                    INSERT INTO jalur_pendakian (gunung_id, nama_jalur, deskripsi, estimasi, gambar_jalur, tingkat_kesulitan, tersedia, kuota_harian)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (gunung_id, nama_jalur, deskripsi, estimasi, gambar_path, tingkat_kesulitan, tersedia, kuota_harian))
+            else:
+                cur.execute("""
+                    INSERT INTO jalur_pendakian (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian))
+            mysql.connection.commit()
+            flash(f'Jalur {nama_jalur} berhasil ditambahkan!', 'success')
+            return redirect(url_for('admin.jalur'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Gagal menambah jalur: {str(e)}', 'danger')
+        finally:
+            cur.close()
+
+    # GET -> show form
+    cur.execute("SELECT gunung_id, nama_gunung FROM gunung ORDER BY nama_gunung")
+    gunung_list = cur.fetchall()
+    cur.close()
+    return render_template('admin/tambah_jalur.html', gunung_list=gunung_list, active_page='jalur')
+
+
+@admin_bp.route('/jalur/edit/<int:id>', methods=['GET', 'POST'])
+@admin_required
+def edit_jalur(id):
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    if request.method == 'POST':
+        gunung_id = request.form['gunung_id']
+        nama_jalur = request.form['nama_jalur']
+        deskripsi = request.form.get('deskripsi', '')
+        estimasi = request.form.get('estimasi', '')
+        kuota_harian = request.form.get('kuota_harian') or 0
+        tingkat_kesulitan = request.form.get('tingkat_kesulitan', 'sedang')
+        tersedia = int(request.form.get('tersedia', '1'))
+        gambar_file = request.files.get('gambar_jalur')
+        gambar_path = save_uploaded_file(gambar_file, 'jalur')
+
+        try:
+            if gambar_path:
+                cur.execute("""
+                    UPDATE jalur_pendakian SET gunung_id=%s, nama_jalur=%s, deskripsi=%s, estimasi=%s, gambar_jalur=%s, tingkat_kesulitan=%s, tersedia=%s, kuota_harian=%s
+                    WHERE jalur_id=%s
+                """, (gunung_id, nama_jalur, deskripsi, estimasi, gambar_path, tingkat_kesulitan, tersedia, kuota_harian, id))
+            else:
+                cur.execute("""
+                    UPDATE jalur_pendakian SET gunung_id=%s, nama_jalur=%s, deskripsi=%s, estimasi=%s, tingkat_kesulitan=%s, tersedia=%s, kuota_harian=%s
+                    WHERE jalur_id=%s
+                """, (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian, id))
+            mysql.connection.commit()
+            flash(f'Jalur {nama_jalur} berhasil diperbarui!', 'success')
+            return redirect(url_for('admin.jalur'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Gagal memperbarui jalur: {str(e)}', 'danger')
+        finally:
+            cur.close()
+
+    cur.execute("SELECT * FROM jalur_pendakian WHERE jalur_id = %s", [id])
+    jalur_data = cur.fetchone()
+    if not jalur_data:
+        cur.close()
+        flash('Jalur tidak ditemukan.', 'danger')
+        return redirect(url_for('admin.jalur'))
+
+    cur.execute("SELECT gunung_id, nama_gunung FROM gunung ORDER BY nama_gunung")
+    gunung_list = cur.fetchall()
+    cur.close()
+    return render_template('admin/edit_jalur.html', jalur=jalur_data, gunung_list=gunung_list, active_page='jalur')
+
+
+@admin_bp.route('/jalur/hapus/<int:id>', methods=['POST'])
+@admin_required
+def hapus_jalur(id):
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM jalur_pendakian WHERE jalur_id = %s", [id])
+        mysql.connection.commit()
+        flash('Jalur berhasil dihapus.', 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Gagal menghapus jalur: {str(e)}', 'danger')
+    finally:
+        cur.close()
+
+    return redirect(url_for('admin.jalur'))
 
 # === PORTER CRUD ===
 @admin_bp.route('/porter')

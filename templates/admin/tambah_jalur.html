@@ -1,0 +1,72 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Tambah Jalur{% endblock %}
+
+{% block content %}
+<header>
+    <h1>Tambah Jalur Pendakian</h1>
+    <p>Tambahkan jalur baru untuk gunung yang dipilih.</p>
+</header>
+
+<div class="content-card" style="max-width:800px;">
+    <form action="{{ url_for('admin.tambah_jalur') }}" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="gunung_id">Pilih Gunung</label>
+            <select id="gunung_id" name="gunung_id" class="form-control" required>
+                {% for g in gunung_list %}
+                    <option value="{{ g.gunung_id }}">{{ g.nama_gunung }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="nama_jalur">Nama Jalur</label>
+            <input type="text" id="nama_jalur" name="nama_jalur" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="deskripsi">Deskripsi Jalur</label>
+            <textarea id="deskripsi" name="deskripsi" class="form-control"></textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-group">
+                <label for="estimasi">Estimasi Waktu</label>
+                <input type="text" id="estimasi" name="estimasi" class="form-control" placeholder="Contoh: 8 jam">
+            </div>
+            <div class="form-group">
+                <label for="tingkat_kesulitan">Tingkat Kesulitan</label>
+                <select id="tingkat_kesulitan" name="tingkat_kesulitan" class="form-control">
+                    <option value="mudah">Mudah</option>
+                    <option value="sedang" selected>Sedang</option>
+                    <option value="sulit">Sulit</option>
+                </select>
+            </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr; gap:12px; margin-top:8px;">
+            <div class="form-group">
+                <label for="kuota_harian">Kuota Harian Jalur (opsional)</label>
+                <input type="number" id="kuota_harian" name="kuota_harian" class="form-control" placeholder="Contoh: 200">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="tersedia">Ketersediaan Jalur</label>
+            <select id="tersedia" name="tersedia" class="form-control">
+                <option value="1" selected>Tersedia</option>
+                <option value="0">Tidak Tersedia</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="gambar_jalur">Unggah Gambar Jalur (opsional)</label>
+            <input type="file" id="gambar_jalur" name="gambar_jalur" accept="image/*" class="form-control">
+        </div>
+
+        <div class="button-group">
+            <button class="btn primary" type="submit">Simpan</button>
+            <a class="btn secondary" href="{{ url_for('admin.jalur') }}">Batal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

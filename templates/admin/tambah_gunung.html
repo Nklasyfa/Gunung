@@ -10,7 +10,7 @@
 
 <div class="content-card" style="max-width: 800px;">
     
-    <form action="{{ url_for('admin.tambah_gunung') }}" method="post">
+    <form action="{{ url_for('admin.tambah_gunung') }}" method="post" enctype="multipart/form-data">
         
         <div class="form-group">
             <label for="nama_gunung">Nama Gunung</label>
@@ -37,16 +37,18 @@
                     <option value="Ditutup Sebagian">Ditutup Sebagian</option>
                 </select>
             </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div class="form-group">
-                <label for="kuota_harian">Kuota Harian</label>
-                <input type="number" id="kuota_harian" name="kuota_harian" class="form-control" placeholder="Contoh: 200" required>
+                <label for="harga_tiket">Harga Tiket (Rp)</label>
+                <input type="number" id="harga_tiket" name="harga_tiket" class="form-control" placeholder="Contoh: 150000" required>
+            </div>
+            <div class="form-group">
+                <label for="min_days">Durasi Minimum (hari)</label>
+                <input type="number" id="min_days" name="min_days" class="form-control" value="1" min="1" required>
             </div>
         </div>
 
-        <div class="form-group">
-            <label for="estimasi_waktu">Estimasi Waktu Pendakian</label>
-            <input type="text" id="estimasi_waktu" name="estimasi_waktu" class="form-control" placeholder="Contoh: 2 hari 1 malam">
-        </div>
+        <!-- Estimasi dan kuota sekarang dikelola pada level jalur pendakian -->
         
         <div class="form-group">
             <label for="deskripsi">Deskripsi Singkat</label>
@@ -56,6 +58,11 @@
         <div class="form-group">
             <label for="sejarah">Sejarah Singkat</label>
             <textarea id="sejarah" name="sejarah" class="form-control" placeholder="Sejarah singkat gunung..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="gambar">Unggah Gambar Gunung (opsional)</label>
+            <input type="file" id="gambar" name="gambar" accept="image/*" class="form-control">
         </div>
         
         <div class="button-group">

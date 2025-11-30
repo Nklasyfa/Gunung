@@ -1,8 +1,15 @@
 import os 
-from flask import Flask, get_flashed_messages, render_template, request, redirect, url_for, session, flash
+from flask import Flask, get_flashed_messages, render_template, request, redirect, url_for, session, flash, g
 from flask_mysqldb import MySQL
 from config import Config
 from functools import wraps # Penting untuk decorator
+import requests
+from flask import jsonify
+from dotenv import load_dotenv
+import MySQLdb
+import MySQLdb.cursors
+from flask_babel import Babel, lazy_gettext as _
+from datetime import timedelta
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_FOLDER = os.path.join(APP_ROOT, 'static')
@@ -771,6 +778,179 @@ def hapus_peralatan(id):
         cur.close()
     
     return redirect(url_for('peralatan'))
+
+# Load API key dari .env
+load_dotenv()
+WEATHER_KEY = os.getenv("OPENWEATHER_KEY")
+
+# Fungsi ambil cuaca berdasarkan nama gunung
+def get_weather_by_coord(lat, lon, lang):
+    url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "lat": lat,
+        "lon": lon,
+        "appid": WEATHER_KEY,
+        "units": "metric",
+        "lang": lang
+    }
+    try:
+        r = requests.get(url, params=params, timeout=10)
+        if r.status_code == 200:
+            d = r.json()
+            return {
+                "suhu": d["main"]["temp"],
+                "kondisi": d["weather"][0]["description"].title(),
+                "angin": d["wind"]["speed"],
+                "kelembapan": d["main"]["humidity"],
+                "error": False
+            }
+    except Exception as e:
+        return {"error": True, "msg": str(e)}
+
+    return {"error": True, "msg": "Gagal ambil data cuaca"}
+
+def get_coord_from_name(nama):
+    """Cari koordinat berdasarkan nama gunung jika lat/lon belum ada di DB"""
+    url = "http://api.openweathermap.org/geo/1.0/direct"
+    params = {
+        "q": nama,
+        "limit": 1,
+        "appid": WEATHER_KEY
+    }
+    try:
+        r = requests.get(url, params=params, timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            if data:
+                return data[0]["lat"], data[0]["lon"]
+    except:
+        pass
+    return None, None
+
+
+# 1. API Cuaca Gunung berdasarkan ID Database
+@app.route("/api/cuaca/gunung/<int:id>")
+@login_required
+def api_weather_gunung(id):
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("SELECT nama_gunung, lat, lon FROM gunung WHERE gunung_id = %s", [id])
+    g = cur.fetchone()
+    cur.close()
+
+    if not g:
+        return jsonify({"error": True, "msg": "Gunung tidak ditemukan"})
+
+    lang = session.get("lang", "id")
+
+    # Jika koordinat ada di DB pakai itu
+    if g["lat"] and g["lon"]:
+        cuaca = get_weather_by_coord(g["lat"], g["lon"], lang)
+        return jsonify(cuaca)
+
+    # Jika koordinat kosong → cari dulu dari Geocoding API
+    geo_url = "https://api.openweathermap.org/geo/1.0/direct"
+    params = {"q": g["nama_gunung"], "limit": 1, "appid": WEATHER_KEY}
+
+    try:
+        r = requests.get(geo_url, params=params, timeout=10)
+        if r.status_code == 200 and r.json():
+            lat = r.json()[0]["lat"]
+            lon = r.json()[0]["lon"]
+
+            # Simpan ke DB biar request berikutnya tidak error
+            cur2 = mysql.connection.cursor()
+            cur2.execute("UPDATE gunung SET lat=%s, lon=%s WHERE gunung_id=%s", (lat, lon, id))
+            mysql.connection.commit()
+            cur2.close()
+
+            cuaca = get_weather_by_coord(lat, lon, lang)
+            return jsonify(cuaca)
+        return jsonify({"error": True, "msg": "Koordinat tidak ditemukan"})
+    except Exception as e:
+        return jsonify({"error": True, "msg": str(e)})
+
+# 2. Ubah Bahasa #########
+
+# ... (Inisialisasi app dan fitur lain seperti login_manager, dll.) ...
+
+# DAFTAR BAHASA YANG DIDUKUNG
+SUPPORTED_LANGS = ['id', 'en', 'ar', 'zh']
+app.config['BABEL_DEFAULT_LOCALE'] = 'id'
+
+
+# 1. Fungsi Penentu Bahasa (Locale Selector)
+def get_locale():
+    """Mengambil bahasa aktif dari session atau browser."""
+    if 'lang' in session and session['lang'] in SUPPORTED_LANGS:
+        return session['lang']
+    return request.accept_languages.best_match(SUPPORTED_LANGS)
+
+# 2. Inisialisasi Babel
+babel = Babel(app, locale_selector=get_locale)
+
+# ... (Lanjutkan dengan kode koneksi database atau setup lainnya) ...
+# 3. Middleware Penentu Arah Teks (RTL/LTR)
+@app.before_request
+def before_request():
+    """Menetapkan kode bahasa dan arah teks (dir) sebelum setiap permintaan."""
+    lang_code = get_locale()
+    
+    # Simpan kode bahasa di g (global context)
+    g.lang_code = lang_code
+    
+    # Menentukan arah: 'rtl' (Right-to-Left) hanya untuk Arab, lainnya 'ltr'
+    g.dir = 'rtl' if lang_code == 'ar' else 'ltr'
+    
+    # Pastikan session juga menyimpan kode bahasa
+    if 'lang' not in session or session['lang'] != lang_code:
+        session['lang'] = lang_code
+
+
+# 4. Route Pengubah Bahasa (Ini kode kamu yang dimodifikasi)
+# @login_required hanya contoh, hilangkan jika tidak menggunakan Flask-Login
+@app.route("/ubah-bahasa/<lang>")
+# @login_required 
+def ubah_bahasa(lang):
+    if lang in SUPPORTED_LANGS:
+        session['lang'] = lang
+    # Redirect ke halaman sebelumnya, yang akan otomatis memuat ulang dengan bahasa baru
+    return redirect(request.referrer or url_for('user_dashboard'))
+
+# 3. Endpoint untuk Dark Mode (tidak simpan di DB, hanya sebagai API trigger)################
+@app.route("/dark-mode-toggle")
+@login_required
+def dark_mode_toggle():
+    return jsonify({"status": "Dark mode dikontrol frontend lewat JS localStorage"})
+
+# 4. Halaman Pusat Bantuan
+@app.route("/bantuan")
+@login_required
+def bantuan():
+    return render_template("user/bantuan.html", active_page="bantuan")
+
+# 5. API Pusat Bantuan (JSON)
+@app.route("/api/bantuan")
+@login_required
+def api_bantuan():
+    return jsonify({
+        "app": "Projek Informasi Gunung",
+        "fitur": [
+            "Lihat detail gunung",
+            "Pesan tiket",
+            "Sewa peralatan",
+            "Sewa porter",
+            "Lihat cuaca gunung",
+            "Mode gelap",
+            "Ganti bahasa",
+            "Support center"
+        ],
+        "kontak": "Silakan gunakan menu Pusat Bantuan di aplikasi",
+        "faq": [
+            {"q": "Kenapa tiket tidak bisa di klik?", "a": "Status gunung masih ditutup atau kuota habis"},
+            {"q": "Kenapa cuaca tidak muncul?", "a": "API Key belum aktif atau nama gunung tidak terdaftar di OpenWeather"},
+            {"q": "Bisa refund tiket?", "a": "Bisa, silakan hubungi admin melalui Pusat Bantuan"}
+        ]
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,92 +1,257 @@
 {% extends "base.html" %}
 
-{% block title %}{{ gunung.nama_gunung | default('Gunung Tidak Diketahui') }}{% endblock %}
+{% block title %}{{ gunung.nama_gunung | default('Detail Gunung') }}{% endblock %}
+
 {% block content_area_class %}content-area-bg{% endblock %}
 
 {% block content %}
 
-<div class="detail-header">
-    <h1>{{ gunung.nama_gunung | default('Gunung Tidak Diketahui') }}</h1>
-    <p><i class="fas fa-map-marker-alt"></i> {{ gunung.lokasi | default('Lokasi tidak tersedia') }}</p>
-</div>
+<div id="mainDetailContainer" class="dashboard-container">
 
-<div class="detail-grid">
-
-    <div class="detail-info-card">
-
-        {% if gunung.gambar %}
-            <img src="{{ url_for('static', filename=gunung.gambar) }}" alt="{{ gunung.nama_gunung }}" style="width:100%; max-height:400px; object-fit:cover; margin-bottom:15px;">
-        {% else %}
-            <img src="{{ url_for('static', filename='default.jpg') }}" alt="No Image" style="width:100%; max-height:400px; object-fit:cover; margin-bottom:15px;">
-        {% endif %}
-
-        <div class="detail-stats">
-            <div class="stat-item">
-                <h4>Status</h4>
-                {% if gunung.status_pendakian == 'Dibuka' %}
-                    <p class="dibuka">{{ gunung.status_pendakian | upper }}</p>
-                {% elif gunung.status_pendakian == 'Ditutup' %}
-                    <p class="ditutup">{{ gunung.status_pendakian | upper }}</p>
-                {% else %}
-                    <p class="lainnya">{{ gunung.status_pendakian | upper | default('Tidak diketahui') }}</p>
-                {% endif %}
-            </div>
-            <div class="stat-item">
-                <h4>Ketinggian</h4>
-                {% if gunung.ketinggian %}
-                    <p>{{ "{:,.0f}".format(gunung.ketinggian) }} MDPL</p>
-                {% else %}
-                    <p>Ketinggian tidak tersedia</p>
-                {% endif %}
-            </div>
-            <div class="stat-item">
-                <h4>Estimasi</h4>
-                <p>{{ gunung.estimasi_waktu | default('Tidak tersedia') }}</p>
-            </div>
-        </div>
-
-        <h3>Deskripsi Gunung</h3>
-        <p style="white-space: pre-wrap;">{{ gunung.deskripsi | default('Belum ada deskripsi.', true) }}</p>
-
-        <h3 style="margin-top: 25px;">Sejarah Singkat</h3>
-        <p style="white-space: pre-wrap;">{{ gunung.sejarah | default('Belum ada info sejarah.', true) }}</p>
-
+    <div class="detail-header">
+        <h1>{{ gunung.nama_gunung | default('Gunung Tidak Diketahui') }}</h1>
+        <p><i class="fas fa-map-marker-alt"></i> {{ gunung.lokasi | default('Lokasi tidak tersedia') }}</p>
     </div>
 
-    <div class="booking-card">
-        <div class="detail-info-card">
-            <h3>Jalur Pendakian</h3>
-            {% if jalur_list %}
-                {% for jalur in jalur_list %}
-                    <div class="jalur-item" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
-                        <h4>{{ jalur.nama_jalur }}</h4>
-                        <p style="white-space: pre-wrap;">{{ jalur.deskripsi | default('Belum ada deskripsi jalur.', true) }}</p>
-                        <h5>Tiket Tersedia:</h5>
-                        {% set tiket_for_jalur = tiket_list | selectattr('nama_jalur', 'equalto', jalur.nama_jalur) | list %}
-                        {% if tiket_for_jalur %}
-                            {% for tiket in tiket_for_jalur %}
-                                <div class="tiket-info" style="background: #f9f9f9; padding: 10px; margin: 5px 0; border-radius: 3px;">
-                                    <p><strong>Harga:</strong> Rp {{ "{:,.0f}".format(tiket.harga) }}</p>
-                                    <p><strong>Kuota Harian:</strong> {{ tiket.kuota_harian }}</p>
-                                    <p><strong>Berlaku hingga:</strong> {{ tiket.tanggal_berlaku.strftime('%d-%m-%Y') if tiket.tanggal_berlaku else 'Tidak ditentukan' }}</p>
-                                    <a href="{{ url_for('pemesanan_tiket', jalur_id=jalur.jalur_id) }}" class="btn primary" {% if gunung.status_pendakian != 'Dibuka' %}style="pointer-events: none; opacity: 0.5;"{% endif %}>
-                                        {% if gunung.status_pendakian == 'Dibuka' %}
-                                            Pesan Tiket
-                                        {% else %}
-                                            Tidak Tersedia
-                                        {% endif %}
-                                    </a>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <p>Tidak ada tiket tersedia untuk jalur ini.</p>
-                        {% endif %}
-                    </div>
-                {% endfor %}
+    <button onclick="history.back()" class="btn primary" style="margin:10px 0 20px 0; width: auto; padding: 10px 20px; display: inline-flex; align-items: center; gap: 5px;">
+        <i class="fas fa-arrow-left"></i> Go Back
+    </button>
+
+    <div class="detail-info-card weather-box" style="margin-bottom:25px;">
+        <h3><i class="fas fa-cloud-sun"></i> Cuaca Gunung Saat Ini</h3>
+        <div id="weatherBox">⏳ Memuat cuaca...</div>
+    </div>
+
+    <div class="detail-grid-original">
+        
+        <div class="detail-info-card main-card">
+
+            {% if gunung.gambar %}
+                <img src="{{ url_for('static', filename='uploads/' ~ gunung.gambar) }}" alt="{{ gunung.nama_gunung }}" style="width:100%; max-height:400px; object-fit:cover; margin-bottom:15px; border-radius: 8px;">
             {% else %}
-                <p>Belum ada jalur pendakian yang tersedia.</p>
+                <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="No Image" style="width:100%; max-height:400px; object-fit:cover; margin-bottom:15px; border-radius: 8px;">
             {% endif %}
+
+            <div class="detail-stats">
+                <div class="stat-item">
+                    <h4>Status</h4>
+                    {% if gunung.status_pendakian == 'Dibuka' %}
+                        <p class="dibuka">{{ gunung.status_pendakian | upper }}</p>
+                    {% elif gunung.status_pendakian == 'Ditutup' %}
+                        <p class="ditutup">{{ gunung.status_pendakian | upper }}</p>
+                    {% else %}
+                        <p class="lainnya">{{ gunung.status_pendakian | upper | default('Tidak diketahui') }}</p>
+                    {% endif %}
+                </div>
+                <div class="stat-item">
+                    <h4>Ketinggian</h4>
+                    <p>{{ "{:,.0f}".format(gunung.ketinggian) if gunung.ketinggian else 'N/A' }} MDPL</p>
+                </div>
+                <div class="stat-item">
+                    <h4>Estimasi</h4>
+                    <p>{{ gunung.estimasi_waktu | default('Tidak tersedia') }}</p>
+                </div>
+            </div>
+
+            <h3>Deskripsi Gunung</h3>
+            <p style="white-space: pre-wrap;">{{ gunung.deskripsi | default('Belum ada deskripsi.', true) }}</p>
+
+            <h3 style="margin-top: 25px;">Sejarah Singkat</h3>
+            <p style="white-space: pre-wrap;">{{ gunung.sejarah | default('Belum ada info sejarah.', true) }}</p>
+
         </div>
+
+        <div class="booking-card">
+            <div class="detail-info-card side-card">
+                <h3>Jalur Pendakian</h3>
+                {% if jalur_list %}
+                    {% for jalur in jalur_list %}
+                        <div class="jalur-item">
+                            <h4>{{ jalur.nama_jalur }}</h4>
+                            <p style="white-space: pre-wrap;">{{ jalur.deskripsi | default('Belum ada deskripsi jalur.', true) }}</p>
+
+                            <h5>Tiket Tersedia:</h5>
+                            {% set tiket_for_jalur = tiket_list | selectattr('nama_jalur', 'equalto', jalur.nama_jalur) | list %}
+
+                            {% if tiket_for_jalur %}
+                                {% for tiket in tiket_for_jalur %}
+                                    <div class="tiket-info">
+                                        <p><strong>Harga:</strong> Rp {{ "{:,.0f}".format(tiket.harga) }}</p>
+                                        <p><strong>Kuota:</strong> {{ tiket.kuota_harian }}</p>
+                                        <p><strong>Valid:</strong> {{ tiket.tanggal_berlaku.strftime('%d-%m-%Y') if tiket.tanggal_berlaku else 'Seterusnya' }}</p>
+
+                                        <a href="{{ url_for('pemesanan_tiket', jalur_id=jalur.jalur_id) }}" class="btn primary"
+                                           {% if gunung.status_pendakian != 'Dibuka' %}
+                                               style="pointer-events: none; opacity: 0.5;"
+                                           {% endif %}>
+                                            {{ 'Pesan Tiket' if gunung.status_pendakian == 'Dibuka' else 'Tidak Tersedia' }}
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p>❌ Tidak ada tiket.</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>Belum ada jalur pendakian.</p>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 </div>
+
+<script>
+    // 1. Simpan URL Gambar dari Python ke Variabel Javascript
+    // (Ini trik agar path-nya absolut dan tidak bingung folder)
+    const bgSiang = "{{ url_for('static', filename='images/kunung.jpg') }}";
+    const bgMalam = "{{ url_for('static', filename='images/ganung.jpg') }}";
+
+    // 2. Fungsi Terapkan Background Langsung ke Body
+    function applyBackground() {
+        const body = document.body;
+        const isDark = localStorage.getItem('darkMode') === 'true';
+
+        if (isDark) {
+            body.classList.add('dark-mode');
+            // PAKSA Ganti Gambar via CSS Inline Javascript
+            body.style.backgroundImage = `url('${bgMalam}')`;
+            body.style.backgroundColor = "#121212";
+        } else {
+            body.classList.remove('dark-mode');
+            // PAKSA Ganti Gambar via CSS Inline Javascript
+            body.style.backgroundImage = `url('${bgSiang}')`;
+            body.style.backgroundColor = "#ECE9F7";
+        }
+        
+        // Pastikan settingan background benar
+        body.style.backgroundSize = "cover";
+        body.style.backgroundPosition = "center";
+        body.style.backgroundAttachment = "fixed";
+        body.style.backgroundRepeat = "no-repeat";
+    }
+
+    // Jalankan segera
+    applyBackground();
+
+    // 3. Load Cuaca (Fitur Tambahan)
+    async function loadWeather() {
+        try {
+            const res = await fetch(`/api/cuaca/gunung/{{ gunung.gunung_id }}`);
+            const data = await res.json();
+            if (data.error) throw new Error();
+            document.getElementById("weatherBox").innerHTML = `
+                <div class="detail-stats">
+                    <div class="stat-item"><h4>Suhu</h4><p>${data.suhu}°C</p></div>
+                    <div class="stat-item"><h4>Kondisi</h4><p>${data.kondisi}</p></div>
+                    <div class="stat-item"><h4>Angin</h4><p>${data.angin} m/s</p></div>
+                </div>`;
+        } catch (err) {
+            document.getElementById("weatherBox").innerHTML = `<p style="color:red;">Info Cuaca Offline</p>`;
+        }
+    }
+    loadWeather();
+</script>
+
+<style>
+/* =========================================
+   FORCE OVERRIDE CSS (JURUS SAKTI)
+   ========================================= */
+
+/* 1. Pastikan Body Transparan agar gambar dari JS terlihat */
+html {
+    background: transparent !important;
+}
+
+/* 2. Pastikan Container Utama BENAR-BENAR Transparan */
+/* Kita tembak semua kemungkinan nama class */
+.dashboard-container, 
+#mainDetailContainer,
+.detail-grid-original,
+.main-wrapper,
+.content-area {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* 3. Style Kartu Original (Agar Cantik & Transparan) */
+.detail-info-card, 
+.booking-card,
+.weather-box,
+.main-card,
+.side-card {
+    /* Gunakan background transparan (Glass Effect) */
+    background: rgba(255, 255, 255, 0.9) !important;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+}
+
+/* 4. Mode Gelap untuk Kartu */
+body.dark-mode .detail-info-card, 
+body.dark-mode .booking-card,
+body.dark-mode .weather-box {
+    background: rgba(30, 30, 30, 0.9) !important; /* Hitam Transparan */
+    color: #e0e0e0 !important;
+    border: 1px solid #555 !important;
+}
+
+/* 5. Perbaikan Teks di Mode Gelap */
+body.dark-mode h1, 
+body.dark-mode h2, 
+body.dark-mode h3, 
+body.dark-mode h4, 
+body.dark-mode h5,
+body.dark-mode p {
+    color: #f0f0f0 !important;
+}
+
+/* Judul header shadow */
+.detail-header h1 { text-shadow: 0 1px 3px rgba(255,255,255,0.8); }
+body.dark-mode .detail-header h1 { text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+/* Item Tiket */
+.tiket-info {
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #7A39E0;
+    margin-bottom: 10px;
+}
+
+body.dark-mode .tiket-info {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    border: 1px solid #555;
+    border-left: 4px solid #A27EDD;
+}
+
+/* Tombol */
+.btn.primary {
+    background-color: #7A39E0;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+.btn.primary:hover { background-color: #5a2aad; }
+
+/* Statistik Box */
+.stat-item { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px; }
+body.dark-mode .stat-item { background: rgba(255,255,255,0.15) !important; }
+
+/* Status Warna */
+.dibuka { color: #28a745 !important; font-weight: bold; }
+.ditutup { color: #dc3545 !important; font-weight: bold; }
+
+</style>
+
 {% endblock %}

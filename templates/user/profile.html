@@ -2,56 +2,201 @@
 
 {% block title %}Akun Saya{% endblock %}
 
-{% block content %}
-<div class="profile-wrapper">
+{% block content_area_class %}content-area-bg{% endblock %}
 
-    <div class="profile-card">
-        
-        <div class="profile-pic-container">
-            <div class="profile-pic">
-                <i class="fas fa-user"></i>
-            </div>
-            <a href="{{ url_for('edit_profile') }}" class="btn secondary">Ubah Profil</a>
-        </div>
-        
-        <div class="profile-details">
-            <h2>Profil Akun Saya</h2>
-            <p style="margin-top: -20px; margin-bottom: 20px; font-size: 15px; color: #555;">Lihat dan kelola data pribadi Anda.</p>
+{% block content %}
+
+<div class="dashboard-container">
+
+    <div class="dashboard-controls" style="display:flex; margin-bottom:20px; justify-content:flex-end;">
+        <button onclick="history.back()" class="btn-dashboard btn-bantuan" style="background-color: #6c757d;">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </button>
+    </div>
+
+    <div class="profile-wrapper">
+        <div class="profile-card">
             
-            <table class="profile-table">
-                <tr>
-                    <td><i class="fas fa-id-card" style="width: 20px; margin-right: 5px;"></i> ID Pengguna</td>
-                    <td>: <strong>{{ user.user_id }}</strong></td>
-                </tr>
-                <tr>
-                    <td><i class="fas fa-user" style="width: 20px; margin-right: 5px;"></i> Nama</td>
-                    <td>: {{ user.nama }}</td>
-                </tr>
-                <tr>
-                    <td><i class="fas fa-envelope" style="width: 20px; margin-right: 5px;"></i> Email</td>
-                    <td>: {{ user.email }}</td>
-                </tr>
-                <tr>
-                    <td><i class="fas fa-phone" style="width: 20px; margin-right: 5px;"></i> No. HP</td>
-                    <td>: {{ user.no_hp }}</td>
-                </tr>
-                <tr>
-                    <td><i class="fas fa-home" style="width: 20px; margin-right: 5px;"></i> Alamat</td>
-                    <td>: {{ user.alamat }}</td>
-                </tr>
-                <tr>
-                    <td><i class="fas fa-tag" style="width: 20px; margin-right: 5px;"></i> Role</td>
-                    <td>: <strong style="text-transform: capitalize;">{{ user.role }}</strong></td>
-                </tr>
-            </table>
-            
-            <div class="button-group">
-                <form action="{{ url_for('delete_account') }}" method="POST" onsubmit="return confirm('❗ PERINGATAN: Apakah Anda YAKIN ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan.');" style="display:inline-block; margin:0;">
-                    <button type="submit" class="btn danger">Hapus Akun</button>
-                </form>
+            <div class="profile-pic-container">
+                <div class="profile-pic">
+                    <i class="fas fa-user"></i>
+                </div>
+                <a href="{{ url_for('edit_profile') }}" class="btn-detail" style="margin-top:15px;">Ubah Profil</a>
             </div>
+            
+            <div class="profile-details">
+                <h2 class="profile-title">Profil Akun Saya</h2>
+                <p class="profile-subtitle">Lihat dan kelola data pribadi Anda.</p>
+                
+                <table class="profile-table">
+                    <tr>
+                        <td class="icon-col"><i class="fas fa-id-card"></i> ID Pengguna</td>
+                        <td>: <strong>{{ user.user_id }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="icon-col"><i class="fas fa-user"></i> Nama</td>
+                        <td>: {{ user.nama }}</td>
+                    </tr>
+                    <tr>
+                        <td class="icon-col"><i class="fas fa-envelope"></i> Email</td>
+                        <td>: {{ user.email }}</td>
+                    </tr>
+                    <tr>
+                        <td class="icon-col"><i class="fas fa-phone"></i> No. HP</td>
+                        <td>: {{ user.no_hp }}</td>
+                    </tr>
+                    <tr>
+                        <td class="icon-col"><i class="fas fa-home"></i> Alamat</td>
+                        <td>: {{ user.alamat }}</td>
+                    </tr>
+                    <tr>
+                        <td class="icon-col"><i class="fas fa-tag"></i> Role</td>
+                        <td>: <strong style="text-transform: capitalize; color: var(--primary-color);">{{ user.role }}</strong></td>
+                    </tr>
+                </table>
+                
+                <div class="button-group" style="margin-top: 25px;">
+                    <form action="{{ url_for('delete_account') }}" method="POST" onsubmit="return confirm('❗ PERINGATAN: Apakah Anda YAKIN ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan.');" style="display:inline-block; margin:0;">
+                        <button type="submit" class="btn-dashboard btn-danger">
+                            <i class="fas fa-trash-alt"></i> Hapus Akun
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
         </div>
-        
     </div>
 </div>
+
+<script>
+    // Langsung cek memori browser saat halaman dibuka
+    const body = document.body;
+
+    // Ambil data 'darkMode' yang disimpan dari Dashboard
+    if (localStorage.getItem('darkMode') === 'true') {
+        // Jika statusnya true, langsung pasang mode gelap
+        body.classList.add('dark-mode');
+    }
+    // Jika tidak, biarkan terang (default)
+</script>
+
+<style>
+/* Background Layout */
+body {
+    background-image: url("{{ url_for('static', filename='images/kunung.jpg') }}") !important;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    transition: background-image 0.5s ease-in-out;
+    background-color: #ECE9F7;
+    font-family: 'Montserrat', sans-serif;
+}
+
+body.dark-mode {
+    background-image: url("{{ url_for('static', filename='images/ganung.jpg') }}") !important;
+    background-color: #121212 !important;
+}
+
+/* Transparansi Wadah Utama */
+.dashboard-container, .profile-wrapper, .main-wrapper, .content-area {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Kartu Profil (Glassmorphism) */
+.profile-wrapper {
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+}
+
+.profile-card {
+    display: flex;
+    flex-direction: row;
+    background: rgba(255, 255, 255, 0.9); /* Putih Transparan */
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    width: 100%;
+    gap: 40px;
+    transition: all 0.3s ease;
+}
+
+/* Kartu Profil (Dark Mode) */
+body.dark-mode .profile-card {
+    background: rgba(30, 30, 30, 0.85); /* Hitam Transparan */
+    color: #e0e0e0;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsif HP */
+@media (max-width: 768px) {
+    .profile-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}
+
+/* Foto Profil */
+.profile-pic-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 200px;
+}
+
+.profile-pic {
+    width: 150px;
+    height: 150px;
+    background: #ddd;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 60px;
+    color: #777;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+body.dark-mode .profile-pic {
+    background: #444;
+    color: #ccc;
+    border-color: #555;
+}
+
+/* Teks Judul */
+.profile-title { margin-top: 0; color: #333; font-weight: 800; }
+.profile-subtitle { margin-top: -10px; margin-bottom: 25px; font-size: 14px; color: #666; }
+
+body.dark-mode .profile-title { color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+body.dark-mode .profile-subtitle { color: #bbb; }
+
+/* Tabel Data */
+.profile-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
+.profile-table td { padding: 5px 0; font-size: 16px; color: #333; vertical-align: middle; }
+.profile-table .icon-col { width: 140px; font-weight: 600; color: #555; }
+.profile-table i { width: 25px; color: #7A39E0; }
+
+body.dark-mode .profile-table td { color: #eee; }
+body.dark-mode .profile-table .icon-col { color: #bbb; }
+body.dark-mode .profile-table i { color: #A27EDD; }
+
+/* Tombol */
+.btn-dashboard { padding: 8px 16px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; color: white; text-decoration: none; }
+.btn-detail { display: inline-block; padding: 8px 20px; background: #007BFF; color: white; border-radius: 20px; text-decoration: none; font-weight: 600; }
+.btn-danger { background-color: #dc3545; }
+
+/* Tombol Mode Gelap */
+body.dark-mode .btn-detail { background: #bb86fc; color: #121212; }
+body.dark-mode .btn-danger { background-color: #ff5252; }
+</style>
+
 {% endblock %}

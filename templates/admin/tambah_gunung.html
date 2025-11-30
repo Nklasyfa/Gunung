@@ -10,7 +10,7 @@
 
 <div class="content-card" style="max-width: 800px;">
     
-    <form action="{{ url_for('tambah_gunung') }}" method="post">
+    <form action="{{ url_for('admin.tambah_gunung') }}" method="post">
         
         <div class="form-group">
             <label for="nama_gunung">Nama Gunung</label>
@@ -60,7 +60,7 @@
         
         <div class="button-group">
             <button type="submit" class="btn primary">Simpan Data</button>
-            <a href="{{ url_for('gunung') }}" class="btn secondary">Batal</a>
+            <a href="{{ url_for('admin.gunung') }}" class="btn secondary">Batal</a>
         </div>
     </form>
 </div>

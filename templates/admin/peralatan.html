@@ -7,7 +7,7 @@
     <div class="card-header">
         <h3 class="card-title">Daftar Semua Peralatan Sewa</h3>
         <div class="card-tools">
-            <a href="{{ url_for('tambah_peralatan') }}" class="btn btn-sm btn-primary">
+            <a href="{{ url_for('admin.tambah_peralatan') }}" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus"></i> Tambah Peralatan Baru
             </a>
         </div>
@@ -38,11 +38,11 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{{ url_for('edit_peralatan', id=alat.peralatan_id) }}" class="btn btn-info btn-sm">
+                            <a href="{{ url_for('admin.edit_peralatan', id=alat.peralatan_id) }}" class="btn btn-info btn-sm">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
                             
-                            <form action="{{ url_for('hapus_peralatan', id=alat.peralatan_id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus peralatan {{ alat.nama_peralatan }}?');">
+                            <form action="{{ url_for('admin.hapus_peralatan', id=alat.peralatan_id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus peralatan {{ alat.nama_peralatan }}?');">
                                 <button type="submit" class="btn btn-danger btn-sm">
                                     <i class="fas fa-trash"></i> Hapus
                                 </button>

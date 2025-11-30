@@ -13,7 +13,7 @@
 
     <div class="card shadow mb-4">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('tambah_porter') }}">
+            <form method="POST" action="{{ url_for('admin.tambah_porter') }}">
                 
                 <div class="form-group">
                     <label for="gunung_id">Gunung Tugas</label>
@@ -59,7 +59,7 @@
                 </div>
                 
                 <button type="submit" class="btn btn-success">Simpan Porter</button>
-                <a href="{{ url_for('porter') }}" class="btn btn-secondary">Batal</a>
+                <a href="{{ url_for('admin.porter') }}" class="btn btn-secondary">Batal</a>
             </form>
         </div>
     </div>

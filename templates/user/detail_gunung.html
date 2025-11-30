@@ -80,7 +80,7 @@
                                         <p><strong>Kuota:</strong> {{ tiket.kuota_harian }}</p>
                                         <p><strong>Valid:</strong> {{ tiket.tanggal_berlaku.strftime('%d-%m-%Y') if tiket.tanggal_berlaku else 'Seterusnya' }}</p>
 
-                                        <a href="{{ url_for('pemesanan_tiket', jalur_id=jalur.jalur_id) }}" class="btn primary"
+                                        <a href="{{ url_for('user.pemesanan_tiket', jalur_id=jalur.jalur_id) }}" class="btn primary"
                                            {% if gunung.status_pendakian != 'Dibuka' %}
                                                style="pointer-events: none; opacity: 0.5;"
                                            {% endif %}>

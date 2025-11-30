@@ -20,14 +20,14 @@
         </ul>
         <ul class="navbar-nav ml-auto">
              <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('logout') }}" role="button">
+                <a class="nav-link" href="{{ url_for('auth.logout') }}" role="button">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             </li>
         </ul>
     </nav>
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
-        <a href="{{ url_for('admin_dashboard') }}" class="brand-link">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="brand-link">
             <i class="fas fa-hiking brand-image elevation-3" style="opacity: .8"></i>
             <span class="brand-text font-weight-light">Admin Pendaki</span>
         </a>
@@ -43,7 +43,7 @@
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
                     
                     <li class="nav-item">
-                        <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if active_page == 'admin_dashboard' %}active{% endif %}">
+                        <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link {% if active_page == 'admin_dashboard' %}active{% endif %}">
                             <i class="nav-icon fas fa-tachometer-alt"></i>
                             <p>Dashboard</p>
                         </a>
@@ -52,7 +52,7 @@
                     <li class="nav-header">DATA MASTER</li>
                     
                     <li class="nav-item">
-                        <a href="{{ url_for('gunung') }}" class="nav-link {% if active_page == 'gunung' %}active{% endif %}">
+                        <a href="{{ url_for('admin.gunung') }}" class="nav-link {% if active_page == 'gunung' %}active{% endif %}">
                             <i class="nav-icon fas fa-mountain"></i>
                             <p>Data Gunung</p>
                         </a>
@@ -61,21 +61,21 @@
                     <li class="nav-header">DATA LAYANAN</li>
 
                     <li class="nav-item">
-                        <a href="{{ url_for('porter') }}" class="nav-link {% if active_page == 'porter' %}active{% endif %}">
+                        <a href="{{ url_for('admin.porter') }}" class="nav-link {% if active_page == 'porter' %}active{% endif %}">
                             <i class="nav-icon fas fa-users"></i>
                             <p>Data Porter</p>
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a href="{{ url_for('peralatan') }}" class="nav-link {% if active_page == 'peralatan' %}active{% endif %}">
+                        <a href="{{ url_for('admin.peralatan') }}" class="nav-link {% if active_page == 'peralatan' %}active{% endif %}">
                             <i class="nav-icon fas fa-campground"></i>
                             <p>Data Peralatan Sewa</p>
                         </a>
                     </li>
                     <li class="nav-header">LAINNYA</li>
                     <li class="nav-item">
-                        <a href="{{ url_for('logout') }}" class="nav-link">
+                        <a href="{{ url_for('auth.logout') }}" class="nav-link">
                             <i class="nav-icon fas fa-sign-out-alt text-danger"></i>
                             <p>Logout</p>
                         </a>

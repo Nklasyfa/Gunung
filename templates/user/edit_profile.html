@@ -9,7 +9,7 @@
 </header>
 
 <div class="content-card" style="max-width: 600px;">
-    <form action="{{ url_for('edit_profile') }}" method="post">
+    <form action="{{ url_for('user.edit_profile') }}" method="post">
         
         <div class="form-group">
             <label for="email">Email (Tidak dapat diubah)</label>
@@ -33,7 +33,7 @@
         
         <div class="button-group">
             <button type="submit" class="btn primary">Simpan Perubahan</button>
-            <a href="{{ url_for('profile') }}" class="btn secondary">Batal</a>
+            <a href="{{ url_for('user.profile') }}" class="btn secondary">Batal</a>
         </div>
     </form>
 </div>

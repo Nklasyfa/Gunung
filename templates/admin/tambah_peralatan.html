@@ -7,7 +7,7 @@
     <div class="card-header">
         <h3 class="card-title">Form Tambah Peralatan Sewa</h3>
     </div>
-    <form action="{{ url_for('tambah_peralatan') }}" method="POST">
+    <form action="{{ url_for('admin.tambah_peralatan') }}" method="POST">
         <div class="card-body">
             
             <div class="form-group">
@@ -28,7 +28,7 @@
         </div>
         <div class="card-footer">
             <button type="submit" class="btn btn-primary">Simpan Data</button>
-            <a href="{{ url_for('peralatan') }}" class="btn btn-secondary">Batal</a>
+            <a href="{{ url_for('admin.peralatan') }}" class="btn btn-secondary">Batal</a>
         </div>
     </form>
 </div>

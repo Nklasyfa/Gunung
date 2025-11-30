@@ -28,14 +28,14 @@
                     <i class="fas fa-caret-down"></i>
                 </button>
                 <div class="dropdown-content">
-                    <a href="{{ url_for('ubah_bahasa', lang='id') }}">{{ _('Bahasa Indonesia') }}</a>
-                    <a href="{{ url_for('ubah_bahasa', lang='en') }}">{{ _('English') }}</a>
-                    <a href="{{ url_for('ubah_bahasa', lang='zh') }}">{{ _('中文') }}</a>
-                    <a href="{{ url_for('ubah_bahasa', lang='ar') }}">{{ _('العربية') }}</a>
+                    <a href="{{ url_for('user.ubah_bahasa', lang='id') }}">{{ _('Bahasa Indonesia') }}</a>
+                    <a href="{{ url_for('user.ubah_bahasa', lang='en') }}">{{ _('English') }}</a>
+                    <a href="{{ url_for('user.ubah_bahasa', lang='zh') }}">{{ _('中文') }}</a>
+                    <a href="{{ url_for('user.ubah_bahasa', lang='ar') }}">{{ _('العربية') }}</a>
                 </div>
             </div>
 
-            <a href="{{ url_for('bantuan') }}" class="btn-dashboard btn-bantuan">
+            <a href="{{ url_for('user.bantuan') }}" class="btn-dashboard btn-bantuan">
                 <i class="fas fa-question-circle"></i> {{ _('Bantuan') }}
             </a>
         </div>
@@ -55,7 +55,7 @@
                 <p>{{ _('Tinggi') }}: {{ gunung.ketinggian }} m</p>
                 <p>{{ _('Status') }}: {{ gunung.status_pendakian }}</p>
                 
-                <a href="{{ url_for('detail_gunung', id=gunung.gunung_id) }}" class="btn-detail">{{ _('Detail') }}</a>
+                <a href="{{ url_for('user.detail_gunung', id=gunung.gunung_id) }}" class="btn-detail">{{ _('Detail') }}</a>
             </div>
         {% else %}
             <div style="grid-column: 1/-1; background: rgba(255,255,255,0.8); padding: 20px; border-radius: 10px; text-align: center;">

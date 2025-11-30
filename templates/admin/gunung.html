@@ -9,7 +9,7 @@
         <p>Kelola semua data gunung yang terdaftar di sistem.</p>
     </div>
     <div>
-        <a href="{{ url_for('tambah_gunung') }}" class="btn primary"><i class="fas fa-plus"></i> Tambah Gunung</a>
+        <a href="{{ url_for('admin.tambah_gunung') }}" class="btn primary"><i class="fas fa-plus"></i> Tambah Gunung</a>
     </div>
 </header>
 
@@ -33,9 +33,9 @@
                     <td>{{ gunung.lokasi }}</td>
                     <td>{{ gunung.status_pendakian | upper }}</td>
                     <td class="table-actions">
-                        <a href="{{ url_for('edit_gunung', id=gunung.gunung_id) }}" class="btn secondary"><i class="fas fa-edit"></i> Edit</a>
+                        <a href="{{ url_for('admin.edit_gunung', id=gunung.gunung_id) }}" class="btn secondary"><i class="fas fa-edit"></i> Edit</a>
                         
-                        <form action="{{ url_for('hapus_gunung', id=gunung.gunung_id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus {{ gunung.nama_gunung }}?');" style="display:inline-block; margin:0;">
+                        <form action="{{ url_for('admin.hapus_gunung', id=gunung.gunung_id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus {{ gunung.nama_gunung }}?');" style="display:inline-block; margin:0;">
                             <button type="submit" class="btn danger"><i class="fas fa-trash"></i> Hapus</button>
                         </form>
                     </td>

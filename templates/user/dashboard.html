@@ -1,44 +1,299 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard Pengguna{% endblock %}
+{% block title %}{{ _('Dasbor Pengguna') }}{% endblock %}
 
 {% block content_area_class %}content-area-bg{% endblock %}
 
 {% block content %}
-<header>
-    <h1>Jelajahi Gunung Impianmu</h1>
-    <p>Halo, {{ user_nama }}! Pilih destinasi pendakianmu berikutnya.</p>
-</header>
 
-<div class="gunung-card-grid"> 
-    
-    {% if gunung_list %}
-        {% for gunung in gunung_list %}
-        <div class="gunung-card">
+<div id="mainDashboard" class="dashboard-container">
+
+    <div class="dashboard-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2 style="text-shadow: 0 1px 4px rgba(0,0,0,0.4); color: inherit;">{{ _('Selamat datang') }}, {{ user_nama }}</h2>
+
+        <div class="dashboard-controls" style="display:flex; gap:10px; align-items:center;">
             
-            <div class="gunung-card-image">
-                {% if gunung.status_pendakian == 'Dibuka' %}
-                    <span class="gunung-card-status dibuka">Dibuka</span>
-                {% elif gunung.status_pendakian == 'Ditutup' %}
-                    <span class="gunung-card-status ditutup">Ditutup</span>
-                {% else %}
-                    <span class="gunung-card-status lainnya">{{ gunung.status_pendakian }}</span>
-                {% endif %}
+            <button id="darkModeToggle" class="btn-dashboard btn-mode">
+                <i class="fas fa-moon"></i> {{ _('Mode Gelap') }}
+            </button>
+
+            <div class="dropdown">
+                <button class="btn-dashboard btn-lang">
+                    {% set current_lang = g.lang_code %}
+                    {% if current_lang == 'id' %}ID {{ _('Indonesia') }}
+                    {% elif current_lang == 'en' %}EN {{ _('Inggris') }}
+                    {% elif current_lang == 'zh' %}ZH {{ _('Mandarin') }}
+                    {% elif current_lang == 'ar' %}AR {{ _('Arab') }}
+                    {% endif %}
+                    <i class="fas fa-caret-down"></i>
+                </button>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('ubah_bahasa', lang='id') }}">{{ _('Bahasa Indonesia') }}</a>
+                    <a href="{{ url_for('ubah_bahasa', lang='en') }}">{{ _('English') }}</a>
+                    <a href="{{ url_for('ubah_bahasa', lang='zh') }}">{{ _('中文') }}</a>
+                    <a href="{{ url_for('ubah_bahasa', lang='ar') }}">{{ _('العربية') }}</a>
+                </div>
             </div>
-            
-            <div class="gunung-card-content">
-                <h3>{{ gunung.nama_gunung }}</h3>
-                <p><i class="fas fa-map-marker-alt"></i> {{ gunung.lokasi }}</p>
-                
-                <a href="{{ url_for('detail_gunung', id=gunung.gunung_id) }}" class="btn primary">Lihat Detail & Booking</a>
-            </div>
+
+            <a href="{{ url_for('bantuan') }}" class="btn-dashboard btn-bantuan">
+                <i class="fas fa-question-circle"></i> {{ _('Bantuan') }}
+            </a>
         </div>
-        {% endfor %}
-    {% else %}
-    <div class="content-card">
-        <p>Tidak ada data gunung yang tersedia saat ini.</p>
     </div>
-    {% endif %}
+
+    <div class="gunung-grid">
+        {% for gunung in gunung_list %}
+            <div class="card-gunung">
+                {% if gunung.gambar %}
+                    <img src="{{ url_for('static', filename='uploads/' ~ gunung.gambar) }}" alt="{{ gunung.nama_gunung }}" class="card-img">
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/kunung.jpg') }}" alt="{{ _('Tidak Ada Gambar') }}" class="card-img">
+                {% endif %}
+
+                <h3>{{ gunung.nama_gunung }}</h3>
+                <p>{{ _('Lokasi') }}: {{ gunung.lokasi }}</p>
+                <p>{{ _('Tinggi') }}: {{ gunung.ketinggian }} m</p>
+                <p>{{ _('Status') }}: {{ gunung.status_pendakian }}</p>
+                
+                <a href="{{ url_for('detail_gunung', id=gunung.gunung_id) }}" class="btn-detail">{{ _('Detail') }}</a>
+            </div>
+        {% else %}
+            <div style="grid-column: 1/-1; background: rgba(255,255,255,0.8); padding: 20px; border-radius: 10px; text-align: center;">
+                <p>{{ _('Tidak ada data gunung.') }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<script>
+    const toggleBtn = document.getElementById('darkModeToggle');
+    const body = document.body; 
+
+    // 1. Ambil teks terjemahan dari Jinja2 ke variabel JS
+    const lightModeText = "{{ _('Mode Terang') }}";
+    const darkModeText = "{{ _('Mode Gelap') }}";
+    const moonIcon = '<i class="fas fa-moon"></i>';
+    const sunIcon = '<i class="fas fa-sun"></i>';
     
-</div> 
-{% endblock content %}
+    function updateToggleText(isDark) {
+        if (!toggleBtn) return;
+        if (isDark) {
+            toggleBtn.innerHTML = sunIcon + ' ' + lightModeText;
+        } else {
+            toggleBtn.innerHTML = moonIcon + ' ' + darkModeText;
+        }
+    }
+
+    // A. Cek Memory (LocalStorage) saat loading
+    const currentMode = localStorage.getItem('darkMode');
+    const isDarkOnLoad = currentMode === 'true';
+    if (isDarkOnLoad) {
+        body.classList.add('dark-mode');
+    }
+    updateToggleText(isDarkOnLoad); 
+    
+
+    // B. Fungsi Klik Tombol
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            
+            const isDarkMode = body.classList.contains('dark-mode');
+            
+            localStorage.setItem('darkMode', isDarkMode);
+            updateToggleText(isDarkMode); 
+        });
+    }
+</script>
+
+<style>
+/* =======================================================
+   PERBAIKAN RTL/LAYOUT KHUSUS ARAB & GRID WRAPPING
+   ======================================================= */
+/* 1. Kunci agar Grid responsif (Grid Wrapping Fix) */
+.gunung-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+    gap: 20px;
+}
+
+/* 2. Perbaikan RTL (Right-to-Left) untuk Arab */
+html[dir="rtl"] .dashboard-header {
+    flex-direction: row-reverse; 
+}
+
+html[dir="rtl"] .dropdown-content {
+    right: auto;
+    left: 0;
+}
+
+html[dir="rtl"] .card-gunung {
+    /* Mengubah text-align center menjadi right saat Arab aktif */
+    text-align: right;
+}
+
+/* =======================================================
+   SISA CSS ASLI (TIDAK ADA PERUBAHAN DESAIN)
+   ======================================================= */
+
+/* Background DEFAULT (SIANG) */
+body {
+    background-image: url("{{ url_for('static', filename='images/kunung.jpg') }}") !important;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; 
+    background-repeat: no-repeat;
+    transition: background-image 0.5s ease-in-out;
+    background-color: #ECE9F7; 
+}
+
+/* Background DARK MODE (MALAM) */
+body.dark-mode {
+    background-image: url("{{ url_for('static', filename='images/ganung.jpg') }}") !important;
+    background-color: #121212 !important;
+}
+
+/* TRANSPARANSI CONTAINER */
+.dashboard-container, 
+#mainDashboard,
+.main-wrapper, 
+.content-area {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* --- KARTU GUNUNG (MODE SIANG) --- */
+.card-gunung {
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s, background 0.3s, color 0.3s, box-shadow 0.3s;
+    text-align: center; 
+}
+
+.card-gunung:hover {
+    transform: translateY(-5px);
+}
+
+.card-gunung img.card-img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.card-gunung h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+/* --- TOMBOL-TOMBOL --- */
+.btn-detail {
+    display:inline-block;
+    margin-top:10px;
+    padding: 8px 16px;
+    background:#007BFF;
+    color:#fff;
+    border-radius:20px;
+    text-decoration:none;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.btn-detail:hover { background:#0056b3; }
+
+.btn-dashboard {
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    color: white;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn-dashboard i { font-size: 14px; }
+
+/* Warna Spesifik Tombol */
+.btn-mode { background-color: #6f42c1; }
+.btn-mode:hover { background-color: #5936a0; }
+.btn-lang { background-color: #007bff; }
+.btn-lang:hover { background-color: #0056b3; }
+.btn-bantuan { background-color: #28a745; }
+.btn-bantuan:hover { background-color: #218838; }
+
+/* --- DROPDOWN BAHASA --- */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #fff;
+    min-width: 160px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10;
+    overflow: hidden;
+    animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-content a {
+    color: #333;
+    padding: 10px 14px;
+    text-decoration: none;
+    display: block;
+    transition: background 0.2s;
+}
+
+.dropdown-content a:hover { background-color: #f1f1f1; }
+.dropdown:hover .dropdown-content { display: block; }
+
+/* =========================================
+   MODE MALAM / DARK MODE (Styles)
+   ========================================= */
+body.dark-mode h2 {
+    color: #f0f0f0; 
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+body.dark-mode .card-gunung {
+    background: rgba(30, 30, 30, 0.85);
+    color: #e0e0e0;
+    border-color: #444;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .card-gunung h3 { color: #fff; }
+
+body.dark-mode .btn-detail { background: #bb86fc; color: #121212; font-weight: bold; }
+body.dark-mode .btn-detail:hover { background: #9a5dfc; }
+
+body.dark-mode .btn-mode { background-color: #FFD700; color: #121212; }
+body.dark-mode .btn-mode:hover { background-color: #e6c200; }
+
+body.dark-mode .dropdown-content { background-color: #2a2a2a; }
+body.dark-mode .dropdown-content a { color: #e0e0e0; }
+body.dark-mode .dropdown-content a:hover { background-color: #3a3a3a; }
+
+</style>
+
+{% endblock %}

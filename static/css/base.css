@@ -128,4 +128,65 @@ body {
     background-color: #fff8e6;
     color: #ffc107;
     border-color: #ffeeba;
+<<<<<<< HEAD
 }
+=======
+}
+
+/* --- 1. SETTING BACKGROUND NORMAL (LIGHT MODE) --- */
+body {
+    font-family: 'Montserrat', sans-serif;
+    position: relative;
+    overflow: auto;
+    
+    background-color: var(--bg-color); 
+    
+    /* PERBAIKAN: Gunakan ../ untuk naik dari folder CSS ke folder Static */
+    background-image: url('../images/kunung.jpg'); 
+    
+    background-size: cover;
+    background-position: center bottom;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    
+    transition: background-image 0.5s ease-in-out, background-color 0.5s ease;
+}
+
+/* --- 2. SETTING BACKGROUND DARK MODE --- */
+body.dark-mode {
+    --bg-color: #121212; 
+    --text-dark: #f0f0f0;
+    
+    /* PERBAIKAN: Mengarah ke ganung.jpg */
+    background-image: url('../images/ganung.jpg'); 
+    
+    background-blend-mode: overlay;
+    background-color: rgba(0, 0, 0, 0.7); 
+}
+
+/* =======================================================
+   FIX: PAKSA GANTI BACKGROUND & TRANSPARANSI
+   ======================================================= */
+
+/* 1. Pastikan Wadah Utama Transparan 
+   (Agar tidak menutupi gambar gunung di belakang) */
+.main-wrapper, 
+.content-area, 
+.dashboard-container,
+#mainDashboard {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* 2. Paksa Ganti Gambar saat Dark Mode */
+body.dark-mode {
+    /* Gunakan !important agar gambar ini MENANG dari gambar siang */
+    background-image: url('../images/ganung.jpg') !important; 
+    
+    /* Settingan tambahan agar pas */
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+}
+
+>>>>>>> origin/master

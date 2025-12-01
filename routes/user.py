@@ -75,7 +75,7 @@ def profile():
     user_id = session['user_id']
     mysql = current_app.mysql
     cur = mysql.connection.cursor()
-    cur.execute("SELECT user_id, email, nama, no_hp, alamat, role FROM user WHERE user_id = %s", [user_id])
+    cur.execute("SELECT user_id, email, nama, no_hp, nik, alamat, role FROM user WHERE user_id = %s", [user_id])
     user_data = cur.fetchone()
     cur.close()
     
@@ -93,16 +93,22 @@ def edit_profile():
         if request.method == 'POST':
             nama = request.form.get('nama', '').strip()
             no_hp = request.form.get('no_hp', '').strip()
+            nik = request.form.get('nik', '').strip()
             alamat = request.form.get('alamat', '').strip()
 
             # basic validation
-            if not nama or not no_hp or not alamat:
+            if not nama or not no_hp or not nik or not alamat:
                 flash('Semua field harus diisi.', 'warning')
+                return redirect(url_for('user.edit_profile'))
+            
+            # Validate NIK format
+            if not nik.isdigit() or len(nik) != 16:
+                flash('NIK harus berupa 16 digit angka!', 'warning')
                 return redirect(url_for('user.edit_profile'))
 
             try:
-                cur.execute("UPDATE user SET nama=%s, no_hp=%s, alamat=%s WHERE user_id=%s",
-                            (nama, no_hp, alamat, user_id))
+                cur.execute("UPDATE user SET nama=%s, no_hp=%s, nik=%s, alamat=%s WHERE user_id=%s",
+                            (nama, no_hp, nik, alamat, user_id))
                 mysql.connection.commit()
                 session['nama'] = nama
                 flash('Profil berhasil diperbarui!', 'success')
@@ -113,7 +119,7 @@ def edit_profile():
                 flash(f'Pembaruan Profil Gagal: {str(e)}', 'danger')
                 return redirect(url_for('user.edit_profile'))
 
-        cur.execute("SELECT user_id, email, nama, no_hp, alamat FROM user WHERE user_id = %s", [user_id])
+        cur.execute("SELECT user_id, email, nama, no_hp, nik, alamat FROM user WHERE user_id = %s", [user_id])
         user_data = cur.fetchone()
     finally:
         try:
@@ -167,7 +173,7 @@ def pemesanan_tiket(gunung_id):
         
         # Get users (anggota) yang terdaftar
         cur.execute("""
-            SELECT user_id, nama FROM user WHERE role = 'user' ORDER BY nama
+            SELECT user_id, nama, nik, email, alamat FROM user WHERE role = 'user' ORDER BY nama
         """)
         users_list = cur.fetchall()
         
@@ -359,6 +365,20 @@ def pemesanan_tiket(gunung_id):
         'porters': porters_map,
         'alats': alats_map
     }
+    
+    # Build users_data untuk client-side JS (untuk lookup user_id)
+    users_data = {}
+    for u in (users_list or []):
+        try:
+            users_data[str(u.get('user_id'))] = {
+                'user_id': u.get('user_id'),
+                'nama': u.get('nama') or '',
+                'nik': u.get('nik') or '',
+                'email': u.get('email') or '',
+                'alamat': u.get('alamat') or ''
+            }
+        except Exception:
+            pass
 
     return render_template('user/pemesanan_tiket.html',
                            gunung=gunung_data,
@@ -367,6 +387,7 @@ def pemesanan_tiket(gunung_id):
                            alat_list=alat_list,
                            selected_jalur_id=selected_jalur_id,
                            price_data=price_data,
+                           users_data=users_data,
                            active_page='home')
 
 

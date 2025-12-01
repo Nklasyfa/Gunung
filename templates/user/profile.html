@@ -34,6 +34,10 @@
                         <td>: <strong>{{ user.user_id }}</strong></td>
                     </tr>
                     <tr>
+                        <td class="icon-col"><i class="fas fa-passport"></i> NIK</td>
+                        <td>: {{ user.nik if user.nik else '-' }}</td>
+                    </tr>
+                    <tr>
                         <td class="icon-col"><i class="fas fa-user"></i> Nama</td>
                         <td>: {{ user.nama }}</td>
                     </tr>

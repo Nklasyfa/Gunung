@@ -52,20 +52,52 @@
 
                 <!-- Anggota -->
                 <div class="form-group">
-                    <label>Pilih Anggota Rombongan (Minimal 1 orang)</label>
-                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; max-height: 300px; overflow-y: auto;">
-                        {% if users_list %}
-                            {% for user in users_list %}
-                                <label style="display: block; margin-bottom: 10px; cursor: pointer;">
-                                    <input type="checkbox" name="anggota_ids" value="{{ user.user_id }}" onchange="updatePrice()">
-                                    {{ user.nama }}
-                                </label>
-                            {% endfor %}
-                        {% else %}
-                            <p style="color: #999;">Tidak ada pengguna lain yang tersedia.</p>
-                        {% endif %}
+                    <label style="font-size: 16px; font-weight: 700; margin-bottom: 15px; display: block;">ANGGOTA ROMBONGAN</label>
+                    
+                    <div id="anggotaContainer" style="border-left: 3px solid #7A39E0; padding: 20px; background: #f9f9f9;">
+                        <!-- Header Row -->
+                        <div style="display: grid; grid-template-columns: 80px 1fr 1.5fr 1.5fr 1.5fr 1.5fr; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #ddd;">
+                            <div style="font-weight: 700; color: #333; font-size: 13px;">No.</div>
+                            <div style="font-weight: 700; color: #333; font-size: 13px;">Kode Pendaki *</div>
+                            <div style="font-weight: 700; color: #333; font-size: 13px;">Nama (Sesuai KTP)</div>
+                            <div style="font-weight: 700; color: #333; font-size: 13px;">NIK</div>
+                            <div style="font-weight: 700; color: #333; font-size: 13px;">Email</div>
+                            <div style="font-weight: 700; color: #333; font-size: 13px;">Alamat</div>
+                        </div>
+                        
+                        <!-- First Row (Required) -->
+                        <div class="anggota-row" style="display: grid; grid-template-columns: 80px 1fr 1.5fr 1.5fr 1.5fr 1.5fr; gap: 15px; margin-bottom: 15px; align-items: start;">
+                            <div style="padding-top: 8px; font-weight: 600; color: #666;">1</div>
+                            <div>
+                                <input type="number" class="anggota-user-id" placeholder="Masukkan User ID" data-index="1" 
+                                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" 
+                                       onblur="cariUserAnggota(this)">
+                                <small style="color: #999; display: block; margin-top: 3px;">User ID dari sistem</small>
+                            </div>
+                            <div class="anggota-nama" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px;">
+                                -
+                            </div>
+                            <div class="anggota-nik" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px;">
+                                -
+                            </div>
+                            <div class="anggota-email" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px; word-break: break-all;">
+                                -
+                            </div>
+                            <div class="anggota-alamat" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px; word-break: break-word;">
+                                -
+                            </div>
+                            <input type="hidden" name="anggota_ids" class="anggota-id-hidden" value="">
+                        </div>
+                        
+                        <!-- Dynamic Rows -->
+                        <div id="anggotaDynamicRows"></div>
                     </div>
-                    <small style="color: #666;">Pilih anggota dari list di atas. Setiap anggota akan dikenakan biaya tiket.</small>
+                    
+                    <button type="button" onclick="tambahBariAnggota()" 
+                            style="margin-top: 15px; padding: 10px 20px; background: #7A39E0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                        + Tambah Anggota
+                    </button>
+                    <small style="display: block; color: #666; margin-top: 10px;">Masukkan User ID untuk mencari anggota. Nama akan ditampilkan otomatis dari database.</small>
                 </div>
 
                 <!-- Porter -->
@@ -166,8 +198,12 @@
     </div>
 </div>
 
-<!-- embed price data safely (avoid Jinja inside JS expressions) -->
+// embed price data safely (avoid Jinja inside JS expressions) -->
 <div id="priceDataRaw" data-price='{{ price_data | tojson | safe }}' style="display:none"></div>
+
+<!-- Store users data for lookup -->
+<div id="usersDataRaw" data-users='{{ users_data | tojson | safe }}' style="display:none"></div>
+
 <script>
 // Format currency
 function formatCurrency(value) {
@@ -179,16 +215,127 @@ function formatCurrency(value) {
     }).format(value);
 }
 
-// priceData will be read from the hidden element to keep editor linters happy
+// Global data
 var priceData = {};
+var usersData = {};
+var anggotaCounter = 1;
 
+// Cari user anggota berdasarkan user_id
+function cariUserAnggota(input) {
+    const userId = input.value.trim();
+    const row = input.closest('.anggota-row');
+    const namaDiv = row.querySelector('.anggota-nama');
+    const nikDiv = row.querySelector('.anggota-nik');
+    const emailDiv = row.querySelector('.anggota-email');
+    const alamatDiv = row.querySelector('.anggota-alamat');
+    const hiddenInput = row.querySelector('.anggota-id-hidden');
+    
+    if (!userId) {
+        namaDiv.textContent = '-';
+        nikDiv.textContent = '-';
+        emailDiv.textContent = '-';
+        alamatDiv.textContent = '-';
+        namaDiv.style.color = '#999';
+        nikDiv.style.color = '#999';
+        emailDiv.style.color = '#999';
+        alamatDiv.style.color = '#999';
+        hiddenInput.value = '';
+        updatePrice();
+        return;
+    }
+    
+    // Cari user dari data berdasarkan user_id
+    if (usersData[userId]) {
+        const user = usersData[userId];
+        namaDiv.textContent = user.nama || '-';
+        nikDiv.textContent = user.nik || '-';
+        emailDiv.textContent = user.email || '-';
+        alamatDiv.textContent = user.alamat || '-';
+        namaDiv.style.color = '#333';
+        nikDiv.style.color = '#333';
+        emailDiv.style.color = '#333';
+        alamatDiv.style.color = '#333';
+        namaDiv.style.background = '#f0f8ff';
+        nikDiv.style.background = '#f0f8ff';
+        emailDiv.style.background = '#f0f8ff';
+        alamatDiv.style.background = '#f0f8ff';
+        namaDiv.style.borderColor = '#7A39E0';
+        nikDiv.style.borderColor = '#7A39E0';
+        emailDiv.style.borderColor = '#7A39E0';
+        alamatDiv.style.borderColor = '#7A39E0';
+        hiddenInput.value = userId;
+        updatePrice();
+    } else {
+        namaDiv.textContent = '❌ Tidak ditemukan';
+        nikDiv.textContent = '-';
+        emailDiv.textContent = '-';
+        alamatDiv.textContent = '-';
+        namaDiv.style.color = '#dc3545';
+        nikDiv.style.color = '#dc3545';
+        emailDiv.style.color = '#dc3545';
+        alamatDiv.style.color = '#dc3545';
+        namaDiv.style.background = '#ffebee';
+        nikDiv.style.background = '#ffebee';
+        emailDiv.style.background = '#ffebee';
+        alamatDiv.style.background = '#ffebee';
+        namaDiv.style.borderColor = '#dc3545';
+        nikDiv.style.borderColor = '#dc3545';
+        emailDiv.style.borderColor = '#dc3545';
+        alamatDiv.style.borderColor = '#dc3545';
+        hiddenInput.value = '';
+        updatePrice();
+    }
+}
+
+// Tambah baris anggota baru
+function tambahBariAnggota() {
+    anggotaCounter++;
+    const dynamicRows = document.getElementById('anggotaDynamicRows');
+    const newRow = document.createElement('div');
+    newRow.className = 'anggota-row';
+    newRow.style.cssText = 'display: grid; grid-template-columns: 80px 1fr 1.5fr 1.5fr 1.5fr 1.5fr 80px; gap: 15px; margin-bottom: 15px; align-items: start;';
+    newRow.innerHTML = `
+        <div style="padding-top: 8px; font-weight: 600; color: #666;">${anggotaCounter}</div>
+        <div>
+            <input type="number" class="anggota-user-id" placeholder="Masukkan User ID" data-index="${anggotaCounter}" 
+                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" 
+                   onblur="cariUserAnggota(this)">
+        </div>
+        <div class="anggota-nama" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px;">
+            -
+        </div>
+        <div class="anggota-nik" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px;">
+            -
+        </div>
+        <div class="anggota-email" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px; word-break: break-all;">
+            -
+        </div>
+        <div class="anggota-alamat" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px; word-break: break-word;">
+            -
+        </div>
+        <div>
+            <button type="button" onclick="hapusAnggota(this)" style="padding: 8px 12px; background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: 600;">Hapus</button>
+        </div>
+        <input type="hidden" name="anggota_ids" class="anggota-id-hidden" value="">
+    `;
+    dynamicRows.appendChild(newRow);
+}
+
+// Hapus baris anggota
+function hapusAnggota(btn) {
+    const row = btn.closest('.anggota-row');
+    row.remove();
+    updatePrice();
+}
+
+// priceData will be read from the hidden element to keep editor linters happy
 // Update price calculation
 function updatePrice() {
     const durasi = parseInt(document.getElementById('durasi').value) || 0;
 
-    // Count members
-    const anggotaCheckboxes = document.querySelectorAll('input[name="anggota_ids"]:checked');
-    const jumlahAnggota = anggotaCheckboxes.length;
+    // Count members (dari hidden inputs yang punya value)
+    const anggotaHiddenInputs = document.querySelectorAll('input[name="anggota_ids"]:not([value=""])');
+    const jumlahAnggota = anggotaHiddenInputs.length;
 
     // Calculate ticket price
     const subtotalTiket = (priceData.hargaTiket || 0) * jumlahAnggota;
@@ -258,9 +405,18 @@ document.addEventListener('DOMContentLoaded', function() {
         priceData = {};
         console.error('Invalid price data', e);
     }
+    
+    // read users data from hidden element
+    try {
+        var usersRaw = document.getElementById('usersDataRaw').getAttribute('data-users');
+        usersData = usersRaw ? JSON.parse(usersRaw) : {};
+    } catch (e) {
+        usersData = {};
+        console.error('Invalid users data', e);
+    }
 
     // attach event listeners to update price dynamically
-    document.querySelectorAll('#durasi, input[name="aktivitas"], input[name="anggota_ids"], input[name="porter_id"], .alat-qty').forEach(function(el){
+    document.querySelectorAll('#durasi, input[name="aktivitas"], input[name="porter_id"], .alat-qty').forEach(function(el){
         el.addEventListener('change', updatePrice);
     });
 

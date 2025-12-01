@@ -46,13 +46,23 @@ def register():
         email = request.form['email']
         password = request.form['password']
         no_hp = request.form['no_hp']
+        nik = request.form.get('nik', '').strip()
         alamat = request.form['alamat']
+
+        # Validation: NIK is required and must be 16 digits
+        if not nik:
+            flash('NIK tidak boleh kosong! Masukkan NIK Anda (16 digit).', 'danger')
+            return render_template('login.html', show_register=True)
+        
+        if not nik.isdigit() or len(nik) != 16:
+            flash('NIK harus berupa 16 digit angka!', 'danger')
+            return render_template('login.html', show_register=True)
 
         mysql = current_app.mysql
         cur = mysql.connection.cursor()
         try:
-            cur.execute("INSERT INTO user (email, password, nama, no_hp, alamat, role) VALUES (%s, %s, %s, %s, %s, 'user')",
-                        (email, password, nama, no_hp, alamat))
+            cur.execute("INSERT INTO user (email, password, nama, no_hp, nik, alamat, role) VALUES (%s, %s, %s, %s, %s, %s, 'user')",
+                        (email, password, nama, no_hp, nik, alamat))
             mysql.connection.commit()
             flash('Registrasi Berhasil! Silakan masuk dengan akun baru Anda.', 'success')
             return redirect(url_for('auth.login'))

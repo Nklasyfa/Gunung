@@ -25,6 +25,11 @@
             <label for="no_hp">Nomor HP</label>
             <input type="text" id="no_hp" name="no_hp" class="form-control" value="{{ user.no_hp }}" required>
         </div>
+
+        <div class="form-group">
+            <label for="nik">NIK (Nomor Identitas Kependudukan)</label>
+            <input type="text" id="nik" name="nik" class="form-control" value="{{ user.nik or '' }}" placeholder="Contoh: 3201234567891234" maxlength="16" required>
+        </div>
         
         <div class="form-group">
             <label for="alamat">Alamat</label>

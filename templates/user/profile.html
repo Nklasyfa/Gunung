@@ -4,6 +4,10 @@
 
 {% block content_area_class %}content-area-bg{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <div class="dashboard-container">

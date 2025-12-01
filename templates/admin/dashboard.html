@@ -7,14 +7,11 @@
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+<div class="dashboard-header">
     <div>
         <h1>Admin Dashboard</h1>
         <p>Selamat datang, {{ session.nama }}! Anda login sebagai Admin.</p>
     </div>
-    <button id="darkModeToggle" class="btn-admin-dark-toggle" onclick="toggleDarkMode(); return false;">
-        <i class="fas fa-moon"></i> <span id="darkModeText">Mode Gelap</span>
-    </button>
 </div>
 
 <div class="dashboard-cards" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">

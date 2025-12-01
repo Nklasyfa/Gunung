@@ -107,9 +107,9 @@
                             {% set jimg = jalur.gambar_jalur if jalur.gambar_jalur is defined else None %}
                             {% if jimg %}
                                 {% if jimg.startswith('uploads/') or jimg.startswith('uploads\\') %}
-                                    <img src="{{ url_for('static', filename=jimg) }}" alt="{{ jalur.nama_jalur }}" style="width:100%; max-height:180px; object-fit:cover; margin-bottom:8px; border-radius:6px;">
+                                    <img src="{{ url_for('static', filename=jimg) }}" alt="{{ jalur.nama_jalur }}" style="width:100%; height:400px; object-fit:cover; margin-bottom:8px; border-radius:6px;">
                                 {% else %}
-                                    <img src="{{ url_for('static', filename='uploads/jalur/' ~ jimg) }}" alt="{{ jalur.nama_jalur }}" style="width:100%; max-height:180px; object-fit:cover; margin-bottom:8px; border-radius:6px;">
+                                    <img src="{{ url_for('static', filename='uploads/jalur/' ~ jimg) }}" alt="{{ jalur.nama_jalur }}" style="width:100%; height:400px; object-fit:cover; margin-bottom:8px; border-radius:6px;">
                                 {% endif %}
                             {% endif %}
 
@@ -154,18 +154,20 @@
                             {% endif %}
 
                             {# Pesan button always available per jalur if gunung open and jalur available. #}
-                            <a href="{{ url_for('user.pemesanan_tiket', gunung_id=gunung.gunung_id, jalur_id=jalur.jalur_id) }}" class="btn primary"
-                               {% if not gunung_open or not jalur_available %}
-                                   style="pointer-events: none; opacity: 0.5;"
-                               {% endif %}>
-                                {% if gunung_open and jalur_available %}
-                                    Pesan Tiket
-                                {% elif not gunung_open %}
-                                    Tidak Tersedia (Gunung Ditutup)
-                                {% else %}
-                                    Tidak Tersedia (Jalur)
-                                {% endif %}
-                            </a>
+                            <div style="margin-top: 25px;">
+                                <a href="{{ url_for('user.pemesanan_tiket', gunung_id=gunung.gunung_id, jalur_id=jalur.jalur_id) }}" class="btn primary"
+                                   {% if not gunung_open or not jalur_available %}
+                                       style="pointer-events: none; opacity: 0.5;"
+                                   {% endif %}>
+                                    {% if gunung_open and jalur_available %}
+                                        Pesan Tiket
+                                    {% elif not gunung_open %}
+                                        Tidak Tersedia (Gunung Ditutup)
+                                    {% else %}
+                                        Tidak Tersedia (Jalur)
+                                    {% endif %}
+                                </a>
+                            </div>
                         </div>
                     {% endfor %}
                 {% else %}

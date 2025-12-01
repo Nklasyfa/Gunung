@@ -4,6 +4,10 @@
 
 {% block content_area_class %}content-area-bg{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/pemesanan.css') }}">
+{% endblock %}
+
 {% block content %}
 <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
     <div style="margin-bottom: 20px;">
@@ -23,16 +27,37 @@
         <div class="content-card">
             <form id="bookingForm" action="{{ url_for('user.pemesanan_tiket', gunung_id=gunung.gunung_id) }}" method="POST">
                 
-                <!-- Pilih Tiket (tanggal + jalur) -->
-                <div class="form-group">
-                    <label for="tiket_id">Pilih Tiket (Tanggal / Jalur)</label>
-                    <select id="tiket_id" name="tiket_id" class="form-control" onchange="updatePrice()" required>
-                        <option value="">-- Pilih Tiket --</option>
-                        {% for t in tiket_list %}
-                            <option value="{{ t.tiket_id }}">{{ t.tdate }} — {{ t.nama_jalur }} — Rp {{ "{:,.0f}".format(t.harga) }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                <!-- Pilih Tiket (tanggal + jalur) - HANYA TAMPIL JIKA TIDAK ADA JALUR_ID -->
+                {% set filtered_tiket = [] %}
+                {% if jalur_data %}
+                    <!-- Jalur sudah dipilih dari detail gunung, filter tiket untuk jalur ini saja -->
+                    {% set filtered_tiket = tiket_list | selectattr('jalur_id', 'equalto', jalur_data.jalur_id) | list %}
+                    
+                    <!-- Tampilkan info jalur yang dipilih -->
+                    <div style="padding: 15px; background: #f0f4ff; border-left: 4px solid #7A39E0; border-radius: 8px; margin-bottom: 20px;">
+                        <h5 style="margin: 0 0 8px 0; color: #7A39E0;">Jalur Pendakian Terpilih</h5>
+                        <p style="margin: 0; color: #333; font-weight: 600;">{{ jalur_data.nama_jalur }}</p>
+                        {% if jalur_data.estimasi %}
+                            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Estimasi: {{ jalur_data.estimasi }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Hidden input untuk tiket_id - ambil yang pertama dari filtered list -->
+                    {% if filtered_tiket %}
+                        <input type="hidden" name="tiket_id" value="{{ filtered_tiket[0].tiket_id }}">
+                    {% endif %}
+                {% else %}
+                    <!-- Tidak ada jalur dipilih, tampilkan dropdown untuk pilih tiket -->
+                    <div class="form-group">
+                        <label for="tiket_id">Pilih Tiket (Tanggal / Jalur)</label>
+                        <select id="tiket_id" name="tiket_id" class="form-control" onchange="updatePrice()" required>
+                            <option value="">-- Pilih Tiket --</option>
+                            {% for t in tiket_list %}
+                                <option value="{{ t.tiket_id }}">{{ t.tdate }} — {{ t.nama_jalur }} — Rp {{ "{:,.0f}".format(t.harga) }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
 
                 <!-- Durasi & Aktivitas -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">

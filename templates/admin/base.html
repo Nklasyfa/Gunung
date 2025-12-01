@@ -10,14 +10,17 @@
     {% set active_page = active_page | default('admin_dashboard') %}
     
     <ul>
-        <li><a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if active_page == 'admin_dashboard' }}"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
+        <li><a href="{{ url_for('admin.admin_dashboard') }}" class="{{ 'active' if active_page == 'admin_dashboard' }}"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
         
         <li style="padding: 0 15px; font-size: 12px; color: #999; margin-top: 15px; margin-bottom: 5px;">DATA</li>
-        <li><a href="{{ url_for('gunung') }}" class="{{ 'active' if active_page == 'gunung' }}"><i class="fas fa-map-marked-alt"></i> Data Gunung</a></li>
-        <li><a href="{{ url_for('porter') }}" class="{{ 'active' if active_page == 'porter' }}"><i class="fas fa-users"></i> Data Porter</a></li>
-    <li><a href="{{ url_for('jalur') }}" class="{{ 'active' if active_page == 'jalur' }}"><i class="fas fa-route"></i> Data Jalur</a></li>
-        <li><a href="{{ url_for('peralatan') }}" class="{{ 'active' if active_page == 'peralatan' }}"><i class="fas fa-tools"></i> Data Peralatan Sewa</a></li>
-        <li class="logout-link"><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        <li><a href="{{ url_for('admin.gunung') }}" class="{{ 'active' if active_page == 'gunung' }}"><i class="fas fa-map-marked-alt"></i> Data Gunung</a></li>
+        <li><a href="{{ url_for('admin.porter') }}" class="{{ 'active' if active_page == 'porter' }}"><i class="fas fa-users"></i> Data Porter</a></li>
+        <li><a href="{{ url_for('admin.jalur') }}" class="{{ 'active' if active_page == 'jalur' }}"><i class="fas fa-route"></i> Data Jalur</a></li>
+        <li><a href="{{ url_for('admin.peralatan') }}" class="{{ 'active' if active_page == 'peralatan' }}"><i class="fas fa-tools"></i> Data Peralatan Sewa</a></li>
+        
+        <li style="padding: 0 15px; font-size: 12px; color: #999; margin-top: 15px; margin-bottom: 5px;">LAINNYA</li>
+        <li><a href="{{ url_for('admin.bantuan') }}" class="{{ 'active' if active_page == 'bantuan' }}"><i class="fas fa-question-circle"></i> Bantuan</a></li>
+        <li class="logout-link"><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>
 </nav>
 {% endblock %}

@@ -25,13 +25,8 @@
     <div class="detail-grid-original">
         
         <div class="detail-info-card main-card">
-
-            {% if gunung.gambar %}
-                <img src="{{ url_for('static', filename='uploads/gunung/' ~ gunung.gambar) }}" alt="{{ gunung.nama_gunung }}" style="width:100%; max-height:400px; object-fit:cover; margin-bottom:15px; border-radius: 8px;">
-            {% else %}
-                <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="No Image" style="width:100%; max-height:400px; object-fit:cover; margin-bottom:15px; border-radius: 8px;">
-            {% endif %}
-
+                {# Main gunung image intentionally omitted here; gunung cards on the dashboard show the primary image.
+                   In this detail view we display per-jalur images below in each jalur block. #}
             <div class="detail-stats">
                 <div class="stat-item">
                     <h4>Status</h4>
@@ -56,6 +51,51 @@
             <h3 style="margin-top: 25px;">Sejarah Singkat</h3>
             <p style="white-space: pre-wrap;">{{ gunung.sejarah | default('Belum ada info sejarah.', true) }}</p>
 
+            <h3 style="margin-top: 25px;">Lokasi di Peta</h3>
+            {% if gunung.latitude and gunung.longitude %}
+                <div id="map" style="width: 100%; height: 400px; border-radius: 8px; margin-top: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1;"></div>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <script>
+                    function initMap() {
+                        const location = [parseFloat('{{ gunung.latitude }}'), parseFloat('{{ gunung.longitude }}')];
+                        
+                        const map = L.map('map').setView(location, 12);
+                        
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 19
+                        }).addTo(map);
+                        
+                        const marker = L.marker(location).addTo(map)
+                            .bindPopup(`
+                                <div style="padding: 10px; font-family: Arial; font-size: 14px;">
+                                    <h4 style="margin: 0 0 8px 0; color: #7A39E0;">{{ gunung.nama_gunung }}</h4>
+                                    <p style="margin: 5px 0;"><strong>Lokasi:</strong> {{ gunung.lokasi }}</p>
+                                    <p style="margin: 5px 0;"><strong>Ketinggian:</strong> {{ "{:,.0f}".format(gunung.ketinggian) }} MDPL</p>
+                                    <p style="margin: 5px 0;"><strong>Koordinat:</strong> {{ "%.4f"|format(gunung.latitude) }}, {{ "%.4f"|format(gunung.longitude) }}</p>
+                                </div>
+                            `)
+                            .openPopup();
+                        
+                        marker.setIcon(L.icon({
+                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [1, -34],
+                            shadowSize: [41, 41]
+                        }));
+                    }
+                    
+                    window.addEventListener('load', initMap);
+                </script>
+            {% else %}
+                <div class="alert alert-warning" style="position: static; width: 100%; margin-top: 15px;">
+                    <i class="fas fa-exclamation-triangle"></i> Koordinat lokasi belum tersedia untuk gunung ini.
+                </div>
+            {% endif %}
+
         </div>
 
         <div class="booking-card">
@@ -64,6 +104,15 @@
                 {% if jalur_list %}
                     {% for jalur in jalur_list %}
                         <div class="jalur-item">
+                            {% set jimg = jalur.gambar_jalur if jalur.gambar_jalur is defined else None %}
+                            {% if jimg %}
+                                {% if jimg.startswith('uploads/') or jimg.startswith('uploads\\') %}
+                                    <img src="{{ url_for('static', filename=jimg) }}" alt="{{ jalur.nama_jalur }}" style="width:100%; max-height:180px; object-fit:cover; margin-bottom:8px; border-radius:6px;">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='uploads/jalur/' ~ jimg) }}" alt="{{ jalur.nama_jalur }}" style="width:100%; max-height:180px; object-fit:cover; margin-bottom:8px; border-radius:6px;">
+                                {% endif %}
+                            {% endif %}
+
                             <h4>{{ jalur.nama_jalur }}</h4>
                             {% if jalur.estimasi %}
                                 <p><strong>Estimasi:</strong> {{ jalur.estimasi }}</p>
@@ -75,6 +124,8 @@
 
                             <h5>Tiket Tersedia:</h5>
                             {% set tiket_for_jalur = tiket_list | selectattr('nama_jalur', 'equalto', jalur.nama_jalur) | list %}
+                            {% set gunung_open = (gunung.status_pendakian | default('') | lower) == 'dibuka' %}
+                            {% set jalur_available = (jalur.tersedia is not defined) or ((jalur.tersedia | int) == 1) %}
 
                             {% if tiket_for_jalur %}
                                 {% for tiket in tiket_for_jalur %}
@@ -82,28 +133,39 @@
                                         <p><strong>Harga:</strong> Rp {{ "{:,.0f}".format(tiket.harga) }}</p>
                                         <p><strong>Kuota:</strong> {{ tiket.kuota_harian }}</p>
                                         <p><strong>Valid:</strong> {{ tiket.tanggal_berlaku.strftime('%d-%m-%Y') if tiket.tanggal_berlaku else 'Seterusnya' }}</p>
-
-                                        {# Disable if gunung closed or jalur not available. Use case-insensitive check and ensure tersedia is integer. #}
-                                        {% set gunung_open = (gunung.status_pendakian | default('') | lower) == 'dibuka' %}
-                                        {# If `tersedia` column doesn't exist yet in DB, assume available (fallback) so admin can test without running migrations. #}
-                                        {% set jalur_available = (jalur.tersedia is not defined) or ((jalur.tersedia | int) == 1) %}
-                                        <a href="{{ url_for('user.pemesanan_tiket', gunung_id=gunung.gunung_id, jalur_id=jalur.jalur_id) }}" class="btn primary"
-                                           {% if not gunung_open or not jalur_available %}
-                                               style="pointer-events: none; opacity: 0.5;"
-                                           {% endif %}>
-                                            {% if gunung_open and jalur_available %}
-                                                Pesan Tiket
-                                            {% elif not gunung_open %}
-                                                Tidak Tersedia (Gunung Ditutup)
-                                            {% else %}
-                                                Tidak Tersedia (Jalur)
-                                            {% endif %}
-                                        </a>
                                     </div>
                                 {% endfor %}
                             {% else %}
-                                <p>❌ Tidak ada tiket.</p>
+                                {# No tiket rows: show fallback price from jalur (if present) or from gunung #}
+                                {% set fallback_price = None %}
+                                {% if jalur.harga is defined and jalur.harga %}
+                                    {% set fallback_price = jalur.harga %}
+                                {% elif jalur.harga_tiket is defined and jalur.harga_tiket %}
+                                    {% set fallback_price = jalur.harga_tiket %}
+                                {% else %}
+                                    {% set fallback_price = gunung.harga_tiket if gunung.harga_tiket is defined else None %}
+                                {% endif %}
+                                {% if fallback_price %}
+                                    <p><strong>Harga (Jalur):</strong> Rp {{ "{:,.0f}".format(fallback_price) }}</p>
+                                {% else %}
+                                    <p><strong>Harga:</strong> -</p>
+                                {% endif %}
+                                <p><strong>Kuota:</strong> {{ jalur.kuota_harian if (jalur.kuota_harian is defined) else '-' }}</p>
                             {% endif %}
+
+                            {# Pesan button always available per jalur if gunung open and jalur available. #}
+                            <a href="{{ url_for('user.pemesanan_tiket', gunung_id=gunung.gunung_id, jalur_id=jalur.jalur_id) }}" class="btn primary"
+                               {% if not gunung_open or not jalur_available %}
+                                   style="pointer-events: none; opacity: 0.5;"
+                               {% endif %}>
+                                {% if gunung_open and jalur_available %}
+                                    Pesan Tiket
+                                {% elif not gunung_open %}
+                                    Tidak Tersedia (Gunung Ditutup)
+                                {% else %}
+                                    Tidak Tersedia (Jalur)
+                                {% endif %}
+                            </a>
                         </div>
                     {% endfor %}
                 {% else %}

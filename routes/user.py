@@ -1,5 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from utils.decorators import login_required
+from datetime import datetime
+import calendar
 
 user_bp = Blueprint('user', __name__)
 
@@ -87,28 +89,38 @@ def edit_profile():
     user_id = session['user_id']
     mysql = current_app.mysql
     cur = mysql.connection.cursor()
+    try:
+        if request.method == 'POST':
+            nama = request.form.get('nama', '').strip()
+            no_hp = request.form.get('no_hp', '').strip()
+            alamat = request.form.get('alamat', '').strip()
 
-    if request.method == 'POST':
-        nama = request.form['nama']
-        no_hp = request.form['no_hp']
-        alamat = request.form['alamat']
+            # basic validation
+            if not nama or not no_hp or not alamat:
+                flash('Semua field harus diisi.', 'warning')
+                return redirect(url_for('user.edit_profile'))
 
+            try:
+                cur.execute("UPDATE user SET nama=%s, no_hp=%s, alamat=%s WHERE user_id=%s",
+                            (nama, no_hp, alamat, user_id))
+                mysql.connection.commit()
+                session['nama'] = nama
+                flash('Profil berhasil diperbarui!', 'success')
+                return redirect(url_for('user.profile'))
+            except Exception as e:
+                mysql.connection.rollback()
+                current_app.logger.exception('Error updating profile')
+                flash(f'Pembaruan Profil Gagal: {str(e)}', 'danger')
+                return redirect(url_for('user.edit_profile'))
+
+        cur.execute("SELECT user_id, email, nama, no_hp, alamat FROM user WHERE user_id = %s", [user_id])
+        user_data = cur.fetchone()
+    finally:
         try:
-            cur.execute("UPDATE user SET nama=%s, no_hp=%s, alamat=%s WHERE user_id=%s",
-                        (nama, no_hp, alamat, user_id))
-            mysql.connection.commit()
-            session['nama'] = nama
-            flash('Profil berhasil diperbarui!', 'success')
-            return redirect(url_for('user.profile'))
-        except Exception as e:
-            mysql.connection.rollback()
-            flash(f'Pembaruan Profil Gagal: {str(e)}', 'danger')
-            return redirect(url_for('user.edit_profile'))
-    
-    cur.execute("SELECT user_id, email, nama, no_hp, alamat FROM user WHERE user_id = %s", [user_id])
-    user_data = cur.fetchone()
-    cur.close()
-    
+            cur.close()
+        except Exception:
+            pass
+
     return render_template('user/edit_profile.html',
                            user=user_data,
                            active_page='profile')
@@ -175,6 +187,21 @@ def pemesanan_tiket(gunung_id):
         
         # Allow optional jalur_id in querystring so front-end can deep-link from a specific jalur
         selected_jalur_id = request.args.get('jalur_id', type=int)
+        
+        # Try to load jalur-level info (including optional harga) when jalur_id provided
+        jalur_data = None
+        if selected_jalur_id:
+            try:
+                # Try with harga column if present
+                cur.execute("SELECT jalur_id, nama_jalur, kuota_harian, estimasi, gambar_jalur, harga FROM jalur_pendakian WHERE jalur_id = %s", [selected_jalur_id])
+                jalur_data = cur.fetchone()
+            except Exception:
+                # fallback: older schema without 'harga'
+                try:
+                    cur.execute("SELECT jalur_id, nama_jalur, kuota_harian, estimasi, gambar_jalur FROM jalur_pendakian WHERE jalur_id = %s", [selected_jalur_id])
+                    jalur_data = cur.fetchone()
+                except Exception:
+                    jalur_data = None
 
         if request.method == 'POST':
             # Process booking
@@ -212,7 +239,13 @@ def pemesanan_tiket(gunung_id):
             try:
                 # Calculate pricing
                 jumlah_anggota = len(anggota_ids)
-                harga_tiket = float(gunung_data.get('harga_tiket') or 0) * jumlah_anggota
+                # Use jalur-level price if available, otherwise fall back to gunung price
+                per_person_price = 0
+                if jalur_data and jalur_data.get('harga'):
+                    per_person_price = float(jalur_data.get('harga') or 0)
+                else:
+                    per_person_price = float(gunung_data.get('harga_tiket') or 0)
+                harga_tiket = per_person_price * jumlah_anggota
                 harga_porter = 0
                 harga_alat = 0
                 
@@ -299,7 +332,11 @@ def pemesanan_tiket(gunung_id):
     
     # Build safe price_data for client-side JS. Ensure only JSON-serializable primitives.
     try:
-        harga_tiket_val = float(gunung_data.get('harga_tiket') or 0)
+        # Use jalur-level price if available, otherwise fall back to gunung price
+        if jalur_data and jalur_data.get('harga'):
+            harga_tiket_val = float(jalur_data.get('harga') or 0)
+        else:
+            harga_tiket_val = float(gunung_data.get('harga_tiket') or 0)
     except Exception:
         harga_tiket_val = 0.0
 
@@ -331,6 +368,141 @@ def pemesanan_tiket(gunung_id):
                            selected_jalur_id=selected_jalur_id,
                            price_data=price_data,
                            active_page='home')
+
+
+@user_bp.route('/kuota-bulanan')
+@login_required
+def kuota_bulanan():
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    try:
+        # parameters
+        month = request.args.get('month', type=int) or datetime.now().month
+        year = request.args.get('year', type=int) or datetime.now().year
+        selected_gunung = request.args.get('gunung_id', type=int)
+
+        # gunung list for selector
+        try:
+            cur.execute("SELECT gunung_id, nama_gunung FROM gunung ORDER BY nama_gunung")
+            gunung_list = cur.fetchall()
+        except Exception:
+            gunung_list = []
+
+        jalur_list = []
+        table_rows = []
+
+        if selected_gunung:
+            # get jalur for gunung
+            cur.execute("SELECT jalur_id, nama_jalur, kuota_harian FROM jalur_pendakian WHERE gunung_id = %s ORDER BY nama_jalur", [selected_gunung])
+            jalur_list = cur.fetchall()
+
+            jalur_ids = [j['jalur_id'] for j in jalur_list] if jalur_list else []
+
+            # fetch tiket for all jalur in the month in one query
+            tiket_map = {}  # (jalur_id, date) -> tiket dict
+            if jalur_ids:
+                placeholders = ', '.join(['%s'] * len(jalur_ids))
+                query = f"""
+                    SELECT tiket_id, jalur_id, kuota_harian, DATE(tanggal_berlaku) as tdate
+                    FROM tiket
+                    WHERE jalur_id IN ({placeholders}) AND YEAR(tanggal_berlaku) = %s AND MONTH(tanggal_berlaku) = %s
+                    """
+                params = tuple(jalur_ids) + (year, month)
+                cur.execute(query, params)
+                tiket_rows = cur.fetchall()
+            else:
+                tiket_rows = []
+
+            # map tiket_id -> (jalur_id, date, kuota)
+            tickets_by_id = {}
+            for t in tiket_rows:
+                # ensure tdate is a date/datetime
+                tdate = t.get('tdate')
+                if hasattr(tdate, 'strftime'):
+                    tdate_str = tdate.strftime('%Y-%m-%d')
+                else:
+                    # fallback if string
+                    try:
+                        tdate_str = str(tdate)
+                    except Exception:
+                        tdate_str = ''
+                key = (t['jalur_id'], tdate_str)
+                tiket_map[key] = t
+                tickets_by_id[t['tiket_id']] = t
+
+            tiket_ids = list(tickets_by_id.keys())
+
+            # fetch pemesanan for these tiket_ids
+            pemesanan_rows = []
+            if tiket_ids:
+                placeholders = ', '.join(['%s'] * len(tiket_ids))
+                query = f"SELECT pemesanan_id, tiket_id FROM pemesanan WHERE tiket_id IN ({placeholders}) AND status != 'gagal'"
+                cur.execute(query, tuple(tiket_ids))
+                pemesanan_rows = cur.fetchall()
+
+            pemesanan_ids = [p['pemesanan_id'] for p in pemesanan_rows] if pemesanan_rows else []
+
+            # fetch anggota counts per pemesanan
+            anggota_count = {}
+            if pemesanan_ids:
+                placeholders = ', '.join(['%s'] * len(pemesanan_ids))
+                query = f"SELECT pemesanan_id, COUNT(*) as cnt FROM anggota_pemesanan WHERE pemesanan_id IN ({placeholders}) GROUP BY pemesanan_id"
+                cur.execute(query, tuple(pemesanan_ids))
+                rows = cur.fetchall()
+                for r in rows:
+                    anggota_count[r['pemesanan_id']] = int(r['cnt'] or 0)
+
+            # compute used seats per tiket
+            used_per_tiket = {}
+            for p in pemesanan_rows:
+                pid = p['pemesanan_id']
+                tid = p['tiket_id']
+                used_per_tiket.setdefault(tid, 0)
+                used_per_tiket[tid] += 1 + int(anggota_count.get(pid, 0))
+
+            # iterate dates
+            last_day = calendar.monthrange(year, month)[1]
+            for day in range(1, last_day + 1):
+                dt = datetime(year, month, day)
+                row = {'date': dt.strftime('%d-%m-%Y'), 'cells': []}
+                for j in jalur_list:
+                    key = (j['jalur_id'], dt.strftime('%Y-%m-%d'))
+                    if key in tiket_map:
+                        t = tiket_map[key]
+                        tiket_id = t['tiket_id']
+                        initial_quota = int(t.get('kuota_harian') or 0)
+                        used = int(used_per_tiket.get(tiket_id, 0))
+                        remaining = initial_quota - used
+                        if remaining < 0:
+                            remaining = 0
+                        row['cells'].append(remaining)
+                    else:
+                        k = int(j.get('kuota_harian') or 0)
+                        row['cells'].append(k if k > 0 else '-')
+                table_rows.append(row)
+
+        months = [(i, datetime(year, i, 1).strftime('%B')) for i in range(1,13)]
+        years = [year - 1, year, year + 1]
+
+        return render_template('user/kuota_bulanan.html',
+                               gunung_list=gunung_list,
+                               jalur_list=jalur_list,
+                               table_rows=table_rows,
+                               selected_gunung=selected_gunung,
+                               month=month,
+                               year=year,
+                               months=months,
+                               years=years,
+                               active_page='kuota_bulanan')
+    except Exception as e:
+        current_app.logger.exception('Error in kuota_bulanan')
+        flash(f"Terjadi kesalahan saat mengambil data kuota: {e}", 'danger')
+        return redirect(url_for('user.user_dashboard'))
+    finally:
+        try:
+            cur.close()
+        except Exception:
+            pass
 
 @user_bp.route('/bantuan')
 @login_required

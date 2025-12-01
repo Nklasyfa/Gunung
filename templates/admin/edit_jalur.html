@@ -43,10 +43,14 @@
                 </select>
             </div>
         </div>
-        <div style="display:grid; grid-template-columns:1fr; gap:12px; margin-top:8px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;">
             <div class="form-group">
-                <label for="kuota_harian">Kuota Harian Jalur (opsional)</label>
+                <label for="kuota_harian">Kuota Harian Jalur</label>
                 <input type="number" id="kuota_harian" name="kuota_harian" class="form-control" value="{{ jalur.kuota_harian | default('') }}">
+            </div>
+            <div class="form-group">
+                <label for="harga">Harga Tiket per Orang</label>
+                <input type="number" id="harga" name="harga" step="0.01" class="form-control" value="{{ jalur.harga | default('') }}">
             </div>
         </div>
 

@@ -30,17 +30,22 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div class="form-group">
-                <label for="status_pendakian">Status Pendakian</label>
-                <select id="status_pendakian" name="status_pendakian" class="form-control" required>
-                    <option value="Dibuka" {{ 'selected' if gunung.status_pendakian == 'Dibuka' }}>Dibuka</option>
-                    <option value="Ditutup" {{ 'selected' if gunung.status_pendakian == 'Ditutup' }}>Ditutup</option>
-                    <option value="Ditutup Sebagian" {{ 'selected' if gunung.status_pendakian == 'Ditutup Sebagian' }}>Ditutup Sebagian</option>
-                </select>
+                <label for="latitude">Latitude</label>
+                <input type="number" id="latitude" name="latitude" class="form-control" value="{{ gunung.latitude | default('') }}" step="0.0001" required>
             </div>
-             <div class="form-group">
-                <label for="harga_tiket">Harga Tiket</label>
-                <input type="number" id="harga_tiket" name="harga_tiket" class="form-control" value="{{ gunung.harga_tiket | default(0) }}" required>
+            <div class="form-group">
+                <label for="longitude">Longitude</label>
+                <input type="number" id="longitude" name="longitude" class="form-control" value="{{ gunung.longitude | default('') }}" step="0.0001" required>
             </div>
+        </div>
+
+        <div class="form-group">
+            <label for="status_pendakian">Status Pendakian</label>
+            <select id="status_pendakian" name="status_pendakian" class="form-control" required>
+                <option value="Dibuka" {{ 'selected' if gunung.status_pendakian == 'Dibuka' }}>Dibuka</option>
+                <option value="Ditutup" {{ 'selected' if gunung.status_pendakian == 'Ditutup' }}>Ditutup</option>
+                <option value="Ditutup Sebagian" {{ 'selected' if gunung.status_pendakian == 'Ditutup Sebagian' }}>Ditutup Sebagian</option>
+            </select>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -68,9 +73,14 @@
         
         <div class="form-group">
             <label for="gambar">Gambar Gunung (ubah jika perlu)</label>
-            {% if gunung.gambar %}
+            {% set img_val = gunung.gambar if gunung.gambar is defined else None %}
+            {% if img_val %}
                 <div style="margin-bottom:8px;">
-                    <img src="{{ url_for('static', filename='uploads/gunung/' ~ gunung.gambar) }}" alt="Gambar {{ gunung.nama_gunung }}" style="max-width:200px; display:block;" />
+                    {% if img_val.startswith('uploads/') or img_val.startswith('uploads\\') %}
+                        <img src="{{ url_for('static', filename=img_val) }}" alt="Gambar {{ gunung.nama_gunung }}" style="max-width:200px; display:block;" />
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/gunung/' ~ img_val) }}" alt="Gambar {{ gunung.nama_gunung }}" style="max-width:200px; display:block;" />
+                    {% endif %}
                 </div>
             {% endif %}
             <input type="file" id="gambar" name="gambar" accept="image/*" class="form-control">

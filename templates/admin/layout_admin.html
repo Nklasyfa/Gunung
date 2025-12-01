@@ -61,6 +61,13 @@
                     <li class="nav-header">DATA LAYANAN</li>
 
                     <li class="nav-item">
+                        <a href="{{ url_for('admin.jalur') }}" class="nav-link {% if active_page == 'jalur' %}active{% endif %}">
+                            <i class="nav-icon fas fa-route"></i>
+                            <p>Data Jalur Pendakian</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a href="{{ url_for('admin.porter') }}" class="nav-link {% if active_page == 'porter' %}active{% endif %}">
                             <i class="nav-icon fas fa-users"></i>
                             <p>Data Porter</p>
@@ -73,7 +80,14 @@
                             <p>Data Peralatan Sewa</p>
                         </a>
                     </li>
+
                     <li class="nav-header">LAINNYA</li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin.bantuan') }}" class="nav-link {% if active_page == 'bantuan' %}active{% endif %}">
+                            <i class="nav-icon fas fa-question-circle"></i>
+                            <p>Bantuan</p>
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a href="{{ url_for('auth.logout') }}" class="nav-link">
                             <i class="nav-icon fas fa-sign-out-alt text-danger"></i>

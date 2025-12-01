@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Cek Kuota Bulanan{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;padding:20px;">
+    <header>
+        <h1>Cek Kuota Bulanan</h1>
+        <p>Pilih bulan, tahun, dan gunung untuk melihat sisa kuota per jalur.</p>
+    </header>
+
+    <form method="get" style="display:flex; gap:12px; align-items:center; margin:18px 0;">
+        <select name="month" class="form-control" style="width:180px;">
+            {% for mnum, mname in months %}
+                <option value="{{ mnum }}" {% if mnum == month %}selected{% endif %}>{{ mname }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="year" class="form-control" style="width:120px;">
+            {% for y in years %}
+                <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="gunung_id" class="form-control" required style="min-width:260px;">
+            <option value="">-- Pilih Gunung --</option>
+            {% for g in gunung_list %}
+                <option value="{{ g.gunung_id }}" {% if selected_gunung and g.gunung_id == selected_gunung %}selected{% endif %}>{{ g.nama_gunung }}</option>
+            {% endfor %}
+        </select>
+
+        <button class="btn primary" type="submit">CARI</button>
+    </form>
+
+    {% if table_rows and jalur_list %}
+        <div style="overflow:auto;">
+            <table class="table" style="min-width:900px;">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Tanggal</th>
+                        {% for j in jalur_list %}
+                            <th style="white-space:nowrap;">{{ j.nama_jalur }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_rows %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ row.date }}</td>
+                            {% for cell in row.cells %}
+                                <td>{{ cell }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% elif selected_gunung %}
+        <p>Tidak ada data kuota untuk pilihan ini.</p>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -74,6 +74,8 @@ def tambah_gunung():
         nama_gunung = request.form['nama_gunung']
         lokasi = request.form['lokasi']
         ketinggian = request.form['ketinggian']
+        latitude = request.form.get('latitude')
+        longitude = request.form.get('longitude')
         status = request.form['status_pendakian']
         deskripsi = request.form['deskripsi']
         sejarah = request.form['sejarah']
@@ -90,14 +92,14 @@ def tambah_gunung():
         try:
             if gambar_path:
                 cur.execute("""
-                    INSERT INTO gunung (nama_gunung, lokasi, ketinggian, status_pendakian, deskripsi, sejarah, harga_tiket, min_days, max_days, gambar) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days, gambar_path))
+                    INSERT INTO gunung (nama_gunung, lokasi, latitude, longitude, ketinggian, status_pendakian, deskripsi, sejarah, harga_tiket, min_days, max_days, gambar) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (nama_gunung, lokasi, latitude, longitude, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days, gambar_path))
             else:
                 cur.execute("""
-                    INSERT INTO gunung (nama_gunung, lokasi, ketinggian, status_pendakian, deskripsi, sejarah, harga_tiket, min_days, max_days) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days))
+                    INSERT INTO gunung (nama_gunung, lokasi, latitude, longitude, ketinggian, status_pendakian, deskripsi, sejarah, harga_tiket, min_days, max_days) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (nama_gunung, lokasi, latitude, longitude, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days))
             mysql.connection.commit()
             flash(f'Gunung {nama_gunung} berhasil ditambahkan!', 'success')
             return redirect(url_for('admin.gunung'))
@@ -120,6 +122,8 @@ def edit_gunung(id):
         nama_gunung = request.form['nama_gunung']
         lokasi = request.form['lokasi']
         ketinggian = request.form['ketinggian']
+        latitude = request.form.get('latitude')
+        longitude = request.form.get('longitude')
         status = request.form['status_pendakian']
         deskripsi = request.form['deskripsi']
         sejarah = request.form['sejarah']
@@ -135,17 +139,17 @@ def edit_gunung(id):
             if gambar_path:
                 cur.execute("""
                     UPDATE gunung SET 
-                    nama_gunung=%s, lokasi=%s, ketinggian=%s, status_pendakian=%s, 
+                    nama_gunung=%s, lokasi=%s, latitude=%s, longitude=%s, ketinggian=%s, status_pendakian=%s, 
                     deskripsi=%s, sejarah=%s, harga_tiket=%s, min_days=%s, max_days=%s, gambar=%s
                     WHERE gunung_id=%s
-                """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days, gambar_path, id))
+                """, (nama_gunung, lokasi, latitude, longitude, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days, gambar_path, id))
             else:
                 cur.execute("""
                     UPDATE gunung SET 
-                    nama_gunung=%s, lokasi=%s, ketinggian=%s, status_pendakian=%s, 
+                    nama_gunung=%s, lokasi=%s, latitude=%s, longitude=%s, ketinggian=%s, status_pendakian=%s, 
                     deskripsi=%s, sejarah=%s, harga_tiket=%s, min_days=%s, max_days=%s
                     WHERE gunung_id=%s
-                """, (nama_gunung, lokasi, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days, id))
+                """, (nama_gunung, lokasi, latitude, longitude, ketinggian, status, deskripsi, sejarah, harga_tiket, min_days, max_days, id))
             mysql.connection.commit()
             flash(f'Data Gunung {nama_gunung} berhasil diperbarui!', 'success')
             return redirect(url_for('admin.gunung'))
@@ -220,26 +224,45 @@ def tambah_jalur():
         tingkat_kesulitan = request.form.get('tingkat_kesulitan', 'sedang')
         # tersedia expected as '1' or '0' from form
         tersedia = int(request.form.get('tersedia', '1'))
+        harga = request.form.get('harga') or None
         gambar_file = request.files.get('gambar_jalur')
         gambar_path = save_uploaded_file(gambar_file, 'jalur')
 
         try:
+            # Try with harga column first
             if gambar_path:
                 cur.execute("""
-                    INSERT INTO jalur_pendakian (gunung_id, nama_jalur, deskripsi, estimasi, gambar_jalur, tingkat_kesulitan, tersedia, kuota_harian)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (gunung_id, nama_jalur, deskripsi, estimasi, gambar_path, tingkat_kesulitan, tersedia, kuota_harian))
+                    INSERT INTO jalur_pendakian (gunung_id, nama_jalur, deskripsi, estimasi, gambar_jalur, tingkat_kesulitan, tersedia, kuota_harian, harga)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (gunung_id, nama_jalur, deskripsi, estimasi, gambar_path, tingkat_kesulitan, tersedia, kuota_harian, harga))
             else:
                 cur.execute("""
-                    INSERT INTO jalur_pendakian (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian))
+                    INSERT INTO jalur_pendakian (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian, harga)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian, harga))
             mysql.connection.commit()
             flash(f'Jalur {nama_jalur} berhasil ditambahkan!', 'success')
             return redirect(url_for('admin.jalur'))
         except Exception as e:
-            mysql.connection.rollback()
-            flash(f'Gagal menambah jalur: {str(e)}', 'danger')
+            # If harga column doesn't exist, retry without it
+            try:
+                mysql.connection.rollback()
+                if gambar_path:
+                    cur.execute("""
+                        INSERT INTO jalur_pendakian (gunung_id, nama_jalur, deskripsi, estimasi, gambar_jalur, tingkat_kesulitan, tersedia, kuota_harian)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (gunung_id, nama_jalur, deskripsi, estimasi, gambar_path, tingkat_kesulitan, tersedia, kuota_harian))
+                else:
+                    cur.execute("""
+                        INSERT INTO jalur_pendakian (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """, (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian))
+                mysql.connection.commit()
+                flash(f'Jalur {nama_jalur} berhasil ditambahkan!', 'success')
+                return redirect(url_for('admin.jalur'))
+            except Exception as e2:
+                mysql.connection.rollback()
+                flash(f'Gagal menambah jalur: {str(e2)}', 'danger')
         finally:
             cur.close()
 
@@ -263,26 +286,44 @@ def edit_jalur(id):
         kuota_harian = request.form.get('kuota_harian') or 0
         tingkat_kesulitan = request.form.get('tingkat_kesulitan', 'sedang')
         tersedia = int(request.form.get('tersedia', '1'))
+        harga = request.form.get('harga') or None
         gambar_file = request.files.get('gambar_jalur')
         gambar_path = save_uploaded_file(gambar_file, 'jalur')
 
         try:
             if gambar_path:
                 cur.execute("""
-                    UPDATE jalur_pendakian SET gunung_id=%s, nama_jalur=%s, deskripsi=%s, estimasi=%s, gambar_jalur=%s, tingkat_kesulitan=%s, tersedia=%s, kuota_harian=%s
+                    UPDATE jalur_pendakian SET gunung_id=%s, nama_jalur=%s, deskripsi=%s, estimasi=%s, gambar_jalur=%s, tingkat_kesulitan=%s, tersedia=%s, kuota_harian=%s, harga=%s
                     WHERE jalur_id=%s
-                """, (gunung_id, nama_jalur, deskripsi, estimasi, gambar_path, tingkat_kesulitan, tersedia, kuota_harian, id))
+                """, (gunung_id, nama_jalur, deskripsi, estimasi, gambar_path, tingkat_kesulitan, tersedia, kuota_harian, harga, id))
             else:
                 cur.execute("""
-                    UPDATE jalur_pendakian SET gunung_id=%s, nama_jalur=%s, deskripsi=%s, estimasi=%s, tingkat_kesulitan=%s, tersedia=%s, kuota_harian=%s
+                    UPDATE jalur_pendakian SET gunung_id=%s, nama_jalur=%s, deskripsi=%s, estimasi=%s, tingkat_kesulitan=%s, tersedia=%s, kuota_harian=%s, harga=%s
                     WHERE jalur_id=%s
-                """, (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian, id))
+                """, (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian, harga, id))
             mysql.connection.commit()
             flash(f'Jalur {nama_jalur} berhasil diperbarui!', 'success')
             return redirect(url_for('admin.jalur'))
         except Exception as e:
-            mysql.connection.rollback()
-            flash(f'Gagal memperbarui jalur: {str(e)}', 'danger')
+            # If harga column doesn't exist, retry without it
+            try:
+                mysql.connection.rollback()
+                if gambar_path:
+                    cur.execute("""
+                        UPDATE jalur_pendakian SET gunung_id=%s, nama_jalur=%s, deskripsi=%s, estimasi=%s, gambar_jalur=%s, tingkat_kesulitan=%s, tersedia=%s, kuota_harian=%s
+                        WHERE jalur_id=%s
+                    """, (gunung_id, nama_jalur, deskripsi, estimasi, gambar_path, tingkat_kesulitan, tersedia, kuota_harian, id))
+                else:
+                    cur.execute("""
+                        UPDATE jalur_pendakian SET gunung_id=%s, nama_jalur=%s, deskripsi=%s, estimasi=%s, tingkat_kesulitan=%s, tersedia=%s, kuota_harian=%s
+                        WHERE jalur_id=%s
+                    """, (gunung_id, nama_jalur, deskripsi, estimasi, tingkat_kesulitan, tersedia, kuota_harian, id))
+                mysql.connection.commit()
+                flash(f'Jalur {nama_jalur} berhasil diperbarui!', 'success')
+                return redirect(url_for('admin.jalur'))
+            except Exception as e2:
+                mysql.connection.rollback()
+                flash(f'Gagal memperbarui jalur: {str(e2)}', 'danger')
         finally:
             cur.close()
 
@@ -525,3 +566,8 @@ def peralatan():
     return render_template('admin/peralatan.html',
                            peralatan_list=peralatan_list,
                            active_page='peralatan')
+
+@admin_bp.route('/bantuan')
+@admin_required
+def bantuan():
+    return render_template('admin/bantuan.html', active_page='bantuan')

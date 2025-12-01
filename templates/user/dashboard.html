@@ -44,8 +44,13 @@
     <div class="gunung-grid">
         {% for gunung in gunung_list %}
             <div class="card-gunung">
-                {% if gunung.gambar %}
-                    <img src="{{ url_for('static', filename='uploads/' ~ gunung.gambar) }}" alt="{{ gunung.nama_gunung }}" class="card-img">
+                {% set img_val = gunung.gambar if gunung.gambar is defined else None %}
+                {% if img_val %}
+                    {% if img_val.startswith('uploads/') or img_val.startswith('uploads\\') %}
+                        <img src="{{ url_for('static', filename=img_val) }}" alt="{{ gunung.nama_gunung }}" class="card-img">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/gunung/' ~ img_val) }}" alt="{{ gunung.nama_gunung }}" class="card-img">
+                    {% endif %}
                 {% else %}
                     <img src="{{ url_for('static', filename='images/kunung.jpg') }}" alt="{{ _('Tidak Ada Gambar') }}" class="card-img">
                 {% endif %}

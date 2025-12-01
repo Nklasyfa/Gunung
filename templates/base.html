@@ -6,6 +6,8 @@
     <title>{% block title %}Dashboard{% endblock %} - TICKET MOUNT</title> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
+    {% block extra_css %}{% endblock %}
+    
     <style>
         /* === GAYA DARI base.css (Digabung) === */
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
@@ -130,6 +132,33 @@
         table.profile-table td:first-child { font-weight: 600; color: #555; width: 30%; }
         .table-actions { display: flex; gap: 5px; }
         .table-actions .btn { padding: 5px 10px; font-size: 13px; text-transform: none; }
+        
+        /* === Global Back Button Styling === */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(-2px);
+        }
+        
+        .btn-back i {
+            font-size: 16px;
+        }
         
         @media (max-width: 900px) {
             body { flex-direction: column; }
@@ -360,6 +389,158 @@
             padding-top: 10px;
             font-weight: 600;
         }
+        
+        /* === DARK MODE STYLES === */
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            background-image: url("{{ url_for('static', filename='images/bg htiam.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        body.dark-mode .content-area {
+            background-color: transparent;
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #0d0d0d;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+
+        body.dark-mode .sidebar .logo {
+            color: #7A39E0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+        }
+
+        body.dark-mode .sidebar ul li a {
+            color: #b0b0b0;
+            border-radius: 8px;
+        }
+
+        body.dark-mode .sidebar ul li a:hover,
+        body.dark-mode .sidebar ul li a.active {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        body.dark-mode .content-area {
+            background-color: transparent;
+        }
+
+        body.dark-mode .content-card {
+            background: rgba(30, 30, 30, 0.9);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .content-card h2,
+        body.dark-mode .content-card h3 {
+            color: #7A39E0;
+        }
+
+        body.dark-mode header {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        body.dark-mode header h1 {
+            color: #7A39E0;
+        }
+
+        body.dark-mode .form-group label {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .form-control {
+            background-color: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .form-control:focus {
+            border-color: #7A39E0;
+            box-shadow: 0 0 8px rgba(122, 57, 224, 0.3);
+        }
+
+        body.dark-mode textarea.form-control {
+            background-color: rgba(255,255,255,0.05);
+        }
+
+        body.dark-mode .btn.secondary {
+            background-color: rgba(255,255,255,0.1);
+            color: #e0e0e0;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        body.dark-mode .btn.secondary:hover {
+            background-color: rgba(255,255,255,0.15);
+        }
+
+        body.dark-mode table {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode table th {
+            background-color: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #e0e0e0;
+        }
+
+        body.dark-mode table td {
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        body.dark-mode .profile-card {
+            background: rgba(30, 30, 30, 0.9);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .profile-pic {
+            background-color: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        body.dark-mode .payment-summary {
+            background: rgba(20, 20, 25, 0.95);
+        }
+
+        body.dark-mode .payment-panel {
+            background: #0e0e10;
+        }
+
+        /* Dark mode untuk content-area-bg (override background image) */
+        body.dark-mode .content-area-bg {
+            background-image: linear-gradient(rgba(20, 20, 25, 0.7), rgba(20, 20, 25, 0.9)), 
+                              url("{{ url_for('static', filename='images/bg htiam.jpg') }}") !important;
+            background-size: cover !important;
+            background-position: center bottom !important;
+            background-attachment: fixed !important;
+        }
+
+        /* Sidebar dark mode toggle button */
+        .sidebar-dark-toggle {
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-dark-toggle:hover {
+            background: rgba(122, 57, 224, 0.2);
+        }
+
+        body.dark-mode .sidebar-dark-toggle {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .sidebar-dark-toggle:hover {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        /* === END DARK MODE === */
     </style>
 </head>
 <body>
@@ -386,12 +567,14 @@
                     <li><a href="{{ url_for('admin.porter') }}" class="{{ 'active' if active_page == 'porter' }}"><i class="fas fa-users"></i> Data Porter</a></li>
                     <li><a href="{{ url_for('admin.jalur') }}" class="{{ 'active' if active_page == 'jalur' }}"><i class="fas fa-route"></i> Data Jalur</a></li>
                     <li><a href="{{ url_for('admin.peralatan') }}" class="{{ 'active' if active_page == 'peralatan' }}"><i class="fas fa-tools"></i> Data Peralatan Sewa</a></li>
+                    <li><a href="{{ url_for('admin.pemesanan_list') }}" class="{{ 'active' if active_page == 'pemesanan' }}"><i class="fas fa-receipt"></i> Data Pemesanan</a></li>
                     <li><a href="{{ url_for('admin.punish_list') }}" class="{{ 'active' if active_page == 'punish' }}"><i class="fas fa-gavel"></i> Data Punishment</a></li>
                     <li style="padding: 0 15px; font-size: 12px; color: #999; margin-top: 15px; margin-bottom: 5px;">LAINNYA</li>
                     <li><a href="{{ url_for('admin.bantuan') }}" class="{{ 'active' if active_page == 'bantuan' }}"><i class="fas fa-question-circle"></i> Bantuan</a></li>
                 {% else %}
                     <li><a href="{{ url_for('user.user_dashboard') }}" class="{{ 'active' if active_page == 'home' }}"><i class="fas fa-chart-line"></i> Dashboard</a></li>
                     <li><a href="{{ url_for('user.profile') }}" class="{{ 'active' if active_page == 'profile' }}"><i class="fas fa-user-circle"></i> Akun Saya</a></li>
+                    <li><a href="{{ url_for('user.riwayat_pemesanan') }}" class="{{ 'active' if active_page == 'riwayat_pemesanan' }}"><i class="fas fa-receipt"></i> Riwayat Pemesanan</a></li>
                     <li><a href="{{ url_for('user.kuota_bulanan') }}" class="{{ 'active' if active_page == 'kuota_bulanan' }}"><i class="fas fa-calendar-check"></i> Cek Kuota Bulanan</a></li>
                     <li><a href="{{ url_for('user.punish') }}" class="{{ 'active' if active_page == 'punish' }}"><i class="fas fa-gavel"></i> Riwayat Punishment</a></li>
                 {% endif %}
@@ -411,5 +594,43 @@
             {% block content %}{% endblock %}
         </div>
     </div>
+
+    <script>
+    // Global Dark Mode Function (accessible from all pages)
+    function toggleDarkMode() {
+        const body = document.body;
+        const isDark = body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', isDark);
+        
+        // Update button text if button exists
+        const textSpan = document.getElementById('darkModeText');
+        const icon = document.querySelector('#darkModeToggle i');
+        if (textSpan && icon) {
+            if (isDark) {
+                icon.className = 'fas fa-sun';
+                textSpan.textContent = 'Light Mode';
+            } else {
+                icon.className = 'fas fa-moon';
+                textSpan.textContent = 'Dark Mode';
+            }
+        }
+    }
+
+    // Load dark mode preference on page load
+    (function() {
+        const body = document.body;
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (isDarkMode) {
+            body.classList.add('dark-mode');
+            // Update button if exists
+            const textSpan = document.getElementById('darkModeText');
+            const icon = document.querySelector('#darkModeToggle i');
+            if (textSpan && icon) {
+                icon.className = 'fas fa-sun';
+                textSpan.textContent = 'Light Mode';
+            }
+        }
+    })();
+    </script>
 </body>
 </html>

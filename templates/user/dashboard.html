@@ -1,42 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Dasbor Pengguna') }}{% endblock %}
+{% block title %}Dasbor Pengguna{% endblock %}
 
 {% block content_area_class %}content-area-bg{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/dashboard.css') }}">
+{% endblock %}
 
 {% block content %}
 
 <div id="mainDashboard" class="dashboard-container">
 
     <div class="dashboard-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2 style="text-shadow: 0 1px 4px rgba(0,0,0,0.4); color: inherit;">{{ _('Selamat datang') }}, {{ user_nama }}</h2>
+        <h2 style="text-shadow: 0 1px 4px rgba(0,0,0,0.4); color: inherit;">Selamat datang, {{ user_nama }}</h2>
 
         <div class="dashboard-controls" style="display:flex; gap:10px; align-items:center;">
             
-            <button id="darkModeToggle" class="btn-dashboard btn-mode">
-                <i class="fas fa-moon"></i> {{ _('Mode Gelap') }}
+            <button id="darkModeToggle" class="btn-dashboard btn-mode" onclick="toggleDarkMode(); return false;">
+                <i class="fas fa-moon"></i> <span id="darkModeText">Mode Gelap</span>
             </button>
 
-            <div class="dropdown">
-                <button class="btn-dashboard btn-lang">
-                    {% set current_lang = g.lang_code %}
-                    {% if current_lang == 'id' %}ID {{ _('Indonesia') }}
-                    {% elif current_lang == 'en' %}EN {{ _('Inggris') }}
-                    {% elif current_lang == 'zh' %}ZH {{ _('Mandarin') }}
-                    {% elif current_lang == 'ar' %}AR {{ _('Arab') }}
-                    {% endif %}
-                    <i class="fas fa-caret-down"></i>
-                </button>
-                <div class="dropdown-content">
-                    <a href="{{ url_for('user.ubah_bahasa', lang='id') }}">{{ _('Bahasa Indonesia') }}</a>
-                    <a href="{{ url_for('user.ubah_bahasa', lang='en') }}">{{ _('English') }}</a>
-                    <a href="{{ url_for('user.ubah_bahasa', lang='zh') }}">{{ _('中文') }}</a>
-                    <a href="{{ url_for('user.ubah_bahasa', lang='ar') }}">{{ _('العربية') }}</a>
-                </div>
-            </div>
-
             <a href="{{ url_for('user.bantuan') }}" class="btn-dashboard btn-bantuan">
-                <i class="fas fa-question-circle"></i> {{ _('Bantuan') }}
+                <i class="fas fa-question-circle"></i> Bantuan
             </a>
         </div>
     </div>
@@ -52,65 +38,24 @@
                         <img src="{{ url_for('static', filename='uploads/gunung/' ~ img_val) }}" alt="{{ gunung.nama_gunung }}" class="card-img">
                     {% endif %}
                 {% else %}
-                    <img src="{{ url_for('static', filename='images/kunung.jpg') }}" alt="{{ _('Tidak Ada Gambar') }}" class="card-img">
+                    <img src="{{ url_for('static', filename='images/kunung.jpg') }}" alt="Tidak Ada Gambar" class="card-img">
                 {% endif %}
 
                 <h3>{{ gunung.nama_gunung }}</h3>
-                <p>{{ _('Lokasi') }}: {{ gunung.lokasi }}</p>
-                <p>{{ _('Tinggi') }}: {{ gunung.ketinggian }} m</p>
-                <p>{{ _('Status') }}: {{ gunung.status_pendakian }}</p>
+                <p>Lokasi: {{ gunung.lokasi }}</p>
+                <p>Tinggi: {{ gunung.ketinggian }} m</p>
+                <p>Status: {{ gunung.status_pendakian }}</p>
                 
-                <a href="{{ url_for('user.detail_gunung', id=gunung.gunung_id) }}" class="btn-detail">{{ _('Detail') }}</a>
+                <a href="{{ url_for('user.detail_gunung', id=gunung.gunung_id) }}" class="btn-detail">Detail</a>
             </div>
         {% else %}
             <div style="grid-column: 1/-1; background: rgba(255,255,255,0.8); padding: 20px; border-radius: 10px; text-align: center;">
-                <p>{{ _('Tidak ada data gunung.') }}</p>
+                <p>Tidak ada data gunung.</p>
             </div>
         {% endfor %}
     </div>
 
 </div>
-
-<script>
-    const toggleBtn = document.getElementById('darkModeToggle');
-    const body = document.body; 
-
-    // 1. Ambil teks terjemahan dari Jinja2 ke variabel JS
-    const lightModeText = "{{ _('Mode Terang') }}";
-    const darkModeText = "{{ _('Mode Gelap') }}";
-    const moonIcon = '<i class="fas fa-moon"></i>';
-    const sunIcon = '<i class="fas fa-sun"></i>';
-    
-    function updateToggleText(isDark) {
-        if (!toggleBtn) return;
-        if (isDark) {
-            toggleBtn.innerHTML = sunIcon + ' ' + lightModeText;
-        } else {
-            toggleBtn.innerHTML = moonIcon + ' ' + darkModeText;
-        }
-    }
-
-    // A. Cek Memory (LocalStorage) saat loading
-    const currentMode = localStorage.getItem('darkMode');
-    const isDarkOnLoad = currentMode === 'true';
-    if (isDarkOnLoad) {
-        body.classList.add('dark-mode');
-    }
-    updateToggleText(isDarkOnLoad); 
-    
-
-    // B. Fungsi Klik Tombol
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            
-            const isDarkMode = body.classList.contains('dark-mode');
-            
-            localStorage.setItem('darkMode', isDarkMode);
-            updateToggleText(isDarkMode); 
-        });
-    }
-</script>
 
 <style>
 /* =======================================================
@@ -126,11 +71,6 @@
 /* 2. Perbaikan RTL (Right-to-Left) untuk Arab */
 html[dir="rtl"] .dashboard-header {
     flex-direction: row-reverse; 
-}
-
-html[dir="rtl"] .dropdown-content {
-    right: auto;
-    left: 0;
 }
 
 html[dir="rtl"] .card-gunung {
@@ -155,7 +95,7 @@ body {
 
 /* Background DARK MODE (MALAM) */
 body.dark-mode {
-    background-image: url("{{ url_for('static', filename='images/ganung.jpg') }}") !important;
+    background-image: url("{{ url_for('static', filename='images/bg htiam.jpg') }}") !important;
     background-color: #121212 !important;
 }
 
@@ -237,41 +177,6 @@ body.dark-mode {
 .btn-bantuan { background-color: #28a745; }
 .btn-bantuan:hover { background-color: #218838; }
 
-/* --- DROPDOWN BAHASA --- */
-.dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.dropdown-content {
-    display: none;
-    position: absolute;
-    right: 0;
-    background-color: #fff;
-    min-width: 160px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 10;
-    overflow: hidden;
-    animation: fadeIn 0.2s;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.dropdown-content a {
-    color: #333;
-    padding: 10px 14px;
-    text-decoration: none;
-    display: block;
-    transition: background 0.2s;
-}
-
-.dropdown-content a:hover { background-color: #f1f1f1; }
-.dropdown:hover .dropdown-content { display: block; }
-
 /* =========================================
    MODE MALAM / DARK MODE (Styles)
    ========================================= */
@@ -294,10 +199,6 @@ body.dark-mode .btn-detail:hover { background: #9a5dfc; }
 
 body.dark-mode .btn-mode { background-color: #FFD700; color: #121212; }
 body.dark-mode .btn-mode:hover { background-color: #e6c200; }
-
-body.dark-mode .dropdown-content { background-color: #2a2a2a; }
-body.dark-mode .dropdown-content a { color: #e0e0e0; }
-body.dark-mode .dropdown-content a:hover { background-color: #3a3a3a; }
 
 </style>
 

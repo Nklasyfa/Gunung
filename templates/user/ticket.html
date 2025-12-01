@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Tiket #{{ pem.pemesanan_id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .ticket { border: 2px dashed #333; padding: 20px; max-width: 700px; }
+        .ticket h1 { margin: 0 0 10px 0; }
+        .meta { margin-top: 10px; }
+        .meta div { margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <h1>Tiket Pendakian - #{{ pem.pemesanan_id }}</h1>
+        <div class="meta">
+            <div><strong>Gunung:</strong> {{ pem.nama_gunung or pem.gunung_id }}</div>
+            <div><strong>Tanggal Pesan:</strong> {{ pem.tanggal_pesan }}</div>
+            <div><strong>Durasi:</strong> {{ pem.durasi }} hari</div>
+            <div><strong>Jumlah Anggota:</strong> {{ pem.jumlah_anggota }}</div>
+            <div><strong>Total:</strong> Rp {{ "{:,.0f}".format(pem.total_harga or 0) }}</div>
+            <div><strong>Status:</strong> {{ pem.status }}</div>
+        </div>
+        <hr>
+        <p>Silakan bawa tiket ini dalam bentuk cetak atau digital saat melakukan registrasi di pos pendakian.</p>
+    </div>
+</body>
+</html>

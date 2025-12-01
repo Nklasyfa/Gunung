@@ -1,0 +1,433 @@
+/* =====================================================
+   ADMIN DASHBOARD - PROFESSIONAL STYLING
+   ===================================================== */
+
+:root {
+    --admin-primary: #2c3e50;
+    --admin-accent: #3498db;
+    --admin-danger: #e74c3c;
+    --admin-success: #27ae60;
+    --admin-warning: #f39c12;
+    --card-shadow: 0 10px 30px rgba(52, 152, 219, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =====================================================
+   DASHBOARD LAYOUT
+   ===================================================== */
+.dashboard-container {
+    padding: 30px 20px;
+    min-height: 100vh;
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    padding: 30px;
+    border-radius: 20px;
+    color: white;
+    margin-bottom: 40px;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: 50%;
+    transform: translate(100px, -100px);
+}
+
+.dashboard-header h1 {
+    font-size: 2.2rem;
+    margin: 0 0 10px 0;
+    font-weight: 800;
+    position: relative;
+    z-index: 1;
+}
+
+.dashboard-header p {
+    font-size: 1.05rem;
+    margin: 0;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+}
+
+body.dark-mode .dashboard-header {
+    background: linear-gradient(135deg, #1a252f 0%, #243447 100%);
+}
+
+/* =====================================================
+   CONTROLS BAR
+   ===================================================== */
+.dashboard-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode .dashboard-controls {
+    background: rgba(40, 40, 40, 0.7);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* =====================================================
+   STATS GRID
+   ===================================================== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    border-left: 5px solid #3498db;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200px;
+    height: 200px;
+    background: rgba(52, 152, 219, 0.05);
+    border-radius: 50%;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(52, 152, 219, 0.2);
+}
+
+.stat-card.warning {
+    border-left-color: #f39c12;
+}
+
+.stat-card.danger {
+    border-left-color: #e74c3c;
+}
+
+.stat-card.success {
+    border-left-color: #27ae60;
+}
+
+.stat-label {
+    font-size: 0.95rem;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    font-weight: 800;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-trend {
+    font-size: 0.9rem;
+    margin-top: 10px;
+    color: #27ae60;
+}
+
+.stat-trend.negative {
+    color: #e74c3c;
+}
+
+body.dark-mode .stat-card {
+    background: #2a2a2a;
+    border-color: rgba(52, 152, 219, 0.5);
+}
+
+body.dark-mode .stat-label {
+    color: #999;
+}
+
+body.dark-mode .stat-value {
+    color: #ffffff;
+}
+
+/* =====================================================
+   DATA TABLES
+   ===================================================== */
+.table-container {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 30px;
+}
+
+.table-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-container th {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 20px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table-container td {
+    padding: 18px 20px;
+    border-bottom: 1px solid #ecf0f1;
+    color: #2c3e50;
+}
+
+.table-container tr:hover {
+    background: #f8f9fa;
+}
+
+.table-container tr:last-child td {
+    border-bottom: none;
+}
+
+body.dark-mode .table-container {
+    background: #2a2a2a;
+}
+
+body.dark-mode .table-container td {
+    border-bottom-color: #3a3a3a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .table-container tr:hover {
+    background: #323232;
+}
+
+/* =====================================================
+   ACTION BUTTONS
+   ===================================================== */
+.btn-action {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: var(--transition);
+    margin-right: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-edit {
+    background: #3498db;
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+.btn-delete {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+.btn-view {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-view:hover {
+    background: #229954;
+    transform: translateY(-2px);
+}
+
+.btn-approve {
+    background: #f39c12;
+    color: white;
+}
+
+.btn-approve:hover {
+    background: #d68910;
+    transform: translateY(-2px);
+}
+
+/* =====================================================
+   MODAL STYLING
+   ===================================================== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+body.dark-mode .modal-content {
+    background: #2a2a2a;
+    color: #e0e0e0;
+}
+
+/* =====================================================
+   MAIN BUTTONS
+   ===================================================== */
+.btn-admin-dark-toggle {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-admin-dark-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.btn-primary:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+   ===================================================== */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 15px 10px;
+    }
+
+    .dashboard-header {
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .table-container th,
+    .table-container td {
+        padding: 12px;
+        font-size: 0.85rem;
+    }
+
+    .btn-action {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+}

@@ -5,6 +5,16 @@ import calendar
 
 user_bp = Blueprint('user', __name__)
 
+
+def _table_exists(cur, table_name):
+    """Helper: cek apakah tabel ada di schema saat ini."""
+    try:
+        cur.execute("SELECT COUNT(*) as cnt FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = %s", [table_name])
+        r = cur.fetchone()
+        return int(r.get('cnt') or 0) > 0
+    except Exception:
+        return False
+
 @user_bp.route('/home')
 @login_required
 def user_dashboard():
@@ -190,6 +200,16 @@ def pemesanan_tiket(gunung_id):
             FROM peralatan_sewa WHERE stok > 0 ORDER BY nama_peralatan
         """)
         alat_list = cur.fetchall()
+
+        # Get available tiket for this gunung (join with jalur name)
+        cur.execute("""
+            SELECT t.tiket_id, t.jalur_id, t.harga, DATE(t.tanggal_berlaku) as tdate, j.nama_jalur
+            FROM tiket t
+            JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id
+            WHERE j.gunung_id = %s
+            ORDER BY t.tanggal_berlaku
+        """, [gunung_id])
+        tiket_list = cur.fetchall()
         
         # Allow optional jalur_id in querystring so front-end can deep-link from a specific jalur
         selected_jalur_id = request.args.get('jalur_id', type=int)
@@ -211,23 +231,68 @@ def pemesanan_tiket(gunung_id):
 
         if request.method == 'POST':
             # Process booking
-            tanggal_pesan = request.form.get('tanggal_pesan')
+            # Client must submit a tiket_id (explicit date+jalur+harga)
+            tiket_id = request.form.get('tiket_id', type=int)
             durasi = request.form.get('durasi', 1, type=int)
             aktivitas = request.form.get('aktivitas')  # 'tektok' atau 'camp'
-            anggota_ids = request.form.getlist('anggota_ids')
-            porter_ids = request.form.getlist('porter_id')
+
+            # Normalize anggota / porter inputs: the client sometimes submits a single
+            # value (string or int) instead of a list. Ensure we always have a list
+            # of string ids so iteration is safe.
+            def _to_list(value):
+                # value may be: None, list, comma-separated string, single string, or int
+                if value is None:
+                    return []
+                if isinstance(value, list):
+                    out = []
+                    for v in value:
+                        if isinstance(v, str) and ',' in v:
+                            out.extend([s for s in v.split(',') if s != ''])
+                        else:
+                            out.append(str(v))
+                    return out
+                # single scalar
+                if isinstance(value, (int, float)):
+                    return [str(int(value))]
+                if isinstance(value, str):
+                    if value.strip() == '':
+                        return []
+                    if ',' in value:
+                        return [s for s in value.split(',') if s != '']
+                    return [value]
+                try:
+                    return list(value)
+                except Exception:
+                    return []
+
+            anggota_ids = _to_list(request.form.getlist('anggota_ids') or request.form.get('anggota_ids'))
+            porter_ids = _to_list(request.form.getlist('porter_id') or request.form.get('porter_id'))
+
             alat_data_str = request.form.get('alat_id', '[]')
-            
-            # Parse equipment data from JSON
+            # Parse equipment data from JSON. The client may sometimes send a bare int
+            # (e.g. "5") which json.loads will return as an int. Ensure alat_data is a list.
             import json
             try:
-                alat_data = json.loads(alat_data_str) if alat_data_str != '[]' else []
-            except:
-                alat_data = []
+                alat_data = json.loads(alat_data_str) if alat_data_str not in (None, '') else []
+            except Exception:
+                # Fallback: if value looks like comma-separated ids (e.g. "1_2,3_1")
+                try:
+                    if isinstance(alat_data_str, str) and ',' in alat_data_str:
+                        alat_data = [s for s in alat_data_str.split(',') if s != '']
+                    else:
+                        alat_data = [alat_data_str]
+                except Exception:
+                    alat_data = []
+            # Ensure alat_data is iterable (list). If it's a single scalar, wrap it.
+            if not isinstance(alat_data, list):
+                if alat_data in (None, ''):
+                    alat_data = []
+                else:
+                    alat_data = [alat_data]
             
             # Validation
-            if not tanggal_pesan or not aktivitas:
-                flash("Tanggal dan aktivitas harus dipilih.", "warning")
+            if not tiket_id or not aktivitas:
+                flash("Pilih tiket (tanggal/jalur) dan aktivitas.", "warning")
                 return redirect(url_for('user.pemesanan_tiket', gunung_id=gunung_id))
             
             # Use safe defaults if min/max not present
@@ -243,11 +308,27 @@ def pemesanan_tiket(gunung_id):
                 return redirect(url_for('user.pemesanan_tiket', gunung_id=gunung_id))
             
             try:
+                # Resolve tiket info (if provided) and Calculate pricing
+                tiket_row = None
+                if tiket_id:
+                    try:
+                        cur.execute("SELECT tiket_id, jalur_id, harga, tanggal_berlaku FROM tiket WHERE tiket_id = %s", [tiket_id])
+                        tiket_row = cur.fetchone()
+                    except Exception:
+                        tiket_row = None
+
                 # Calculate pricing
+                # sanitize anggota_ids (remove empties) and compute count
+                anggota_ids = [a for a in (anggota_ids or []) if str(a).strip() != '']
                 jumlah_anggota = len(anggota_ids)
-                # Use jalur-level price if available, otherwise fall back to gunung price
+                # Prefer tiket-level price, then jalur-level, then gunung-level
                 per_person_price = 0
-                if jalur_data and jalur_data.get('harga'):
+                if tiket_row and tiket_row.get('harga') is not None:
+                    try:
+                        per_person_price = float(tiket_row.get('harga') or 0)
+                    except Exception:
+                        per_person_price = 0
+                elif jalur_data and jalur_data.get('harga'):
                     per_person_price = float(jalur_data.get('harga') or 0)
                 else:
                     per_person_price = float(gunung_data.get('harga_tiket') or 0)
@@ -256,75 +337,183 @@ def pemesanan_tiket(gunung_id):
                 harga_alat = 0
                 
                 # Calculate porter cost
-                for porter_id in porter_ids:
-                    cur.execute("SELECT harga_per_hari FROM porter WHERE porter_id = %s", [porter_id])
-                    porter = cur.fetchone()
-                    if porter:
-                        harga_porter += float(porter['harga_per_hari']) * durasi
+                for porter_id in (porter_ids or []):
+                    try:
+                        cur.execute("SELECT harga_per_hari FROM porter WHERE porter_id = %s", [porter_id])
+                        porter = cur.fetchone()
+                        if porter:
+                            harga_porter += float(porter.get('harga_per_hari') or 0) * durasi
+                    except Exception:
+                        # ignore individual porter lookup errors and continue
+                        continue
                 
                 # Calculate equipment cost (use peralatan_sewa table)
-                for alat_str in alat_data:
-                    if '_' in str(alat_str):
-                        alat_id, jumlah = str(alat_str).split('_')
-                        jumlah = int(jumlah) if jumlah else 0
-                        if jumlah > 0:
+                for alat_str in (alat_data or []):
+                    try:
+                        s = str(alat_str)
+                        if '_' in s:
+                            alat_id, jumlah = s.split('_')
+                            jumlah = int(jumlah) if jumlah else 0
+                            if jumlah > 0:
+                                cur.execute("SELECT harga_sewa FROM peralatan_sewa WHERE peralatan_id = %s", [alat_id])
+                                alat = cur.fetchone()
+                                if alat:
+                                    harga_alat += float(alat.get('harga_sewa') or 0) * jumlah * durasi
+                        else:
+                            # if client sent just an id as scalar, treat jumlah = 1
+                            alat_id = s
+                            jumlah = 1
                             cur.execute("SELECT harga_sewa FROM peralatan_sewa WHERE peralatan_id = %s", [alat_id])
                             alat = cur.fetchone()
                             if alat:
-                                harga_alat += float(alat['harga_sewa']) * jumlah * durasi
+                                harga_alat += float(alat.get('harga_sewa') or 0) * jumlah * durasi
+                    except Exception:
+                        continue
                 
                 total_harga = harga_tiket + harga_porter + harga_alat
                 
-                # Insert pemesanan
-                cur.execute("""
-                    INSERT INTO pemesanan_tiket 
-                    (user_id, gunung_id, tanggal_pesan, durasi, aktivitas, jumlah_anggota, 
-                     harga_tiket, harga_porter, harga_alat, total_harga, status)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
-                """, (user_id, gunung_id, tanggal_pesan, durasi, aktivitas, jumlah_anggota,
-                      harga_tiket, harga_porter, harga_alat, total_harga))
-                mysql.connection.commit()
-                pemesanan_id = cur.lastrowid
-                
-                # Insert anggota
-                for anggota_id in anggota_ids:
+                # Insert pemesanan. The project has evolved and different DB schemas
+                # exist: older code used `pemesanan_tiket` with many pricing columns;
+                # your SQL dump uses `pemesanan`, `anggota_pemesanan`, `detail_sewa`,
+                # and `sewa_porter`. Detect which table exists and adapt accordingly so
+                # the app can work with your database without schema changes.
+
+                def table_exists(table_name):
+                    try:
+                        cur.execute("SELECT COUNT(*) as cnt FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = %s", [table_name])
+                        r = cur.fetchone()
+                        return int(r.get('cnt') or 0) > 0
+                    except Exception:
+                        return False
+
+                if table_exists('pemesanan_tiket'):
+                    # current code path (keep backward compatible)
+                    # ensure tanggal_pesan is defined (use current timestamp)
+                    tanggal_pesan = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     cur.execute("""
-                        SELECT user_id, nama FROM user WHERE user_id = %s
-                    """, [anggota_id])
-                    anggota = cur.fetchone()
-                    if anggota:
-                        cur.execute("""
-                            INSERT INTO pemesanan_anggota (pemesanan_id, user_id, nama)
-                            VALUES (%s, %s, %s)
-                        """, (pemesanan_id, anggota['user_id'], anggota['nama']))
-                
-                # Insert porter assignments
-                for porter_id in porter_ids:
-                    cur.execute("SELECT harga_per_hari FROM porter WHERE porter_id = %s", [porter_id])
-                    porter = cur.fetchone()
-                    if porter:
-                        cur.execute("""
-                            INSERT INTO pemesanan_porter (pemesanan_id, porter_id, jumlah, harga_per_hari)
-                            VALUES (%s, %s, 1, %s)
-                        """, (pemesanan_id, porter_id, porter['harga_per_hari']))
-                
-                # Insert equipment (use peralatan_sewa table)
-                for alat_str in alat_data:
-                    if '_' in str(alat_str):
-                        alat_id, jumlah = str(alat_str).split('_')
-                        jumlah = int(jumlah) if jumlah else 0
-                        if jumlah > 0:
-                            cur.execute("SELECT harga_sewa FROM peralatan_sewa WHERE peralatan_id = %s", [alat_id])
-                            alat = cur.fetchone()
-                            if alat:
-                                cur.execute("""
-                                    INSERT INTO pemesanan_alat (pemesanan_id, alat_id, jumlah, harga_satuan)
-                                    VALUES (%s, %s, %s, %s)
-                                """, (pemesanan_id, alat_id, jumlah, alat['harga_sewa']))
-                
-                mysql.connection.commit()
-                flash(f"Pemesanan berhasil dibuat! Total: Rp {total_harga:,.0f}", "success")
-                return redirect(url_for('user.user_dashboard'))
+                        INSERT INTO pemesanan_tiket 
+                        (user_id, gunung_id, tanggal_pesan, durasi, aktivitas, jumlah_anggota, 
+                         harga_tiket, harga_porter, harga_alat, total_harga, status)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                    """, (user_id, gunung_id, tanggal_pesan, durasi, aktivitas, jumlah_anggota,
+                          harga_tiket, harga_porter, harga_alat, total_harga))
+                    mysql.connection.commit()
+                    pemesanan_id = cur.lastrowid
+
+                    # Insert anggota
+                    for anggota_id in anggota_ids:
+                        cur.execute("SELECT user_id, nama FROM user WHERE user_id = %s", [anggota_id])
+                        anggota = cur.fetchone()
+                        if anggota:
+                            cur.execute("INSERT INTO pemesanan_anggota (pemesanan_id, user_id, nama) VALUES (%s, %s, %s)",
+                                        (pemesanan_id, anggota['user_id'], anggota['nama']))
+
+                    # Insert porter assignments
+                    for porter_id in porter_ids:
+                        cur.execute("SELECT harga_per_hari FROM porter WHERE porter_id = %s", [porter_id])
+                        porter = cur.fetchone()
+                        if porter:
+                            cur.execute("INSERT INTO pemesanan_porter (pemesanan_id, porter_id, jumlah, harga_per_hari) VALUES (%s, %s, 1, %s)",
+                                        (pemesanan_id, porter_id, porter['harga_per_hari']))
+
+                    # Insert equipment (use peralatan_sewa table)
+                    for alat_str in alat_data:
+                        if '_' in str(alat_str):
+                            alat_id, jumlah = str(alat_str).split('_')
+                            jumlah = int(jumlah) if jumlah else 0
+                            if jumlah > 0:
+                                cur.execute("SELECT harga_sewa FROM peralatan_sewa WHERE peralatan_id = %s", [alat_id])
+                                alat = cur.fetchone()
+                                if alat:
+                                    cur.execute("INSERT INTO pemesanan_alat (pemesanan_id, alat_id, jumlah, harga_satuan) VALUES (%s, %s, %s, %s)",
+                                                (pemesanan_id, alat_id, jumlah, alat['harga_sewa']))
+
+                    mysql.connection.commit()
+                    # Redirect user to pembayaran page for this pemesanan
+                    return redirect(url_for('user.pembayaran', pemesanan_id=pemesanan_id))
+                else:
+                    # Adapt to your provided schema (pemesanan + anggota_pemesanan + detail_sewa + sewa_porter)
+                    # Use the tiket_id provided by the form and verify it exists.
+                    try:
+                        cur.execute("SELECT tiket_id, harga, tanggal_berlaku FROM tiket WHERE tiket_id = %s LIMIT 1", [tiket_id])
+                        r = cur.fetchone()
+                        if not r:
+                            raise Exception('tiket_not_found')
+                    except Exception:
+                        mysql.connection.rollback()
+                        flash('Tidak dapat menemukan tiket (tiket_id) untuk jalur/tanggal yang dipilih. Silakan pilih jalur/tanggal lain.', 'danger')
+                        return redirect(url_for('user.pemesanan_tiket', gunung_id=gunung_id))
+
+                    # Determine booking timestamp (use now) and prepare price columns if present
+                    booking_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    tanggal_pesan_val = booking_time
+
+                    # detect if pemesanan table has price columns
+                    try:
+                        cur.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'pemesanan' AND COLUMN_NAME IN ('harga_tiket','harga_porter','harga_alat','total_harga')")
+                        existing_cols = [c.get('COLUMN_NAME') for c in cur.fetchall()]
+                    except Exception:
+                        existing_cols = []
+
+                    cols = ['user_id','tiket_id','tanggal_pesan','status']
+                    vals = [user_id, tiket_id, tanggal_pesan_val, 'menunggu']
+                    if 'harga_tiket' in existing_cols:
+                        cols.append('harga_tiket'); vals.append(harga_tiket)
+                    if 'harga_porter' in existing_cols:
+                        cols.append('harga_porter'); vals.append(harga_porter)
+                    if 'harga_alat' in existing_cols:
+                        cols.append('harga_alat'); vals.append(harga_alat)
+                    if 'total_harga' in existing_cols:
+                        cols.append('total_harga'); vals.append(total_harga)
+
+                    placeholders = ','.join(['%s'] * len(vals))
+                    cols_sql = ','.join(cols)
+                    cur.execute(f"INSERT INTO pemesanan ({cols_sql}) VALUES ({placeholders})", tuple(vals))
+                    mysql.connection.commit()
+                    pemesanan_id = cur.lastrowid
+
+                    # Insert anggota into anggota_pemesanan (user_id_anggota)
+                    for anggota_id in anggota_ids:
+                        try:
+                            cur.execute("INSERT INTO anggota_pemesanan (pemesanan_id, user_id_anggota) VALUES (%s, %s)", (pemesanan_id, anggota_id))
+                        except Exception:
+                            continue
+
+                    # Insert sewa_porter entries
+                    for porter_id in porter_ids:
+                        try:
+                            cur.execute("SELECT harga_per_hari FROM porter WHERE porter_id = %s", [porter_id])
+                            p = cur.fetchone()
+                            if p:
+                                total_biaya = float(p.get('harga_per_hari') or 0) * durasi
+                                cur.execute("INSERT INTO sewa_porter (pemesanan_id, porter_id, lama_sewa_hari, total_biaya) VALUES (%s, %s, %s, %s)",
+                                            (pemesanan_id, porter_id, durasi, total_biaya))
+                        except Exception:
+                            continue
+
+                    # Insert equipment into detail_sewa
+                    for alat_str in (alat_data or []):
+                        try:
+                            s = str(alat_str)
+                            if '_' in s:
+                                alat_id, jumlah = s.split('_')
+                                jumlah = int(jumlah) if jumlah else 0
+                            else:
+                                alat_id = s
+                                jumlah = 1
+                            if jumlah > 0:
+                                cur.execute("SELECT harga_sewa FROM peralatan_sewa WHERE peralatan_id = %s", [alat_id])
+                                a = cur.fetchone()
+                                if a:
+                                    subtotal = float(a.get('harga_sewa') or 0) * jumlah * durasi
+                                    cur.execute("INSERT INTO detail_sewa (pemesanan_id, peralatan_id, jumlah, subtotal) VALUES (%s, %s, %s, %s)",
+                                                (pemesanan_id, alat_id, jumlah, subtotal))
+                        except Exception:
+                            continue
+
+                    mysql.connection.commit()
+                    # Redirect to pembayaran so user can complete payment
+                    return redirect(url_for('user.pembayaran', pemesanan_id=pemesanan_id))
                 
             except Exception as e:
                 mysql.connection.rollback()
@@ -365,6 +554,14 @@ def pemesanan_tiket(gunung_id):
         'porters': porters_map,
         'alats': alats_map
     }
+    # tiketPrices mapping for client-side lookup
+    tiket_prices_map = {}
+    for t in (locals().get('tiket_list') or []):
+        try:
+            tiket_prices_map[str(t.get('tiket_id'))] = float(t.get('harga') or 0)
+        except Exception:
+            tiket_prices_map[str(t.get('tiket_id'))] = 0.0
+    price_data['tiketPrices'] = tiket_prices_map
     
     # Build users_data untuk client-side JS (untuk lookup user_id)
     users_data = {}
@@ -385,10 +582,167 @@ def pemesanan_tiket(gunung_id):
                            users_list=users_list,
                            porter_list=porter_list,
                            alat_list=alat_list,
+                           tiket_list=locals().get('tiket_list', []),
                            selected_jalur_id=selected_jalur_id,
                            price_data=price_data,
                            users_data=users_data,
                            active_page='home')
+
+
+@user_bp.route('/pembayaran/<int:pemesanan_id>', methods=['GET', 'POST'])
+@login_required
+def pembayaran(pemesanan_id):
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    user_id = session['user_id']
+
+    # verify ownership + load pemesanan (support legacy `pemesanan_tiket` or new `pemesanan` schema)
+    pem = None
+    if _table_exists(cur, 'pemesanan_tiket'):
+        cur.execute("SELECT * FROM pemesanan_tiket WHERE pemesanan_id = %s", [pemesanan_id])
+        pem = cur.fetchone()
+    else:
+        cur.execute("""
+            SELECT p.*, t.harga as tiket_harga, t.tanggal_berlaku as tiket_tanggal, j.jalur_id, j.nama_jalur, g.gunung_id, g.nama_gunung
+            FROM pemesanan p
+            LEFT JOIN tiket t ON p.tiket_id = t.tiket_id
+            LEFT JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id
+            LEFT JOIN gunung g ON j.gunung_id = g.gunung_id
+            WHERE p.pemesanan_id = %s
+        """, [pemesanan_id])
+        pem = cur.fetchone()
+        if pem:
+            # jumlah_anggota: pemesan + anggota_pemesanan
+            try:
+                cur.execute("SELECT COUNT(*) as cnt FROM anggota_pemesanan WHERE pemesanan_id = %s", [pemesanan_id])
+                r = cur.fetchone() or {'cnt': 0}
+                anggota_cnt = int(r.get('cnt') or 0)
+            except Exception:
+                anggota_cnt = 0
+            pem['jumlah_anggota'] = 1 + anggota_cnt
+            # durasi may not be stored in new schema; default to 1
+            try:
+                pem['durasi'] = int(pem.get('durasi') or 1)
+            except Exception:
+                pem['durasi'] = 1
+            # compute total_harga if missing
+            try:
+                if not pem.get('total_harga'):
+                    tiket_price = float(pem.get('tiket_harga') or 0)
+                    harga_tiket = tiket_price * pem['jumlah_anggota']
+                    cur.execute("SELECT COALESCE(SUM(total_biaya),0) as s FROM sewa_porter WHERE pemesanan_id = %s", [pemesanan_id])
+                    rp = cur.fetchone() or {'s': 0}
+                    harga_porter = float(rp.get('s') or 0)
+                    cur.execute("SELECT COALESCE(SUM(subtotal),0) as s FROM detail_sewa WHERE pemesanan_id = %s", [pemesanan_id])
+                    ra = cur.fetchone() or {'s': 0}
+                    harga_alat = float(ra.get('s') or 0)
+                    pem['total_harga'] = harga_tiket + harga_porter + harga_alat
+            except Exception:
+                pem['total_harga'] = pem.get('total_harga') or 0
+
+    if not pem or int(pem.get('user_id')) != int(user_id):
+        cur.close()
+        flash('Pemesanan tidak ditemukan atau Anda tidak berwenang.', 'danger')
+        return redirect(url_for('user.riwayat_pemesanan'))
+
+    if request.method == 'POST':
+        metode = request.form.get('metode') or 'transfer'
+        jumlah = float(pem.get('total_harga') or 0)
+        try:
+            cur.execute("INSERT INTO pembayaran (pemesanan_id, metode_bayar, jumlah, tanggal_bayar, status_bayar) VALUES (%s, %s, %s, NOW(), 'berhasil')",
+                        (pemesanan_id, metode, jumlah))
+            # update status depending on schema
+            if _table_exists(cur, 'pemesanan_tiket'):
+                cur.execute("UPDATE pemesanan_tiket SET status = 'berhasil' WHERE pemesanan_id = %s", [pemesanan_id])
+            else:
+                cur.execute("UPDATE pemesanan SET status = 'berhasil' WHERE pemesanan_id = %s", [pemesanan_id])
+            mysql.connection.commit()
+            flash('Pembayaran berhasil dicatat. Terima kasih!', 'success')
+            return redirect(url_for('user.riwayat_pemesanan'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Gagal memproses pembayaran: {e}', 'danger')
+
+    cur.close()
+    return render_template('user/pembayaran.html', pemesanan=pem, active_page='home')
+
+
+@user_bp.route('/riwayat')
+@login_required
+def riwayat_pemesanan():
+    user_id = session['user_id']
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    try:
+        if _table_exists(cur, 'pemesanan_tiket'):
+            cur.execute("SELECT pt.*, g.nama_gunung FROM pemesanan_tiket pt LEFT JOIN gunung g ON pt.gunung_id = g.gunung_id WHERE pt.user_id = %s ORDER BY pt.pemesanan_id DESC", [user_id])
+            rows = cur.fetchall()
+        else:
+            cur.execute("SELECT p.*, g.nama_gunung FROM pemesanan p LEFT JOIN tiket t ON p.tiket_id = t.tiket_id LEFT JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id LEFT JOIN gunung g ON j.gunung_id = g.gunung_id WHERE p.user_id = %s ORDER BY p.pemesanan_id DESC", [user_id])
+            rows = cur.fetchall()
+    except Exception as e:
+        rows = []
+        flash(f'Error mengambil riwayat: {e}', 'danger')
+    finally:
+        cur.close()
+
+    return render_template('user/riwayat_pemesanan.html', pemesanan_list=rows, active_page='riwayat_pemesanan')
+
+
+@user_bp.route('/ticket/<int:pemesanan_id>/download')
+@login_required
+def download_ticket(pemesanan_id):
+    user_id = session['user_id']
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    pem = None
+    try:
+        if _table_exists(cur, 'pemesanan_tiket'):
+            cur.execute("SELECT pt.*, g.nama_gunung FROM pemesanan_tiket pt LEFT JOIN gunung g ON pt.gunung_id = g.gunung_id WHERE pt.pemesanan_id = %s", [pemesanan_id])
+            pem = cur.fetchone()
+        else:
+            cur.execute("SELECT p.*, t.harga as tiket_harga, j.nama_jalur, g.nama_gunung FROM pemesanan p LEFT JOIN tiket t ON p.tiket_id = t.tiket_id LEFT JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id LEFT JOIN gunung g ON j.gunung_id = g.gunung_id WHERE p.pemesanan_id = %s", [pemesanan_id])
+            pem = cur.fetchone()
+            if pem:
+                try:
+                    cur.execute("SELECT COUNT(*) as cnt FROM anggota_pemesanan WHERE pemesanan_id = %s", [pemesanan_id])
+                    r = cur.fetchone() or {'cnt': 0}
+                    anggota_cnt = int(r.get('cnt') or 0)
+                except Exception:
+                    anggota_cnt = 0
+                pem['jumlah_anggota'] = 1 + anggota_cnt
+                try:
+                    pem['durasi'] = int(pem.get('durasi') or 1)
+                except Exception:
+                    pem['durasi'] = 1
+                # compute total if missing
+                try:
+                    if not pem.get('total_harga'):
+                        tiket_price = float(pem.get('tiket_harga') or 0)
+                        harga_tiket = tiket_price * pem['jumlah_anggota']
+                        cur.execute("SELECT COALESCE(SUM(total_biaya),0) as s FROM sewa_porter WHERE pemesanan_id = %s", [pemesanan_id])
+                        rp = cur.fetchone() or {'s': 0}
+                        harga_porter = float(rp.get('s') or 0)
+                        cur.execute("SELECT COALESCE(SUM(subtotal),0) as s FROM detail_sewa WHERE pemesanan_id = %s", [pemesanan_id])
+                        ra = cur.fetchone() or {'s': 0}
+                        harga_alat = float(ra.get('s') or 0)
+                        pem['total_harga'] = harga_tiket + harga_porter + harga_alat
+                except Exception:
+                    pem['total_harga'] = pem.get('total_harga') or 0
+    finally:
+        cur.close()
+
+    if not pem or int(pem.get('user_id')) != int(user_id):
+        flash('Pemesanan tidak ditemukan atau Anda tidak berwenang.', 'danger')
+        return redirect(url_for('user.riwayat_pemesanan'))
+
+    # Render ticket HTML and force download as attachment
+    rendered = render_template('user/ticket.html', pem=pem)
+    from flask import make_response
+    resp = make_response(rendered)
+    resp.headers['Content-Type'] = 'text/html; charset=utf-8'
+    resp.headers['Content-Disposition'] = f'attachment; filename=ticket_{pemesanan_id}.html'
+    return resp
 
 
 @user_bp.route('/kuota-bulanan')
@@ -529,12 +883,6 @@ def kuota_bulanan():
 @login_required
 def bantuan():
     return render_template('user/bantuan.html', active_page='bantuan')
-
-@user_bp.route('/ubah-bahasa/<lang>')
-@login_required
-def ubah_bahasa(lang):
-    session['language'] = lang
-    return redirect(request.referrer or url_for('user.user_dashboard'))
 
 @user_bp.route('/punish')
 @login_required

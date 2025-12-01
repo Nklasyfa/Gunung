@@ -7,6 +7,15 @@ from datetime import datetime
 
 admin_bp = Blueprint('admin', __name__)
 
+
+def _table_exists(cur, table_name):
+    try:
+        cur.execute("SELECT COUNT(*) as cnt FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = %s", [table_name])
+        r = cur.fetchone()
+        return int(r.get('cnt') or 0) > 0
+    except Exception:
+        return False
+
 # allowed extensions for uploaded images
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -67,6 +76,42 @@ def gunung():
     return render_template('admin/gunung.html',
                            gunung_list=gunung_list,
                            active_page='gunung')
+
+
+@admin_bp.route('/pemesanan')
+@admin_required
+def pemesanan_list():
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    try:
+        if _table_exists(cur, 'pemesanan_tiket'):
+            cur.execute("""
+                SELECT pt.*, u.nama as pemesan_nama, g.nama_gunung
+                FROM pemesanan_tiket pt
+                LEFT JOIN user u ON pt.user_id = u.user_id
+                LEFT JOIN gunung g ON pt.gunung_id = g.gunung_id
+                ORDER BY pt.pemesanan_id DESC
+            """)
+            rows = cur.fetchall()
+        else:
+            # adapt to newer schema: pemesanan + tiket -> jalur -> gunung
+            cur.execute("""
+                SELECT p.*, u.nama as pemesan_nama, g.nama_gunung
+                FROM pemesanan p
+                LEFT JOIN user u ON p.user_id = u.user_id
+                LEFT JOIN tiket t ON p.tiket_id = t.tiket_id
+                LEFT JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id
+                LEFT JOIN gunung g ON j.gunung_id = g.gunung_id
+                ORDER BY p.pemesanan_id DESC
+            """)
+            rows = cur.fetchall()
+    except Exception as e:
+        rows = []
+        flash(f"Error mengambil data pemesanan: {e}", 'danger')
+    finally:
+        cur.close()
+
+    return render_template('admin/pemesanan.html', pemesanan_list=rows, active_page='pemesanan')
 
 @admin_bp.route('/gunung/tambah', methods=['GET', 'POST'])
 @admin_required

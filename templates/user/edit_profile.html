@@ -2,44 +2,52 @@
 
 {% block title %}Edit Profil{% endblock %}
 
+{% block content_area_class %}content-area-bg{% endblock %}
+
 {% block content %}
-<header>
-    <h1>Ubah Data Profil</h1>
-    <p>Perbarui informasi kontak dan alamat Anda di bawah ini.</p>
-</header>
-
-<div class="content-card" style="max-width: 600px;">
-    <form action="{{ url_for('user.edit_profile') }}" method="post">
-        
-        <div class="form-group">
-            <label for="email">Email (Tidak dapat diubah)</label>
-            <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" readonly disabled style="background: #f4f4f4;">
+<div style="display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 40px 20px;">
+    <div class="content-card" style="max-width: 500px; width: 100%;">
+        <div style="margin-bottom: 20px;">
+            <a href="javascript:history.back()" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </a>
         </div>
 
-        <div class="form-group">
-            <label for="nama">Nama Lengkap</label>
-            <input type="text" id="nama" name="nama" class="form-control" value="{{ user.nama }}" required>
-        </div>
+        <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 10px;">Ubah Data Profil</h2>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">Perbarui informasi kontak dan alamat Anda di bawah ini.</p>
         
-        <div class="form-group">
-            <label for="no_hp">Nomor HP</label>
-            <input type="text" id="no_hp" name="no_hp" class="form-control" value="{{ user.no_hp }}" required>
-        </div>
+        <form action="{{ url_for('user.edit_profile') }}" method="post">
+            
+            <div class="form-group">
+                <label for="email">Email (Tidak dapat diubah)</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" readonly disabled style="background: #f4f4f4;">
+            </div>
 
-        <div class="form-group">
-            <label for="nik">NIK (Nomor Identitas Kependudukan)</label>
-            <input type="text" id="nik" name="nik" class="form-control" value="{{ user.nik or '' }}" placeholder="Contoh: 3201234567891234" maxlength="16" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="alamat">Alamat</label>
-            <textarea id="alamat" name="alamat" class="form-control" required>{{ user.alamat }}</textarea>
-        </div>
-        
-        <div class="button-group">
-            <button type="submit" class="btn primary">Simpan Perubahan</button>
-            <a href="{{ url_for('user.profile') }}" class="btn secondary">Batal</a>
-        </div>
-    </form>
+            <div class="form-group">
+                <label for="nama">Nama Lengkap</label>
+                <input type="text" id="nama" name="nama" class="form-control" value="{{ user.nama }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="no_hp">Nomor HP</label>
+                <input type="text" id="no_hp" name="no_hp" class="form-control" value="{{ user.no_hp }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="nik">NIK (Nomor Identitas Kependudukan)</label>
+                <input type="text" id="nik" name="nik" class="form-control" value="{{ user.nik or '' }}" placeholder="Contoh: 3201234567891234" maxlength="16" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="alamat">Alamat</label>
+                <textarea id="alamat" name="alamat" class="form-control" required>{{ user.alamat }}</textarea>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn primary">Simpan Perubahan</button>
+                <a href="{{ url_for('user.profile') }}" class="btn secondary">Batal</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

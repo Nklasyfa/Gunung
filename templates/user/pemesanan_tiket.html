@@ -2,8 +2,16 @@
 
 {% block title %}Pemesanan Tiket - {{ gunung.nama_gunung }}{% endblock %}
 
+{% block content_area_class %}content-area-bg{% endblock %}
+
 {% block content %}
 <div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <div style="margin-bottom: 20px;">
+        <a href="javascript:history.back()" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </a>
+    </div>
+
     <header>
         <h1>Pemesanan Tiket Gunung {{ gunung.nama_gunung }}</h1>
         <p>Isi formulir di bawah untuk melakukan pemesanan perjalanan.</p>
@@ -15,10 +23,15 @@
         <div class="content-card">
             <form id="bookingForm" action="{{ url_for('user.pemesanan_tiket', gunung_id=gunung.gunung_id) }}" method="POST">
                 
-                <!-- Tanggal Pemesanan -->
+                <!-- Pilih Tiket (tanggal + jalur) -->
                 <div class="form-group">
-                    <label for="tanggal_pesan">Tanggal Keberangkatan</label>
-                    <input type="date" id="tanggal_pesan" name="tanggal_pesan" class="form-control" required>
+                    <label for="tiket_id">Pilih Tiket (Tanggal / Jalur)</label>
+                    <select id="tiket_id" name="tiket_id" class="form-control" onchange="updatePrice()" required>
+                        <option value="">-- Pilih Tiket --</option>
+                        {% for t in tiket_list %}
+                            <option value="{{ t.tiket_id }}">{{ t.tdate }} — {{ t.nama_jalur }} — Rp {{ "{:,.0f}".format(t.harga) }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
 
                 <!-- Durasi & Aktivitas -->
@@ -198,7 +211,7 @@
     </div>
 </div>
 
-// embed price data safely (avoid Jinja inside JS expressions) -->
+<!-- embed price data safely (avoid Jinja inside JS expressions) -->
 <div id="priceDataRaw" data-price='{{ price_data | tojson | safe }}' style="display:none"></div>
 
 <!-- Store users data for lookup -->
@@ -337,8 +350,11 @@ function updatePrice() {
     const anggotaHiddenInputs = document.querySelectorAll('input[name="anggota_ids"]:not([value=""])');
     const jumlahAnggota = anggotaHiddenInputs.length;
 
-    // Calculate ticket price
-    const subtotalTiket = (priceData.hargaTiket || 0) * jumlahAnggota;
+    // Calculate ticket price (use selected tiket's price when available)
+    const tiketSel = document.getElementById('tiket_id');
+    const tiketId = tiketSel ? tiketSel.value : '';
+    const perPerson = (priceData.tiketPrices && priceData.tiketPrices[tiketId]) ? priceData.tiketPrices[tiketId] : (priceData.hargaTiket || 0);
+    const subtotalTiket = perPerson * jumlahAnggota;
     document.getElementById('jumlahAnggota').textContent = jumlahAnggota + ' orang';
     document.getElementById('subtotalTiket').textContent = formatCurrency(subtotalTiket);
 
@@ -416,10 +432,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // attach event listeners to update price dynamically
-    document.querySelectorAll('#durasi, input[name="aktivitas"], input[name="porter_id"], .alat-qty').forEach(function(el){
+    document.querySelectorAll('#tiket_id, #durasi, input[name="aktivitas"], input[name="porter_id"], .alat-qty').forEach(function(el){
         el.addEventListener('change', updatePrice);
     });
-
     // initial price calc
     updatePrice();
 });

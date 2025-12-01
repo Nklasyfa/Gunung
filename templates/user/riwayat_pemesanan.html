@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Riwayat Pemesanan{% endblock %}
+
+{% block content_area_class %}content-area-bg{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <h2>Riwayat Pemesanan</h2>
+    <p>Daftar pemesanan tiket yang pernah Anda buat.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Gunung</th>
+                <th>Tanggal Pesan</th>
+                <th>Durasi</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if pemesanan_list %}
+                {% for p in pemesanan_list %}
+                    <tr>
+                        <td>{{ p.pemesanan_id }}</td>
+                        <td>{{ p.nama_gunung or p.gunung_id }}</td>
+                        <td>{{ p.tanggal_pesan }}</td>
+                        <td>{{ p.durasi }} hari</td>
+                        <td>Rp {{ "{:,.0f}".format(p.total_harga or 0) }}</td>
+                        <td>{{ p.status }}</td>
+                        <td>
+                            {% if p.status != 'berhasil' %}
+                                <a class="btn primary" href="{{ url_for('user.pembayaran', pemesanan_id=p.pemesanan_id) }}">Bayar</a>
+                            {% endif %}
+                            <a class="btn secondary" href="{{ url_for('user.download_ticket', pemesanan_id=p.pemesanan_id) }}">Download Tiket</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="7">Belum ada riwayat pemesanan.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

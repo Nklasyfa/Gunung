@@ -1,0 +1,382 @@
+/* ===================================================
+   Payment Page Styles - Dark Split Layout
+   Hanya untuk halaman pembayaran (pembayaran.html)
+   ================================================== */
+
+/* Main payment page grid layout */
+.payment-page {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 30px;
+    align-items: start;
+}
+
+/* Left side: Order Summary */
+.payment-summary {
+    background: rgba(0, 0, 0, 0.85);
+    color: #ddd;
+    padding: 20px;
+    border-radius: 12px;
+    min-height: 300px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.payment-summary h3 {
+    color: #fff;
+    margin-bottom: 12px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.payment-summary > div:first-of-type {
+    margin-bottom: 16px;
+    color: #aaa;
+    font-size: 14px;
+}
+
+.order-line {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    color: #ccc;
+    font-size: 15px;
+}
+
+.order-line-label {
+    flex: 1;
+}
+
+.order-line-value {
+    font-weight: 600;
+    color: #eee;
+}
+
+.order-total {
+    font-weight: 800;
+    color: #2bb6ff;
+    font-size: 18px;
+}
+
+.order-total .order-line-label {
+    color: #fff;
+}
+
+.order-total .order-line-value {
+    color: #2bb6ff;
+}
+
+.payment-summary hr {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin: 12px 0;
+}
+
+.payment-summary-info {
+    margin-top: 16px;
+    color: #bbb;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Right side: Payment Panel */
+.payment-panel {
+    background: #0e0e10;
+    color: #eee;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.payment-panel h3 {
+    color: #fff;
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pm-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #111;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pm-option:hover {
+    background: #1a1a1d;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.pm-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.pm-content {
+    flex: 1;
+}
+
+.pm-label {
+    font-weight: 700;
+    color: #fff;
+    font-size: 15px;
+}
+
+.pm-sub {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* Metode details boxes (bank transfer / e-wallet) */
+.method-details {
+    background: #0b0b0b;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 12px;
+    border-radius: 8px;
+    color: #ccc;
+    margin-top: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.method-details strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+.method-details.hidden {
+    display: none;
+}
+
+.bank-details {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+    font-family: 'Courier New', monospace;
+    color: #bbb;
+}
+
+.bank-info {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+    font-family: 'Courier New', monospace;
+    color: #bbb;
+}
+
+/* Bank selection dropdown/radio */
+.bank-selector {
+    margin-top: 12px;
+    padding: 12px;
+    background: #0b0b0b;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+}
+
+.bank-selector label {
+    display: block;
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.bank-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bank-option-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #111;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bank-option-item:hover {
+    background: #1a1a1d;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.bank-option-item input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.bank-option-item .bank-name {
+    flex: 1;
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.bank-option-item .bank-logo {
+    font-size: 12px;
+    color: #666;
+    font-weight: 700;
+}
+
+/* Bank details display */
+.bank-account-details {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #ccc;
+}
+
+.bank-account-details .account-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.bank-account-details .account-row:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.bank-account-details .label {
+    color: #999;
+    font-weight: 600;
+}
+
+.bank-account-details .value {
+    color: #2bb6ff;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+.bank-info .account-number {
+    color: #2bb6ff;
+    font-weight: 700;
+}
+
+.ewallet-info {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+    color: #bbb;
+}
+
+.ewallet-info li {
+    margin-bottom: 6px;
+}
+
+.ewallet-info em {
+    color: #aaa;
+    font-style: italic;
+}
+
+/* Payment form button group */
+.payment-button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.payment-button-group .btn {
+    flex: 1;
+}
+
+.payment-button-group .btn.primary {
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 12px;
+}
+
+.payment-button-group .btn.secondary {
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 12px;
+}
+
+/* Form styling for payment */
+.payment-form-group {
+    margin-bottom: 16px;
+}
+
+.payment-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+/* Responsive: Stack on smaller screens */
+@media (max-width: 900px) {
+    .payment-page {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-panel {
+        padding: 16px;
+    }
+
+    .payment-summary {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .payment-page {
+        gap: 20px;
+    }
+
+    .payment-summary h3,
+    .payment-panel h3 {
+        font-size: 18px;
+    }
+
+    .order-line {
+        font-size: 14px;
+    }
+
+    .order-total {
+        font-size: 16px;
+    }
+
+    .pm-option {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    .payment-button-group {
+        flex-direction: column;
+    }
+}

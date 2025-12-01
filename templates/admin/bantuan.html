@@ -4,84 +4,63 @@
 
 {% block content_area_class %}content-area-bg{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/bantuan.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <div class="dashboard-container">
 
     <div class="dashboard-controls" style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; justify-content:flex-end;">
 
-        <button id="darkModeToggle" class="btn-dashboard btn-mode">
-            <i class="fas fa-moon"></i> Dark Mode
+        <button id="darkModeToggle" onclick="toggleDarkMode(); return false;" class="btn-dashboard btn-bantuan" style="background-color: #6f42c1;">
+            <i class="fas fa-moon"></i> <span id="darkModeText">Dark Mode</span>
         </button>
 
-        <div class="dropdown">
-            <button class="btn-dashboard btn-lang" id="langBtnDisplay">
-                🇮🇩 Bahasa Indonesia <i class="fas fa-caret-down"></i>
-            </button>
-            <div class="dropdown-content">
-                <a href="#" onclick="setLanguage('id'); return false;">🇮🇩 Bahasa Indonesia</a>
-                <a href="#" onclick="setLanguage('en'); return false;">🇺🇸 English</a>
-            </div>
-        </div>
-
         <button onclick="history.back()" class="btn-dashboard btn-bantuan" style="background-color: #6c757d;">
-            <i class="fas fa-arrow-left"></i> <span class="lang-text" data-id="Kembali" data-en="Go Back">Kembali</span>
+            <i class="fas fa-arrow-left"></i> Kembali
         </button>
     </div>
 
     <header style="text-align:center; margin-bottom:30px;">
-        <h1 class="page-title lang-text" data-id="Pusat Bantuan Administrator" data-en="Administrator Help Center">
-            Pusat Bantuan Administrator
-        </h1>
-        <p class="page-subtitle lang-text" data-id="Panduan pengelolaan sistem dan manajemen data."
-           data-en="System management guides and data administration.">
-            Panduan pengelolaan sistem dan manajemen data.
-        </p>
+        <h1 class="page-title">Pusat Bantuan Administrator</h1>
+        <p class="page-subtitle">Panduan pengelolaan sistem dan manajemen data.</p>
     </header>
 
     <div class="content-card">
 
         <section class="help-section">
-            <h3><i class="fas fa-tools"></i>
-                <span class="lang-text" data-id="Manajemen Data Gunung" data-en="Mountain Data Management">Manajemen Data Gunung</span>
-            </h3>
+            <h3><i class="fas fa-tools"></i> Manajemen Data Gunung</h3>
             <ul>
-                <li class="lang-text" data-id="Cara menambahkan gunung baru (+ Foto)" data-en="How to add new mountain (+ Photos)">Cara menambahkan gunung baru (+ Foto)</li>
-                <li class="lang-text" data-id="Mengedit harga tiket & kuota" data-en="Editing ticket prices & quota">Mengedit harga tiket & kuota</li>
-                <li class="lang-text" data-id="Menghapus data gunung yang tidak aktif" data-en="Deleting inactive mountain data">Menghapus data gunung yang tidak aktif</li>
-                <li class="lang-text" data-id="Mengatur status jalur (Buka/Tutup)" data-en="Setting route status (Open/Close)">Mengatur status jalur (Buka/Tutup)</li>
+                <li>Cara menambahkan gunung baru (+ Foto)</li>
+                <li>Mengedit harga tiket & kuota</li>
+                <li>Menghapus data gunung yang tidak aktif</li>
+                <li>Mengatur status jalur (Buka/Tutup)</li>
             </ul>
         </section>
 
         <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 20px 0;">
 
         <section class="help-section">
-            <h3><i class="fas fa-shield-alt"></i>
-                <span class="lang-text" data-id="Kendala Teknis (FAQ)" data-en="Technical Issues (FAQ)">Kendala Teknis (FAQ)</span>
-            </h3>
+            <h3><i class="fas fa-shield-alt"></i> Kendala Teknis (FAQ)</h3>
 
             <div class="faq-item">
-                <p><strong>Q: <span class="lang-text" data-id="Kenapa saya tidak bisa menghapus gunung?" data-en="Why can't I delete a mountain?">Kenapa saya tidak bisa menghapus gunung?</span></strong></p>
-                <p>A: <span class="lang-text" data-id="Gunung tidak bisa dihapus jika masih ada pesanan aktif dari pendaki." data-en="Mountain cannot be deleted if there are active bookings from hikers.">Gunung tidak bisa dihapus jika masih ada pesanan aktif dari pendaki.</span></p>
+                <p><strong>Q: Kenapa saya tidak bisa menghapus gunung?</strong></p>
+                <p>A: Gunung tidak bisa dihapus jika masih ada pesanan aktif dari pendaki.</p>
             </div>
 
             <div class="faq-item">
-                <p><strong>Q: <span class="lang-text" data-id="Bagaimana cara verifikasi pembayaran?" data-en="How to verify payments?">Bagaimana cara verifikasi pembayaran?</span></strong></p>
-                <p>A: <span class="lang-text" data-id="Masuk ke menu 'Pesanan', cek bukti transfer, lalu klik tombol 'Terima'." data-en="Go to 'Orders' menu, check transfer proof, then click 'Accept'.">Masuk ke menu 'Pesanan', cek bukti transfer, lalu klik tombol 'Terima'.</span></p>
+                <p><strong>Q: Bagaimana cara verifikasi pembayaran?</strong></p>
+                <p>A: Masuk ke menu 'Pesanan', cek bukti transfer, lalu klik tombol 'Terima'.</p>
             </div>
         </section>
 
         <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 20px 0;">
 
         <section class="help-section">
-            <h3><i class="fas fa-code"></i>
-                <span class="lang-text" data-id="Hubungi Tim IT / Developer" data-en="Contact IT Team / Developer">Hubungi Tim IT / Developer</span>
-            </h3>
-            <p class="lang-text" style="margin-bottom:15px;"
-               data-id="Jika terjadi error sistem (Bug), segera laporkan ke developer:"
-               data-en="If a system error (Bug) occurs, report immediately to developer:">
-                Jika terjadi error sistem (Bug), segera laporkan ke developer:
-            </p>
+            <h3><i class="fas fa-code"></i> Hubungi Tim IT / Developer</h3>
+            <p style="margin-bottom:15px;">Jika terjadi error sistem (Bug), segera laporkan ke developer:</p>
 
             <div style="display:flex; gap:15px; flex-wrap:wrap;">
                 <a href="#" class="btn-dashboard btn-contact whatsapp"><i class="fab fa-whatsapp"></i> Chat Developer</a>
@@ -91,50 +70,6 @@
 
     </div>
 </div>
-
-<script>
-    // --- 1. DARK MODE ---
-    const toggleBtn = document.getElementById('darkModeToggle');
-    const body = document.body;
-
-    if (localStorage.getItem('darkMode') === 'true') {
-        body.classList.add('dark-mode');
-        if(toggleBtn) toggleBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
-    }
-
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            const isDarkMode = body.classList.contains('dark-mode');
-            localStorage.setItem('darkMode', isDarkMode);
-
-            if (isDarkMode) {
-                toggleBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
-            } else {
-                toggleBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
-            }
-        });
-    }
-
-    // --- 2. BAHASA ---
-    function setLanguage(lang) {
-        localStorage.setItem('lang', lang);
-        
-        const btnDisplay = document.getElementById('langBtnDisplay');
-        if(lang === 'en') {
-            btnDisplay.innerHTML = '🇺🇸 English <i class="fas fa-caret-down"></i>';
-        } else {
-            btnDisplay.innerHTML = '🇮🇩 Bahasa Indonesia <i class="fas fa-caret-down"></i>';
-        }
-
-        document.querySelectorAll(".lang-text").forEach(el => {
-            el.textContent = el.getAttribute(`data-${lang}`);
-        });
-    }
-
-    const savedLang = localStorage.getItem('lang') || 'id';
-    setLanguage(savedLang);
-</script>
 
 <style>
 /* =======================================================
@@ -152,7 +87,7 @@ body {
 }
 
 body.dark-mode {
-    background-image: url("{{ url_for('static', filename='images/ganung.jpg') }}") !important;
+    background-image: url("{{ url_for('static', filename='images/bg htiam.jpg') }}") !important;
     background-color: #121212 !important;
 }
 
@@ -176,14 +111,6 @@ body.dark-mode {
     border-top: 5px solid #7A39E0; /* Aksen Ungu di atas khusus Admin */
 }
 
-body.dark-mode .content-card {
-    background: rgba(30, 30, 30, 0.85);
-    color: #e0e0e0;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-top: 5px solid #A27EDD;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-}
-
 .page-title {
     color: #333;
     text-shadow: 0 1px 3px rgba(255,255,255,0.5);
@@ -191,15 +118,10 @@ body.dark-mode .content-card {
 }
 .page-subtitle { color: #555; font-weight: 600; }
 
-body.dark-mode .page-title { color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-body.dark-mode .page-subtitle { color: #ccc; }
-
 .help-section h3 { margin-bottom: 15px; color: #7A39E0; }
-body.dark-mode .help-section h3 { color: #A27EDD; }
 
 ul li { margin-bottom: 8px; font-weight: 500; }
 .faq-item { margin-bottom: 15px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
-body.dark-mode .faq-item { background: rgba(255,255,255,0.05); }
 
 /* =======================================================
    TOMBOL & DROPDOWN
@@ -219,37 +141,11 @@ body.dark-mode .faq-item { background: rgba(255,255,255,0.05); }
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-.btn-mode { background-color: #6f42c1; }
-.btn-mode:hover { background-color: #5936a0; }
-.btn-lang { background-color: #007bff; }
-.btn-lang:hover { background-color: #0056b3; }
-
 /* Warna Tombol Kontak Admin */
 .whatsapp { background-color: #25D366; }
 .email { background-color: #D44638; }
 
-body.dark-mode .btn-mode { background-color: #FFD700; color: #121212; }
-body.dark-mode .btn-dashboard:hover { transform: translateY(-2px); }
-
-.dropdown { position: relative; display: inline-block; }
-.dropdown-content {
-    display: none;
-    position: absolute;
-    right: 0;
-    background-color: #fff;
-    min-width: 160px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 10;
-    overflow: hidden;
-}
-.dropdown-content a { color: #333; padding: 10px 14px; text-decoration: none; display: block; }
-.dropdown-content a:hover { background-color: #f1f1f1; }
-.dropdown:hover .dropdown-content { display: block; }
-
-body.dark-mode .dropdown-content { background-color: #2a2a2a; }
-body.dark-mode .dropdown-content a { color: #e0e0e0; }
-body.dark-mode .dropdown-content a:hover { background-color: #3a3a3a; }
+.btn-dashboard:hover { transform: translateY(-2px); }
 
 </style>
 

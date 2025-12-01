@@ -24,3 +24,137 @@
     </ul>
 </nav>
 {% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== ADMIN DARK MODE WITH BACKGROUND IMAGES ===== */
+    
+    /* Light Mode - Admin Dashboard */
+    body:not(.dark-mode) {
+        background-image: linear-gradient(rgba(245, 245, 245, 0.8), rgba(245, 245, 245, 1)), url("{{ url_for('static', filename='images/kunung.jpg') }}");
+        background-size: cover;
+        background-position: center bottom;
+        background-attachment: fixed;
+    }
+
+    body:not(.dark-mode) .content-area {
+        background: transparent;
+    }
+
+    /* Dark Mode - Admin Dashboard */
+    body.dark-mode {
+        background-image: linear-gradient(rgba(20, 20, 25, 0.7), rgba(20, 20, 25, 0.9)), url("{{ url_for('static', filename='images/bg htiam.jpg') }}");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+
+    body.dark-mode .content-area {
+        background: transparent;
+    }
+
+    body.dark-mode .sidebar {
+        background-color: rgba(13, 13, 13, 0.95);
+        box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+        border-right: 1px solid rgba(255,255,255,0.1);
+    }
+
+    body.dark-mode .sidebar .logo {
+        color: #7A39E0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 15px;
+    }
+
+    body.dark-mode .sidebar ul li a {
+        color: #b0b0b0;
+        border-radius: 8px;
+    }
+
+    body.dark-mode .sidebar ul li a:hover,
+    body.dark-mode .sidebar ul li a.active {
+        background-color: var(--primary-color);
+        color: #fff;
+    }
+
+    body.dark-mode .content-card {
+        background: rgba(30, 30, 30, 0.9);
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .content-card h2,
+    body.dark-mode .content-card h3 {
+        color: #7A39E0;
+    }
+
+    body.dark-mode header {
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    body.dark-mode header h1 {
+        color: #7A39E0;
+    }
+
+    body.dark-mode .dashboard-header h1 {
+        color: #7A39E0;
+    }
+
+    body.dark-mode .dashboard-header p {
+        color: #b0b0b0;
+    }
+
+    body.dark-mode .form-group label {
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .form-control {
+        background-color: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .form-control:focus {
+        border-color: #7A39E0;
+        box-shadow: 0 0 8px rgba(122, 57, 224, 0.3);
+    }
+
+    body.dark-mode textarea.form-control {
+        background-color: rgba(255,255,255,0.05);
+    }
+
+    body.dark-mode .btn.secondary {
+        background-color: rgba(255,255,255,0.1);
+        color: #e0e0e0;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    body.dark-mode .btn.secondary:hover {
+        background-color: rgba(255,255,255,0.15);
+    }
+
+    body.dark-mode .btn.danger {
+        background-color: #f44336;
+    }
+
+    body.dark-mode table {
+        color: #e0e0e0;
+    }
+
+    body.dark-mode table th {
+        background-color: rgba(255,255,255,0.05);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        color: #e0e0e0;
+    }
+
+    body.dark-mode table td {
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    body.dark-mode .alert {
+        background-color: rgba(122, 57, 224, 0.1);
+        color: #BB86FC;
+        border-color: #BB86FC;
+    }
+</style>
+{% endblock %}

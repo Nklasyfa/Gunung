@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Pembayaran{% endblock %}
+
+{# Aktifkan background dashboard juga di halaman pembayaran #}
+{% block content_area_class %}content-area-bg{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/payment.css') }}">
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <a href="javascript:history.back()" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+</div>
+
+<div class="payment-page">
+    <!-- LEFT: Order Summary -->
+    <div class="payment-summary">
+        <h3>Order Summary</h3>
+        <div>#{{ pemesanan.pemesanan_id }} • {{ pemesanan.nama_gunung or pemesanan.gunung_id }}</div>
+
+        <div class="order-line">
+            <span class="order-line-label">Harga tiket</span>
+            <span class="order-line-value">Rp {{ "{:,.0f}".format(pemesanan.harga_tiket or pemesanan.get('harga_tiket') or 0) }}</span>
+        </div>
+        <div class="order-line">
+            <span class="order-line-label">Biaya porter</span>
+            <span class="order-line-value">Rp {{ "{:,.0f}".format(pemesanan.harga_porter or pemesanan.get('harga_porter') or 0) }}</span>
+        </div>
+        <div class="order-line">
+            <span class="order-line-label">Biaya sewa alat</span>
+            <span class="order-line-value">Rp {{ "{:,.0f}".format(pemesanan.harga_alat or pemesanan.get('harga_alat') or 0) }}</span>
+        </div>
+        <hr>
+        <div class="order-line order-total">
+            <span class="order-line-label">Total</span>
+            <span class="order-line-value">Rp {{ "{:,.0f}".format(pemesanan.total_harga or 0) }}</span>
+        </div>
+
+        <div class="payment-summary-info">
+            <strong>Detail Pesanan:</strong><br>
+            Tanggal pesan: {{ pemesanan.tanggal_pesan }}<br>
+            Jumlah anggota: {{ pemesanan.jumlah_anggota or 1 }} orang<br>
+            Durasi: {{ pemesanan.durasi or 1 }} hari
+        </div>
+    </div>
+
+    <!-- RIGHT: Payment Panel -->
+    <div class="payment-panel">
+        <h3>Pembayaran</h3>
+        <form method="post" id="paymentForm">
+            <div class="payment-form-group">
+                <label>Pilih Metode Pembayaran</label>
+                <div class="payment-methods">
+                    <!-- Transfer Bank -->
+                    <label class="pm-option">
+                        <input type="radio" name="metode" value="transfer" checked>
+                        <div class="pm-content">
+                            <div class="pm-label">Transfer Bank</div>
+                            <div class="pm-sub">Transfer antar bank (manual). Konfirmasi otomatis setelah konfirmasi pembayaran.</div>
+                        </div>
+                    </label>
+
+                    <!-- OVO -->
+                    <label class="pm-option">
+                        <input type="radio" name="metode" value="ewallet_ovo">
+                        <div class="pm-content">
+                            <div class="pm-label">OVO</div>
+                            <div class="pm-sub">Bayar langsung via aplikasi OVO Wallet.</div>
+                        </div>
+                    </label>
+
+                    <!-- DANA -->
+                    <label class="pm-option">
+                        <input type="radio" name="metode" value="ewallet_dana">
+                        <div class="pm-content">
+                            <div class="pm-label">DANA</div>
+                            <div class="pm-sub">Bayar langsung via aplikasi DANA.</div>
+                        </div>
+                    </label>
+
+                    <!-- GCash -->
+                    <label class="pm-option">
+                        <input type="radio" name="metode" value="ewallet_gcash">
+                        <div class="pm-content">
+                            <div class="pm-label">GOPAY</div>
+                            <div class="pm-sub">Bayar via GOPAY atau e-wallet regional.</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Bank Transfer Details -->
+            <div id="bankDetails" class="method-details">
+                <strong>Instruksi Transfer Bank</strong>
+                
+                <!-- Bank Selection -->
+                <div class="bank-selector">
+                    <label>Pilih Bank Tujuan</label>
+                    <div class="bank-options">
+                        <label class="bank-option-item">
+                            <input type="radio" name="bank_transfer" value="bca" checked>
+                            <span class="bank-name">BCA</span>
+                            <span class="bank-logo">PT BCA</span>
+                        </label>
+                        <label class="bank-option-item">
+                            <input type="radio" name="bank_transfer" value="bri">
+                            <span class="bank-name">BRI</span>
+                            <span class="bank-logo">PT BRI</span>
+                        </label>
+                        <label class="bank-option-item">
+                            <input type="radio" name="bank_transfer" value="mandiri">
+                            <span class="bank-name">Mandiri</span>
+                            <span class="bank-logo">PT Mandiri</span>
+                        </label>
+                        <label class="bank-option-item">
+                            <input type="radio" name="bank_transfer" value="cimb">
+                            <span class="bank-name">CIMB Niaga</span>
+                            <span class="bank-logo">PT CIMB</span>
+                        </label>
+                        <label class="bank-option-item">
+                            <input type="radio" name="bank_transfer" value="permata">
+                            <span class="bank-name">Bank Permata</span>
+                            <span class="bank-logo">PT Permata</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Bank Account Details (Dynamic) -->
+                <div id="bankAccountInfo" class="bank-account-details">
+                    <div class="account-row">
+                        <span class="label">Bank:</span>
+                        <span class="value" id="bankName">BCA</span>
+                    </div>
+                    <div class="account-row">
+                        <span class="label">Nomor Rekening:</span>
+                        <span class="value" id="bankAccount">1234 5678 901</span>
+                    </div>
+                    <div class="account-row">
+                        <span class="label">Atas Nama:</span>
+                        <span class="value" id="bankAccountName">a.n. PEMESANAN GUNUNG</span>
+                    </div>
+                    <div class="account-row">
+                        <span class="label">Jumlah:</span>
+                        <span class="value">Rp {{ "{:,.0f}".format(pemesanan.total_harga or 0) }}</span>
+                    </div>
+                </div>
+
+                <p style="margin-top:10px;color:#aaa;font-size:12px;">
+                    Transfer dari rekening mana pun. Silakan pastikan jumlah transfer sesuai untuk memudahkan verifikasi otomatis.
+                </p>
+            </div>
+
+            <!-- E-Wallet Details -->
+            <div id="ewalletDetails" class="method-details hidden">
+                <strong>Instruksi E-Wallet</strong>
+                <div class="ewallet-info">
+                    <div><strong>Jumlah pembayaran:</strong> Rp {{ "{:,.0f}".format(pemesanan.total_harga or 0) }}</div>
+                    <ul style="margin-top:8px;">
+                        <li>1. Buka aplikasi e-wallet Anda (OVO, DANA, atau GOPAY)</li>
+                        <li>2. Cari menu <em>Bayar</em> atau <em>Send Money</em></li>
+                        <li>3. Masukkan nomor/ID yang sesuai dengan metode (akan diberikan setelah Anda klik Bayar)</li>
+                        <li>4. Konfirmasi pembayaran dan tunggu notifikasi sukses</li>
+                        <li>5. Simpan bukti transaksi untuk arsip Anda</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="payment-button-group">
+                <button type="submit" class="btn primary">Bayar Sekarang</button>
+                <a href="{{ url_for('user.riwayat_pemesanan') }}" class="btn secondary">Batal</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    // Bank account data
+    const bankData = {
+        bca: {
+            name: 'BCA',
+            account: '1234 5678 901',
+            accountName: 'a.n. PEMESANAN GUNUNG'
+        },
+        bri: {
+            name: 'BRI',
+            account: '9876 5432 101',
+            accountName: 'a.n. PEMESANAN GUNUNG'
+        },
+        mandiri: {
+            name: 'Mandiri',
+            account: '1111 2222 3333',
+            accountName: 'a.n. PEMESANAN GUNUNG'
+        },
+        cimb: {
+            name: 'CIMB Niaga',
+            account: '5555 6666 7777',
+            accountName: 'a.n. PEMESANAN GUNUNG'
+        },
+        permata: {
+            name: 'Bank Permata',
+            account: '8888 9999 0000',
+            accountName: 'a.n. PEMESANAN GUNUNG'
+        }
+    };
+
+    // Payment method handling
+    const metodeRadios = document.querySelectorAll('input[name="metode"]');
+    const bankDetails = document.getElementById('bankDetails');
+    const ewalletDetails = document.getElementById('ewalletDetails');
+
+    function updatePaymentDetails() {
+        const selectedMetode = document.querySelector('input[name="metode"]:checked').value;
+        if (selectedMetode === 'transfer') {
+            bankDetails.classList.remove('hidden');
+            ewalletDetails.classList.add('hidden');
+        } else {
+            bankDetails.classList.add('hidden');
+            ewalletDetails.classList.remove('hidden');
+        }
+    }
+
+    metodeRadios.forEach(radio => {
+        radio.addEventListener('change', updatePaymentDetails);
+    });
+
+    // Bank selection handling
+    const bankRadios = document.querySelectorAll('input[name="bank_transfer"]');
+    const bankNameEl = document.getElementById('bankName');
+    const bankAccountEl = document.getElementById('bankAccount');
+    const bankAccountNameEl = document.getElementById('bankAccountName');
+
+    function updateBankInfo() {
+        const selectedBank = document.querySelector('input[name="bank_transfer"]:checked').value;
+        const bank = bankData[selectedBank];
+        
+        if (bank) {
+            bankNameEl.textContent = bank.name;
+            bankAccountEl.textContent = bank.account;
+            bankAccountNameEl.textContent = bank.accountName;
+        }
+    }
+
+    bankRadios.forEach(radio => {
+        radio.addEventListener('change', updateBankInfo);
+    });
+
+    // Initial state
+    updatePaymentDetails();
+    updateBankInfo();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Data Pemesanan{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <h2>Data Pemesanan</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Pemesan</th>
+                <th>Gunung</th>
+                <th>Tanggal Pesan</th>
+                <th>Total</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if pemesanan_list %}
+                {% for p in pemesanan_list %}
+                    <tr>
+                        <td>{{ p.pemesanan_id }}</td>
+                        <td>{{ p.pemesan_nama or p.user_id }}</td>
+                        <td>{{ p.nama_gunung or p.gunung_id }}</td>
+                        <td>{{ p.tanggal_pesan }}</td>
+                        <td>Rp {{ "{:,.0f}".format(p.total_harga or 0) }}</td>
+                        <td>{{ p.status }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="6">Belum ada pemesanan.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

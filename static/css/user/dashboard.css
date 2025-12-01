@@ -1,0 +1,302 @@
+/* =====================================================
+   USER DASHBOARD - MODERN & ATTRACTIVE STYLING
+   ===================================================== */
+
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-shadow: 0 10px 30px rgba(102, 126, 234, 0.15);
+    --hover-transform: translateY(-8px);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =====================================================
+   DASHBOARD CONTAINER & LAYOUT
+   ===================================================== */
+.dashboard-container {
+    padding: 30px 20px;
+    min-height: 100vh;
+}
+
+.dashboard-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode .dashboard-controls {
+    background: rgba(40, 40, 40, 0.7);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* =====================================================
+   HEADER SECTION
+   ===================================================== */
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: var(--primary-gradient);
+    border-radius: 20px;
+    color: white;
+    box-shadow: var(--card-shadow);
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0 0 10px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-header p {
+    font-size: 1.1rem;
+    margin: 0;
+    opacity: 0.95;
+}
+
+body.dark-mode .dashboard-header {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b38a0 100%);
+}
+
+/* =====================================================
+   MOUNTAIN GRID CARDS
+   ===================================================== */
+.gunung-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.gunung-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition-smooth);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+}
+
+.gunung-card:hover {
+    transform: var(--hover-transform);
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.25);
+}
+
+.gunung-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+.gunung-card-content {
+    padding: 20px;
+}
+
+.gunung-card-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gunung-card-title i {
+    color: #667eea;
+    font-size: 1.3rem;
+}
+
+.gunung-card-desc {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    min-height: 50px;
+}
+
+.gunung-stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.stat-item i {
+    margin-right: 5px;
+}
+
+.gunung-price {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #667eea;
+    margin-bottom: 15px;
+}
+
+.btn-pesan {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-pesan:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-pesan:active {
+    transform: translateY(0);
+}
+
+/* Dark Mode Cards */
+body.dark-mode .gunung-card {
+    background: #2a2a2a;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .gunung-card:hover {
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
+}
+
+body.dark-mode .gunung-card-title {
+    color: #ffffff;
+}
+
+body.dark-mode .gunung-card-desc {
+    color: #b0b0b0;
+}
+
+body.dark-mode .stat-item {
+    background: rgba(102, 126, 234, 0.15);
+    color: #8fa3f5;
+}
+
+/* =====================================================
+   BUTTONS & CONTROLS
+   ===================================================== */
+.btn-dashboard {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-smooth);
+    color: white;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-size: 0.95rem;
+}
+
+.btn-mode {
+    background: var(--primary-gradient);
+}
+
+.btn-mode:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+}
+
+.btn-bantuan {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.btn-bantuan:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 87, 108, 0.35);
+}
+
+/* =====================================================
+   EMPTY STATE
+   ===================================================== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #ddd;
+    margin-bottom: 20px;
+}
+
+.empty-state p {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+   ===================================================== */
+@media (max-width: 768px) {
+    .gunung-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .dashboard-controls {
+        justify-content: space-between;
+    }
+
+    .btn-dashboard {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 15px 10px;
+    }
+
+    .dashboard-header {
+        padding: 15px;
+        margin-bottom: 25px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .gunung-card-title {
+        font-size: 1.2rem;
+    }
+
+    .btn-dashboard {
+        padding: 8px 15px;
+        font-size: 0.85rem;
+    }
+}

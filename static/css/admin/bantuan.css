@@ -1,0 +1,496 @@
+/* =====================================================
+   ADMIN BANTUAN (HELP) PAGE - PROFESSIONAL STYLING
+   ===================================================== */
+
+:root {
+    --admin-primary: #2c3e50;
+    --admin-accent: #3498db;
+    --admin-danger: #e74c3c;
+    --admin-success: #27ae60;
+    --admin-warning: #f39c12;
+    --card-shadow: 0 10px 30px rgba(52, 152, 219, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =====================================================
+   PAGE LAYOUT & BACKGROUND
+   ===================================================== */
+.dashboard-container {
+    padding: 30px 20px;
+    min-height: 100vh;
+}
+
+.dashboard-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode .dashboard-controls {
+    background: rgba(40, 40, 40, 0.7);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* =====================================================
+   HEADER SECTION
+   ===================================================== */
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: slideDown 0.6s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 15px 0;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #555;
+    margin: 0;
+    font-weight: 500;
+}
+
+body.dark-mode .page-subtitle {
+    color: #aaa;
+}
+
+/* =====================================================
+   CONTENT CARD
+   ===================================================== */
+.content-card {
+    background: white;
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: var(--card-shadow);
+    max-width: 950px;
+    margin: 0 auto;
+    transition: var(--transition);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 5px solid #3498db;
+}
+
+body.dark-mode .content-card {
+    background: rgba(40, 40, 40, 0.9);
+    border-color: rgba(255, 255, 255, 0.1);
+    border-top-color: rgba(52, 152, 219, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* =====================================================
+   HELP SECTIONS
+   ===================================================== */
+.help-section {
+    margin-bottom: 35px;
+    padding: 25px;
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.05) 0%, rgba(41, 128, 185, 0.05) 100%);
+    border-radius: 15px;
+    border-left: 4px solid #3498db;
+    transition: var(--transition);
+    position: relative;
+}
+
+.help-section::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 100px;
+    height: 100px;
+    background: rgba(52, 152, 219, 0.05);
+    border-radius: 50%;
+    z-index: 0;
+}
+
+.help-section:hover {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(41, 128, 185, 0.1) 100%);
+    transform: translateX(5px);
+    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.1);
+}
+
+.help-section h3 {
+    font-size: 1.6rem;
+    color: #2c3e50;
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+}
+
+.help-section h3 i {
+    font-size: 1.8rem;
+    color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.help-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.help-section ul li {
+    padding: 12px 0;
+    padding-left: 30px;
+    color: #333;
+    position: relative;
+    font-weight: 500;
+    transition: var(--transition);
+    line-height: 1.6;
+}
+
+.help-section ul li:before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #3498db;
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+.help-section ul li:hover {
+    color: #3498db;
+    transform: translateX(5px);
+}
+
+body.dark-mode .help-section {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(41, 128, 185, 0.1) 100%);
+    border-left-color: rgba(52, 152, 219, 0.7);
+}
+
+body.dark-mode .help-section h3 {
+    color: #e0e0e0;
+}
+
+body.dark-mode .help-section h3 i {
+    color: #a8d8ff;
+}
+
+body.dark-mode .help-section ul li {
+    color: #d0d0d0;
+}
+
+body.dark-mode .help-section ul li:before {
+    color: #6eb8ff;
+}
+
+body.dark-mode .help-section ul li:hover {
+    color: #a8d8ff;
+}
+
+/* =====================================================
+   FAQ ITEMS
+   ===================================================== */
+.faq-item {
+    background: linear-gradient(135deg, #ecf0f1 0%, #d5dbdb 100%);
+    padding: 22px;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    border: 1px solid rgba(52, 152, 219, 0.15);
+    transition: var(--transition);
+    position: relative;
+}
+
+.faq-item:hover {
+    border-color: #3498db;
+    box-shadow: 0 6px 18px rgba(52, 152, 219, 0.15);
+    transform: translateY(-2px);
+}
+
+.faq-item p {
+    margin: 0 0 12px 0;
+    color: #2c3e50;
+    font-weight: 500;
+    line-height: 1.7;
+}
+
+.faq-item p:last-child {
+    margin: 0;
+    color: #34495e;
+    font-weight: 400;
+}
+
+.faq-item p strong {
+    color: #3498db;
+    font-weight: 700;
+}
+
+body.dark-mode .faq-item {
+    background: linear-gradient(135deg, #2a3a4a 0%, #243647 100%);
+    border-color: rgba(52, 152, 219, 0.2);
+}
+
+body.dark-mode .faq-item p {
+    color: #e0e0e0;
+}
+
+body.dark-mode .faq-item p:last-child {
+    color: #c0c0c0;
+}
+
+body.dark-mode .faq-item p strong {
+    color: #6eb8ff;
+}
+
+/* =====================================================
+   CONTACT SECTION
+   ===================================================== */
+.contact-info {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    padding: 30px;
+    border-radius: 15px;
+    color: white;
+    margin-top: 30px;
+}
+
+.contact-info p {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.contact-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-contact {
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition);
+    text-decoration: none;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    font-size: 0.95rem;
+}
+
+.btn-contact i {
+    font-size: 1.2rem;
+}
+
+.whatsapp {
+    background: #25D366;
+}
+
+.whatsapp:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+}
+
+.email {
+    background: #D44638;
+}
+
+.email:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(212, 70, 56, 0.4);
+}
+
+.chat {
+    background: #0084FF;
+}
+
+.chat:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 132, 255, 0.4);
+}
+
+/* =====================================================
+   HORIZONTAL DIVIDER
+   ===================================================== */
+hr {
+    border: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(52, 152, 219, 0.3), transparent);
+    margin: 35px 0;
+}
+
+body.dark-mode hr {
+    background: linear-gradient(to right, transparent, rgba(52, 152, 219, 0.15), transparent);
+}
+
+/* =====================================================
+   MAIN BUTTONS
+   ===================================================== */
+.btn-dashboard {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition);
+    color: white;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-size: 0.95rem;
+}
+
+.btn-bantuan {
+    background: #95a5a6;
+}
+
+.btn-bantuan:hover {
+    background: #7f8c8d;
+    transform: translateY(-2px);
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+   ===================================================== */
+@media (max-width: 768px) {
+    .content-card {
+        padding: 25px;
+    }
+
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .help-section {
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    .help-section h3 {
+        font-size: 1.4rem;
+    }
+
+    .faq-item {
+        padding: 18px;
+    }
+
+    .contact-buttons {
+        flex-direction: column;
+    }
+
+    .btn-contact {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .btn-dashboard {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 15px 10px;
+    }
+
+    .content-card {
+        padding: 20px;
+        border-radius: 15px;
+        border-top: 4px solid #3498db;
+    }
+
+    header {
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+    }
+
+    .page-subtitle {
+        font-size: 0.95rem;
+    }
+
+    .help-section {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .help-section h3 {
+        font-size: 1.2rem;
+        gap: 8px;
+    }
+
+    .help-section h3 i {
+        padding: 8px;
+        font-size: 1.4rem;
+    }
+
+    .help-section ul li {
+        padding: 10px 0;
+        padding-left: 25px;
+        font-size: 0.95rem;
+    }
+
+    .faq-item {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .faq-item p {
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+    }
+
+    .contact-info {
+        padding: 20px;
+    }
+
+    .contact-info p {
+        font-size: 1rem;
+        margin-bottom: 15px;
+    }
+
+    .btn-contact {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+
+    .btn-dashboard {
+        padding: 8px 15px;
+        font-size: 0.85rem;
+    }
+
+    hr {
+        margin: 25px 0;
+    }
+}

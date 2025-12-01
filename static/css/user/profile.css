@@ -1,6 +1,4 @@
-/* =====================================================
-   USER PROFILE & ACCOUNT PAGES - STYLING
-   ===================================================== */
+
 
 :root {
     --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -8,9 +6,7 @@
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* =====================================================
-   PROFILE CONTAINER
-   ===================================================== */
+
 .profile-container {
     padding: 30px 20px;
     min-height: 100vh;
@@ -41,9 +37,7 @@ body.dark-mode .profile-header {
     background: linear-gradient(135deg, #5a67d8 0%, #6b38a0 100%);
 }
 
-/* =====================================================
-   FORM SECTIONS
-   ===================================================== */
+
 .profile-section {
     background: white;
     border-radius: 15px;

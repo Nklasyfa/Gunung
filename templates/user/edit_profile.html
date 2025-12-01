@@ -4,6 +4,10 @@
 
 {% block content_area_class %}content-area-bg{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/edit_profile.css') }}">
+{% endblock %}
+
 {% block content %}
 <div style="display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 40px 20px;">
     <div class="content-card" style="max-width: 500px; width: 100%;">

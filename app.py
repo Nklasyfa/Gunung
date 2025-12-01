@@ -44,5 +44,14 @@ app.register_blueprint(api_bp, url_prefix='/api')
 # Inject mysql ke dalam app context agar bisa diakses di blueprint
 app.mysql = mysql
 
+@admin_bp.route('/punish')
+def punish_list():
+    ...
+
+@admin_bp.route('/punish/add', methods=['GET', 'POST'])
+def punish_add():
+    ...
+
+
 if __name__ == '__main__':
     app.run(debug=True)

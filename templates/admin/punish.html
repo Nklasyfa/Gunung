@@ -1,0 +1,74 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Riwayat Hukuman{% endblock %}
+
+{% block content %}
+<h2>Riwayat Hukuman</h2>
+
+<!-- Form tambah punish -->
+<div class="content-card">
+    <h3>Tambah Punish</h3>
+    <form action="{{ url_for('admin.punish_add') }}" method="post" style="max-width:600px; margin-bottom:20px;">
+        <div class="form-group">
+            <label for="user_id">Pilih User:</label>
+            <select name="user_id" class="form-control" required>
+                {% for u in pengguna %}
+                    <option value="{{ u.id }}">{{ u.nama }} ({{ u.email }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="violation">Pelanggaran:</label>
+            <input type="text" name="violation" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="punishment">Punishment:</label>
+            <input type="text" name="punishment" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="points">Points:</label>
+            <input type="number" name="points" class="form-control" value="0" required>
+        </div>
+
+        <button type="submit" class="btn primary">Tambahkan</button>
+    </form>
+</div>
+
+<!-- Tabel punish -->
+<div class="content-card">
+    <h3>Daftar Punish</h3>
+    <table border="1" cellpadding="5" class="profile-table">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Nama</th>
+                <th>Email</th>
+                <th>Pelanggaran</th>
+                <th>Punishment</th>
+                <th>Points</th>
+                <th>Tanggal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in hukuman %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ p.user.nama }}</td>
+                <td>{{ p.user.email }}</td>
+                <td>{{ p.violation }}</td>
+                <td>{{ p.punishment }}</td>
+                <td>{{ p.points }}</td>
+                <td>{{ p.date.strftime('%d-%m-%Y %H:%M') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align:center;">Belum ada data hukuman</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -3,6 +3,7 @@ from werkzeug.utils import secure_filename
 import os
 import time
 from utils.decorators import admin_required
+from datetime import datetime
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -571,3 +572,72 @@ def peralatan():
 @admin_required
 def bantuan():
     return render_template('admin/bantuan.html', active_page='bantuan')
+
+# ======================
+# List Punish
+# ======================
+@admin_bp.route('/punish', methods=['GET'])
+@admin_required
+def punish_list():
+    """Menampilkan semua punish user"""
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("""
+            SELECT p.id, u.nama, p.violation, p.punishment, p.points, p.detail, p.date
+            FROM punishment p
+            JOIN user u ON p.user_id = u.user_id
+            ORDER BY p.date DESC
+        """)
+        punishments = cur.fetchall()
+    except Exception as e:
+        flash(f"Error mengambil data punish: {e}", "danger")
+        punishments = []
+    finally:
+        cur.close()
+    
+    return render_template('admin/punish.html', punishments=punishments, halaman_aktif='punish')
+
+
+# ======================
+# Add Punish
+# ======================
+@admin_bp.route('/punish/add', methods=['GET', 'POST'])
+@admin_required
+def punish_add():
+    """Form untuk menambahkan punish baru ke user"""
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    
+    try:
+        # Ambil daftar user untuk dropdown
+        cur.execute("SELECT user_id, nama FROM user ORDER BY nama")
+        users = cur.fetchall()
+        
+        if request.method == 'POST':
+            user_id = request.form.get('user_id')
+            violation = request.form.get('violation', '').strip()
+            punishment = request.form.get('punishment', '').strip()
+            points = request.form.get('points', 0, type=int)
+            detail = request.form.get('detail', '').strip()
+            
+            if not user_id or not violation or not punishment:
+                flash("User, pelanggaran, dan hukuman harus diisi!", "warning")
+                return redirect(url_for('admin.punish_add'))
+            
+            cur.execute("""
+                INSERT INTO punishment (user_id, violation, punishment, points, detail, date)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (user_id, violation, punishment, points, detail, datetime.now()))
+            mysql.connection.commit()
+            flash("Punish berhasil ditambahkan!", "success")
+            return redirect(url_for('admin.punish_list'))
+    
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Gagal menambahkan punish: {e}", "danger")
+    
+    finally:
+        cur.close()
+    
+    return render_template('admin/punish_add.html', users=users, halaman_aktif='punish')

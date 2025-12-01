@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Riwayat Hukuman{% endblock %}
+
+{% block content %}
+<h2>Riwayat Hukuman</h2>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Tanggal</th>
+        <th>Pelanggaran</th>
+        <th>Hukuman</th>
+        <th>Poin</th>
+        <th>Detail</th>
+    </tr>
+    {% for p in punish_list %}
+    <tr>
+        <td>{{ p.date }}</td>
+        <td>{{ p.violation }}</td>
+        <td>{{ p.punishment }}</td>
+        <td>{{ p.points }}</td>
+        <td>{{ p.detail }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

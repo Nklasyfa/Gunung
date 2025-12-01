@@ -3,19 +3,20 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-<header>
+<div class="dashboard-header">
     <h1>Admin Dashboard</h1>
     <p>Selamat datang, {{ session.nama }}! Anda login sebagai Admin.</p>
-</header>
+</div>
 
-<div style="display: flex; gap: 20px;">
-    <div class="content-card" style="flex: 1;">
-        <h3 style="margin-top: 0;">Total Gunung</h3>
-        <h1 style="font-size: 48px; color: var(--primary-color); margin: 0;">{{ total_gunung }}</h1>
+<div class="dashboard-cards" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+    <div class="content-card" style="flex: 1; min-width: 200px; padding: 20px; background-color: #f5f5f5; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+        <h3>Total Gunung</h3>
+        <p style="font-size: 48px; color: var(--primary-color); margin: 10px 0 0 0;">{{ total_gunung }}</p>
     </div>
-    <div class="content-card" style="flex: 1;">
-        <h3 style="margin-top: 0;">Total User (Pendaki)</h3>
-        <h1 style="font-size: 48px; color: var(--primary-color); margin: 0;">{{ total_user }}</h1>
+
+    <div class="content-card" style="flex: 1; min-width: 200px; padding: 20px; background-color: #f5f5f5; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+        <h3>Total User (Pendaki)</h3>
+        <p style="font-size: 48px; color: var(--primary-color); margin: 10px 0 0 0;">{{ total_user }}</p>
     </div>
 </div>
 {% endblock %}

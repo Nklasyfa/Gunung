@@ -535,3 +535,24 @@ def bantuan():
 def ubah_bahasa(lang):
     session['language'] = lang
     return redirect(request.referrer or url_for('user.user_dashboard'))
+
+@user_bp.route('/punish')
+@login_required
+def punish():
+    """Tampilan riwayat punish untuk user"""
+    user_id = session['user_id']
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    
+    try:
+        cur.execute("""
+            SELECT p.id, p.violation, p.punishment, p.points, p.detail, p.date
+            FROM punishment p
+            WHERE p.user_id = %s
+            ORDER BY p.date DESC
+        """, [user_id])
+        punish_list = cur.fetchall()
+    finally:
+        cur.close()
+    
+    return render_template('user/punish.html', punish_list=punish_list, active_page='punish')

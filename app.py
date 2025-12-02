@@ -36,9 +36,5 @@ app.register_blueprint(api_bp, url_prefix='/api')
 # Inject mysql ke dalam app context agar bisa diakses di blueprint
 app.mysql = mysql
 
-# Note: All admin routes are defined in `routes/admin.py`.
-# Do not add route decorators for blueprints here after registering them.
-
-
 if __name__ == '__main__':
     app.run(debug=True)

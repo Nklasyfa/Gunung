@@ -57,6 +57,30 @@
             margin-bottom: 10px; color: var(--text-dark); text-decoration: none;
             font-weight: 600; border-radius: 8px;
         }
+        /* Hamburger menu for mobile */
+        .hamburger-menu {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            cursor: pointer;
+            padding: 8px;
+            border: none;
+            background: none;
+            z-index: 1100;
+        }
+        .hamburger-menu span {
+            width: 22px;
+            height: 3px;
+            background-color: var(--primary-color);
+            border-radius: 2px;
+            transition: all 0.25s ease;
+            display: block;
+        }
+        .hamburger-menu.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger-menu.active span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger-menu.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 990; }
+    .sidebar-overlay.active { display: block; }
         .sidebar ul li a i { margin-right: 10px; width: 20px; text-align: center;}
         .sidebar ul li a:hover, .sidebar ul li a.active {
             background-color: var(--primary-color);
@@ -188,6 +212,8 @@
             background-color: #f9f9f9;
             text-align: left; font-size: 14px; color: #333;
         }
+        /* Responsive table wrapper to allow horizontal scroll on small screens */
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 15px; }
         table.profile-table td:first-child { font-weight: 600; color: #555; width: 30%; }
         .table-actions { display: flex; gap: 5px; }
@@ -222,8 +248,11 @@
         
         @media (max-width: 900px) {
             body { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; position: relative; }
-            .content-area { margin-left: 0; padding: 20px 15px; height: auto; }
+            .hamburger-menu { display: flex; }
+            .sidebar { width: 100%; height: auto; position: fixed; top: 60px; left: -100%; transition: left 0.25s ease; z-index: 999; max-height: calc(100vh - 60px); overflow-y: auto; }
+            .sidebar.active { left: 0; }
+            .content-area { margin-left: 0; padding: 20px 15px; height: auto; width: 100%; }
+            .app-bar { justify-content: space-between; }
         }
         
         /* === TAMBAHAN CSS BARU UNTUK DASHBOARD & PROFIL === */
@@ -602,6 +631,22 @@
 
         /* === END DARK MODE === */
     </style>
+    <style>
+    /* Small-screen touch targets */
+    @media (max-width: 480px) {
+        .btn {
+            padding: 12px 18px !important;
+            font-size: 14px !important;
+            min-height: 44px;
+        }
+        .form-control {
+            padding: 12px !important;
+            min-height: 44px;
+            font-size: 15px !important;
+        }
+        .app-bar .btn { padding: 6px 10px !important; min-height: 36px; }
+    }
+    </style>
 </head>
 <body>
     <div class="main-wrapper">
@@ -642,10 +687,18 @@
             </ul>
         </nav>
 
+        <!-- sidebar overlay (for mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <div class="content-area {% block content_area_class %}{% endblock %}">
             <!-- APP BAR dengan Dark Mode & Bantuan -->
             <div class="app-bar">
                 {% block app_bar_title %}{% endblock %}
+                <button class="hamburger-menu" id="hamburgerMenu" aria-label="Toggle navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
                 <div class="app-bar-buttons">
                     <button id="darkModeToggle" class="btn btn-dark-toggle" onclick="toggleDarkMode(); return false;" title="Toggle Dark Mode">
                         <i class="fas fa-moon"></i>
@@ -717,6 +770,42 @@
                 textSpan.textContent = 'Light Mode';
             }
         }
+    })();
+
+    // Sidebar toggle for mobile
+    (function() {
+        const sidebar = document.querySelector('.sidebar');
+        const hamburger = document.getElementById('hamburgerMenu');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        if (!sidebar || !hamburger || !overlay) return;
+
+        function openSidebar() {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+            hamburger.classList.add('active');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            hamburger.classList.remove('active');
+        }
+
+        hamburger.addEventListener('click', function(e) {
+            if (sidebar.classList.contains('active')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+
+        overlay.addEventListener('click', function() { closeSidebar(); });
+
+        // Close sidebar on wider screens
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 900) closeSidebar();
+        });
     })();
     </script>
 </body>

@@ -10,12 +10,19 @@
     <h3>Tambah Punish</h3>
     <form action="{{ url_for('admin.punish_add') }}" method="post" style="max-width:600px; margin-bottom:20px;">
         <div class="form-group">
-            <label for="user_id">Pilih User:</label>
-            <select name="user_id" class="form-control" required>
-                {% for u in pengguna %}
-                    <option value="{{ u.id }}">{{ u.nama }} ({{ u.email }})</option>
-                {% endfor %}
-            </select>
+            <label for="user_id">Cari User (Masukkan User ID):</label>
+            <input type="number" id="user_id" name="user_id" class="form-control" placeholder="Masukkan User ID" onblur="cariUserPunish()" required>
+            <small style="color: #999; display: block; margin-top: 3px;">User ID dari sistem</small>
+            
+            <!-- Tampilkan info user yang ditemukan -->
+            <div id="userInfo" style="margin-top: 15px; padding: 15px; background: #f0f4ff; border-left: 4px solid #7A39E0; border-radius: 8px; display: none;">
+                <p style="margin: 0 0 5px 0;"><strong>Nama:</strong> <span id="userName">-</span></p>
+                <p style="margin: 0 0 5px 0;"><strong>Email:</strong> <span id="userEmail">-</span></p>
+                <p style="margin: 0;"><strong>ID:</strong> <span id="userIdDisplay">-</span></p>
+            </div>
+            <div id="userNotFound" style="margin-top: 10px; color: red; display: none; font-weight: bold;">
+                ❌ User ID tidak ditemukan
+            </div>
         </div>
 
         <div class="form-group">
@@ -24,7 +31,7 @@
         </div>
 
         <div class="form-group">
-            <label for="punishment">Punishment:</label>
+            <label for="punishment">Hukuman:</label>
             <input type="text" name="punishment" class="form-control" required>
         </div>
 
@@ -70,5 +77,53 @@
             {% endfor %}
         </tbody>
     </table>
+</div>
+
+<script>
+    // Data user untuk pencarian - dibuat sebagai atribut data di form
+    const usersDataPunish = {};
+    const userSelectElements = document.querySelectorAll('[data-user-id][data-user-name][data-user-email]');
+    
+    // Generate dari elemen tersembunyi (akan dibuat di bawah)
+    document.addEventListener('DOMContentLoaded', function() {
+        const userDataElements = document.querySelectorAll('.user-data-item');
+        userDataElements.forEach(el => {
+            const id = el.getAttribute('data-id');
+            const nama = el.getAttribute('data-nama');
+            const email = el.getAttribute('data-email');
+            usersDataPunish[id] = { id: id, nama: nama, email: email };
+        });
+    });
+
+    function cariUserPunish() {
+        const userId = document.getElementById('user_id').value.trim();
+        const userInfo = document.getElementById('userInfo');
+        const userNotFound = document.getElementById('userNotFound');
+
+        if (!userId) {
+            userInfo.style.display = 'none';
+            userNotFound.style.display = 'none';
+            return;
+        }
+
+        if (usersDataPunish[userId]) {
+            const user = usersDataPunish[userId];
+            document.getElementById('userName').textContent = user.nama;
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('userIdDisplay').textContent = user.id;
+            userInfo.style.display = 'block';
+            userNotFound.style.display = 'none';
+        } else {
+            userInfo.style.display = 'none';
+            userNotFound.style.display = 'block';
+        }
+    }
+</script>
+
+<!-- Data user tersembunyi (untuk JavaScript) -->
+<div style="display: none;">
+    {% for u in pengguna %}
+    <div class="user-data-item" data-id="{{ u.id }}" data-nama="{{ u.nama }}" data-email="{{ u.email }}"></div>
+    {% endfor %}
 </div>
 {% endblock %}

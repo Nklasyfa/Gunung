@@ -328,7 +328,16 @@ body.dark-mode .stat-item { background: rgba(255,255,255,0.15) !important; }
 /* Status Warna */
 .dibuka { color: #28a745 !important; font-weight: bold; }
 .ditutup { color: #dc3545 !important; font-weight: bold; }
-
+/* Responsive images for jalur */
+.jalur-item img { width: 100%; height: 400px; object-fit: cover; border-radius:6px; }
+@media (max-width: 900px) {
+    .jalur-item img { height: 280px; }
+}
+@media (max-width: 480px) {
+    .jalur-item img { height: 180px; }
+    .detail-header { height: 220px; padding: 18px; }
+    .detail-header h1 { font-size: 28px; }
+}
 </style>
 
 {% endblock %}

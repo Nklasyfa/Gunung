@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Edit Porter</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.edit_porter', id=porter.porter_id) }}">
+                
+                <div class="form-group">
+                    <label for="gunung_id">Gunung Tugas</label>
+                    <select class="form-control" id="gunung_id" name="gunung_id" required>
+                        <option value="">-- Pilih Gunung --</option>
+                        {% for gunung in gunung_list %}
+                        <option value="{{ gunung.gunung_id }}" {% if gunung.gunung_id == porter.gunung_id %}selected{% endif %}>{{ gunung.nama_gunung }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="nama_porter">Nama Porter</label>
+                    <input type="text" class="form-control" id="nama_porter" name="nama_porter" value="{{ porter.nama_porter }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="umur">Umur</label>
+                    <input type="number" class="form-control" id="umur" name="umur" value="{{ porter.umur }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pengalaman_tahun">Pengalaman (Tahun)</label>
+                    <input type="number" class="form-control" id="pengalaman_tahun" name="pengalaman_tahun" value="{{ porter.pengalaman_tahun }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="kontak">Kontak (No. HP)</label>
+                    <input type="text" class="form-control" id="kontak" name="kontak" value="{{ porter.kontak }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="harga_per_hari">Harga Sewa / Hari (Rp)</label>
+                    <input type="number" class="form-control" id="harga_per_hari" name="harga_per_hari" value="{{ porter.harga_per_hari }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select class="form-control" id="status" name="status" required>
+                        <option value="tersedia" {% if porter.status == 'tersedia' %}selected{% endif %}>Tersedia</option>
+                        <option value="sedang bertugas" {% if porter.status == 'sedang bertugas' %}selected{% endif %}>Sedang Bertugas</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="background-color: #7A39E0; border-color: #7A39E0; color: white; font-weight: 700; padding: 10px 30px; text-transform: uppercase;">Perbarui Porter</button>
+                <a href="{{ url_for('admin.porter') }}" class="btn btn-secondary" style="background-color: #d3d3d3; border-color: #d3d3d3; color: #000; font-weight: 700; padding: 10px 30px; text-transform: uppercase;">Batal</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

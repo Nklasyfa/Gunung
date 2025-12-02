@@ -373,3 +373,44 @@ body.dark-mode .checkbox-group label {
         align-items: flex-start;
     }
 }
+
+/* Layout helpers for template-specific grids */
+.pemesanan-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+.price-summary { max-width: 420px; }
+
+/* Anggota rows: make them responsive */
+.anggota-header,
+.anggota-row,
+.anggota-row + .anggota-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1.5fr 1.5fr 1.5fr 1.5fr 80px;
+    gap: 15px;
+    align-items: start;
+}
+
+/* Make anggota rows stack on small screens */
+@media (max-width: 900px) {
+    .pemesanan-grid { grid-template-columns: 1fr; }
+    .price-summary { position: static; max-width: 100%; }
+    .anggota-header,
+    .anggota-row,
+    .anggota-row + .anggota-row {
+        grid-template-columns: 1fr;
+    }
+    .anggota-row .anggota-nama,
+    .anggota-row .anggota-nik,
+    .anggota-row .anggota-email,
+    .anggota-row .anggota-alamat {
+        min-height: auto;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pemesanan-container { padding: 15px 12px; }
+    .pemesanan-grid { gap: 18px; }
+}

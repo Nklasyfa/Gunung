@@ -228,6 +228,7 @@
             text-align: right;
             margin-top: -5px;
             margin-bottom: 25px;
+            display: none;
         }
 
         .forgot-password a {
@@ -267,6 +268,53 @@
             .left-panel { min-height: 200px; }
             .right-panel { padding: 30px 20px; }
         }
+
+        /* Password show/hide toggle */
+        .password-input-wrapper {
+            position: relative;
+            width: 100%;
+            display: inline-block;
+        }
+
+        .password-input-wrapper .form-control {
+            width: 100%;
+            padding-right: 65px;
+            display: block;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 5px 10px;
+            display: inline-block;
+            pointer-events: auto;
+            z-index: 100;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--secondary-color);
+            background-color: rgba(122, 57, 224, 0.1);
+        }
+
+        .password-toggle-btn:active {
+            background-color: rgba(122, 57, 224, 0.2);
+        }
+
+        .password-toggle-btn:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: -2px;
+        }
     </style>
 </head>
 <body>
@@ -305,7 +353,12 @@
                     </div>
                     <div class="form-group">
                         <label for="login-password">Password</label>
-                        <input type="password" id="login-password" name="password" class="form-control" placeholder="Masukkan password" required>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="login-password" name="password" class="form-control" placeholder="Masukkan password" required>
+                            <button type="button" class="password-toggle-btn" onclick="togglePassword('login-password', event)">
+                                SHOW
+                            </button>
+                        </div>
                     </div>
                     <div class="forgot-password">
                         <a href="#">Lupa Password?</a>
@@ -330,7 +383,12 @@
                     </div>
                     <div class="form-group">
                         <label for="register-password">Password</label>
-                        <input type="password" id="register-password" name="password" class="form-control" placeholder="Buat password (min. 5 karakter)" required>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="register-password" name="password" class="form-control" placeholder="Buat password (min. 5 karakter)" required>
+                            <button type="button" class="password-toggle-btn" onclick="togglePassword('register-password', event)">
+                                SHOW
+                            </button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="register-no_hp">Nomor HP</label>
@@ -387,6 +445,28 @@
                 });
             }
         });
+
+        // Toggle password visibility
+        window.togglePassword = function(fieldId, event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const field = document.getElementById(fieldId);
+            const btn = event.currentTarget;
+
+            if (!field || !btn) {
+                console.error('Elements not found', { field, btn });
+                return;
+            }
+
+            if (field.type === 'password') {
+                field.type = 'text';
+                btn.textContent = 'HIDE';
+            } else {
+                field.type = 'password';
+                btn.textContent = 'SHOW';
+            }
+        }
     </script>
 </body>
 </html>

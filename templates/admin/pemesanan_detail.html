@@ -1,0 +1,140 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Detail Pemesanan #{{ pem.pemesanan_id }}{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <a href="{{ url_for('admin.pemesanan_list') }}" class="btn-back"><i class="fas fa-arrow-left"></i> Kembali ke daftar</a>
+        <form method="POST" action="{{ url_for('admin.hapus_pemesanan', pemesanan_id=pem.pemesanan_id) }}" style="display: inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pemesanan ini? Aksi ini tidak dapat dibatalkan.');">
+            <button type="submit" class="btn danger"><i class="fas fa-trash"></i> Hapus Pemesanan</button>
+        </form>
+    </div>
+    <h2>Detail Pemesanan — #{{ pem.pemesanan_id }}</h2>
+
+    <div class="meta-block">
+        <p><strong>Pemesan:</strong> {{ pem.pemesan_nama or pem.user_id }}</p>
+        <p><strong>Gunung / Jalur:</strong>
+            {% if pem.nama_gunung %}{{ pem.nama_gunung }}{% endif %}
+            {% if pem.nama_jalur %} — {{ pem.nama_jalur }}{% endif %}
+        </p>
+        <p><strong>Tanggal Pesan:</strong> {{ pem.tanggal_pesan }}</p>
+        <p><strong>Durasi:</strong> {{ pem.durasi or 1 }} hari</p>
+        <p><strong>Jumlah Anggota:</strong> {{ pem.jumlah_anggota or (pem.jumlah_anggota if pem.jumlah_anggota is not none else 1) }}</p>
+        <p><strong>Status:</strong> {{ pem.status }}</p>
+        <p><strong>Total Harga:</strong> Rp {{ "{:,.0f}".format(pem.total_harga or 0) }}</p>
+    </div>
+
+    <hr>
+
+    {% if anggota %}
+    <h3>Data Anggota / Pendaki</h3>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nama</th>
+                    <th>User ID / NIK</th>
+                    <th>Kontak Darurat</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in anggota %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ a.get('nama') or a.get('nama_pendaki') or a.get('user_id') }}</td>
+                    <td>{{ a.get('user_id') or a.get('nik') or '-' }}</td>
+                    <td>{{ a.get('kontak_darurat') or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <hr>
+    {% endif %}
+
+    {% if porter %}
+    <h3>Porter / Sewa Porter</h3>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Porter ID</th>
+                    <th>Jumlah / Lama</th>
+                    <th>Total Biaya</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in porter %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ s.get('porter_id') }}</td>
+                    <td>{{ s.get('jumlah') or s.get('lama_sewa_hari') or 1 }}</td>
+                    <td>Rp {{ "{:,.0f}".format(s.get('total_biaya') or s.get('harga_per_hari') or 0) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <hr>
+    {% endif %}
+
+    {% if alat %}
+    <h3>Peralatan / Sewa Alat</h3>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Peralatan ID</th>
+                    <th>Jumlah</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in alat %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ d.get('peralatan_id') or d.get('alat_id') }}</td>
+                    <td>{{ d.get('jumlah') }}</td>
+                    <td>Rp {{ "{:,.0f}".format(d.get('subtotal') or d.get('harga_satuan') or 0) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <hr>
+    {% endif %}
+
+    {% if pembayaran %}
+    <h3>Riwayat Pembayaran</h3>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Metode</th>
+                    <th>Jumlah</th>
+                    <th>Tanggal</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pay in pembayaran %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ pay.get('metode_bayar') or pay.get('metode') or '-' }}</td>
+                    <td>Rp {{ "{:,.0f}".format(pay.get('jumlah') or 0) }}</td>
+                    <td>{{ pay.get('tanggal_bayar') or pay.get('tanggal') or '-' }}</td>
+                    <td>{{ pay.get('status_bayar') or pay.get('status') or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

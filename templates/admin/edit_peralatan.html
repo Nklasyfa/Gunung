@@ -7,7 +7,7 @@
     <div class="card-header">
         <h3 class="card-title">Form Edit Peralatan: {{ peralatan.nama_peralatan }}</h3>
     </div>
-    <form action="{{ url_for('edit_peralatan', id=peralatan.peralatan_id) }}" method="POST">
+    <form action="{{ url_for('admin.edit_peralatan', id=peralatan.peralatan_id) }}" method="POST">
         <div class="card-body">
             
             <div class="form-group">
@@ -27,8 +27,8 @@
             
         </div>
         <div class="card-footer">
-            <button type="submit" class="btn btn-info">Update Data</button>
-            <a href="{{ url_for('peralatan') }}" class="btn btn-secondary">Batal</a>
+            <button type="submit" class="btn btn-primary" style="background-color: #7A39E0; border-color: #7A39E0; color: white; font-weight: 700; padding: 10px 30px; text-transform: uppercase;">Update Peralatan</button>
+            <a href="{{ url_for('admin.peralatan') }}" class="btn btn-secondary" style="background-color: #d3d3d3; border-color: #d3d3d3; color: #000; font-weight: 700; padding: 10px 30px; text-transform: uppercase;">Batal</a>
         </div>
     </form>
 </div>

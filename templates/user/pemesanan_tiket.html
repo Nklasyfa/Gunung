@@ -9,8 +9,8 @@
 {% endblock %}
 
 {% block content %}
-<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-    <div style="margin-bottom: 20px;">
+<div class="pemesanan-container" style="max-width: 1200px; margin: 0 auto;">
+    <div style="margin-bottom: 20px; padding:20px 20px 0 20px;">
         <a href="javascript:history.back()" class="btn-back">
             <i class="fas fa-arrow-left"></i> Kembali
         </a>
@@ -21,7 +21,7 @@
         <p>Isi formulir di bawah untuk melakukan pemesanan perjalanan.</p>
     </header>
 
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-top: 30px;">
+    <div class="pemesanan-grid" style="margin-top: 30px;">
         
         <!-- Main Form -->
         <div class="content-card">
@@ -60,7 +60,7 @@
                 {% endif %}
 
                 <!-- Durasi & Aktivitas -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-row">
                     <div class="form-group">
                         <label for="durasi">Durasi Pendakian</label>
                         <select id="durasi" name="durasi" class="form-control" onchange="updatePrice()" required>
@@ -94,7 +94,7 @@
                     
                     <div id="anggotaContainer" style="border-left: 3px solid #7A39E0; padding: 20px; background: #f9f9f9;">
                         <!-- Header Row -->
-                        <div style="display: grid; grid-template-columns: 80px 1fr 1.5fr 1.5fr 1.5fr 1.5fr; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #ddd;">
+                        <div class="anggota-header" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #ddd;">
                             <div style="font-weight: 700; color: #333; font-size: 13px;">No.</div>
                             <div style="font-weight: 700; color: #333; font-size: 13px;">Kode Pendaki *</div>
                             <div style="font-weight: 700; color: #333; font-size: 13px;">Nama (Sesuai KTP)</div>
@@ -104,7 +104,7 @@
                         </div>
                         
                         <!-- First Row (Required) -->
-                        <div class="anggota-row" style="display: grid; grid-template-columns: 80px 1fr 1.5fr 1.5fr 1.5fr 1.5fr; gap: 15px; margin-bottom: 15px; align-items: start;">
+                        <div class="anggota-row">
                             <div style="padding-top: 8px; font-weight: 600; color: #666;">1</div>
                             <div>
                                 <input type="number" class="anggota-user-id" placeholder="Masukkan User ID" data-index="1" 
@@ -180,15 +180,15 @@
                 </div>
 
                 <!-- Submit -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px;">
+                <div class="form-row" style="margin-top: 30px;">
                     <button type="submit" class="btn primary" style="width: 100%; padding: 12px;">Lanjutkan Pemesanan</button>
                     <a href="{{ url_for('user.user_dashboard') }}" class="btn secondary" style="width: 100%; padding: 12px; text-align: center;">Batal</a>
                 </div>
             </form>
         </div>
 
-        <!-- Price Summary -->
-        <div class="content-card" style="height: fit-content; position: sticky; top: 20px;">
+    <!-- Price Summary -->
+    <div class="content-card price-summary" style="height: fit-content; position: sticky; top: 20px;">
             <h3>Ringkasan Harga</h3>
             <hr>
             
@@ -331,7 +331,6 @@ function tambahBariAnggota() {
     const dynamicRows = document.getElementById('anggotaDynamicRows');
     const newRow = document.createElement('div');
     newRow.className = 'anggota-row';
-    newRow.style.cssText = 'display: grid; grid-template-columns: 80px 1fr 1.5fr 1.5fr 1.5fr 1.5fr 80px; gap: 15px; margin-bottom: 15px; align-items: start;';
     newRow.innerHTML = `
         <div style="padding-top: 8px; font-weight: 600; color: #666;">${anggotaCounter}</div>
         <div>

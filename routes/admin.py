@@ -113,9 +113,188 @@ def pemesanan_list():
 
     return render_template('admin/pemesanan.html', pemesanan_list=rows, active_page='pemesanan')
 
+
+@admin_bp.route('/pemesanan/<int:pemesanan_id>')
+@admin_required
+def pemesanan_detail(pemesanan_id):
+    """Show detailed information about a pemesanan for admin: supports both legacy pemesanan_tiket and new pemesanan schema."""
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    pem = None
+    anggota = []
+    porter = []
+    alat = []
+    pembayaran = []
+    try:
+        if _table_exists(cur, 'pemesanan_tiket'):
+            cur.execute("SELECT pt.*, g.nama_gunung, u.nama as pemesan_nama FROM pemesanan_tiket pt LEFT JOIN gunung g ON pt.gunung_id = g.gunung_id LEFT JOIN user u ON pt.user_id = u.user_id WHERE pt.pemesanan_id = %s", [pemesanan_id])
+            pem = cur.fetchone()
+            if pem:
+                # legacy tables: pemesanan_anggota, pemesanan_porter, pemesanan_alat, pembayaran
+                try:
+                    cur.execute("SELECT * FROM pemesanan_anggota WHERE pemesanan_id = %s", [pemesanan_id])
+                    anggota = cur.fetchall() or []
+                except Exception:
+                    anggota = []
+                try:
+                    cur.execute("SELECT * FROM pemesanan_porter WHERE pemesanan_id = %s", [pemesanan_id])
+                    porter = cur.fetchall() or []
+                except Exception:
+                    porter = []
+                try:
+                    cur.execute("SELECT * FROM pemesanan_alat WHERE pemesanan_id = %s", [pemesanan_id])
+                    alat = cur.fetchall() or []
+                except Exception:
+                    alat = []
+                try:
+                    cur.execute("SELECT * FROM pembayaran WHERE pemesanan_id = %s", [pemesanan_id])
+                    pembayaran = cur.fetchall() or []
+                except Exception:
+                    pembayaran = []
+        else:
+            cur.execute("""
+                SELECT p.*, t.harga as tiket_harga, t.tiket_id, j.nama_jalur, g.nama_gunung, u.nama as pemesan_nama
+                FROM pemesanan p
+                LEFT JOIN tiket t ON p.tiket_id = t.tiket_id
+                LEFT JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id
+                LEFT JOIN gunung g ON j.gunung_id = g.gunung_id
+                LEFT JOIN user u ON p.user_id = u.user_id
+                WHERE p.pemesanan_id = %s
+            """, [pemesanan_id])
+            pem = cur.fetchone()
+            if pem:
+                try:
+                    cur.execute("SELECT * FROM anggota_pemesanan WHERE pemesanan_id = %s", [pemesanan_id])
+                    anggota = cur.fetchall() or []
+                except Exception:
+                    anggota = []
+                try:
+                    cur.execute("SELECT * FROM sewa_porter WHERE pemesanan_id = %s", [pemesanan_id])
+                    porter = cur.fetchall() or []
+                except Exception:
+                    porter = []
+                try:
+                    cur.execute("SELECT * FROM detail_sewa WHERE pemesanan_id = %s", [pemesanan_id])
+                    alat = cur.fetchall() or []
+                except Exception:
+                    alat = []
+                try:
+                    cur.execute("SELECT * FROM pembayaran WHERE pemesanan_id = %s", [pemesanan_id])
+                    pembayaran = cur.fetchall() or []
+                except Exception:
+                    pembayaran = []
+    except Exception as e:
+        flash(f"Gagal mengambil detail pemesanan: {e}", 'danger')
+    finally:
+        cur.close()
+
+    if not pem:
+        flash('Pemesanan tidak ditemukan.', 'danger')
+        return redirect(url_for('admin.pemesanan_list'))
+
+    # render detail template
+    return render_template('admin/pemesanan_detail.html', pem=pem, anggota=anggota, porter=porter, alat=alat, pembayaran=pembayaran, active_page='pemesanan')
+
+
+@admin_bp.route('/pemesanan/<int:pemesanan_id>/hapus', methods=['POST'])
+@admin_required
+def hapus_pemesanan(pemesanan_id):
+    """Delete a pemesanan and all related records (anggota, porter, alat, pembayaran, pendaki, rating) - supports both schemas."""
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    try:
+        # First, get ALL tiket_id from pemesanan (could be multiple in new schema) 
+        tiket_ids = []
+        try:
+            if not _table_exists(cur, 'pemesanan_tiket'):
+                cur.execute("SELECT DISTINCT tiket_id FROM pemesanan WHERE pemesanan_id = %s", [pemesanan_id])
+                rows = cur.fetchall() or []
+                tiket_ids = [row.get('tiket_id') for row in rows if row.get('tiket_id')]
+        except Exception:
+            pass
+
+        if _table_exists(cur, 'pemesanan_tiket'):
+            # Legacy schema: delete from all related tables first (foreign key constraints)
+            # Delete in order of foreign key dependencies
+            try:
+                cur.execute("DELETE FROM rating_review WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            try:
+                cur.execute("DELETE FROM pendaki WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            try:
+                cur.execute("DELETE FROM pembayaran WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            try:
+                cur.execute("DELETE FROM pemesanan_anggota WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            try:
+                cur.execute("DELETE FROM pemesanan_porter WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            try:
+                cur.execute("DELETE FROM pemesanan_alat WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            # Delete main record
+            cur.execute("DELETE FROM pemesanan_tiket WHERE pemesanan_id = %s", [pemesanan_id])
+        else:
+            # New schema: delete related records first
+            # Delete in order of foreign key dependencies
+            try:
+                cur.execute("DELETE FROM rating_review WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            try:
+                cur.execute("DELETE FROM pendaki WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            try:
+                cur.execute("DELETE FROM pembayaran WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            try:
+                cur.execute("DELETE FROM anggota_pemesanan WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            try:
+                cur.execute("DELETE FROM sewa_porter WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            try:
+                cur.execute("DELETE FROM detail_sewa WHERE pemesanan_id = %s", [pemesanan_id])
+            except Exception:
+                pass
+            # Delete main record
+            cur.execute("DELETE FROM pemesanan WHERE pemesanan_id = %s", [pemesanan_id])
+            
+            # Delete ALL tiket that were associated with this pemesanan (new schema)
+            # First delete from any tables that reference tiket
+            if tiket_ids:
+                for tid in tiket_ids:
+                    try:
+                        cur.execute("DELETE FROM tiket WHERE tiket_id = %s", [tid])
+                    except Exception:
+                        pass
+        
+        mysql.connection.commit()
+        flash(f'Pemesanan #{pemesanan_id} dan semua data terkait berhasil dihapus.', 'success')
+        return redirect(url_for('admin.pemesanan_list'))
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Gagal menghapus pemesanan: {str(e)}', 'danger')
+        return redirect(url_for('admin.pemesanan_detail', pemesanan_id=pemesanan_id))
+    finally:
+        cur.close()
+
 @admin_bp.route('/gunung/tambah', methods=['GET', 'POST'])
 @admin_required
 def tambah_gunung():
+
     if request.method == 'POST':
         nama_gunung = request.form['nama_gunung']
         lokasi = request.form['lokasi']
@@ -628,6 +807,7 @@ def punish_list():
     mysql = current_app.mysql
     cur = mysql.connection.cursor()
     try:
+        # Ambil daftar punishment
         cur.execute("""
             SELECT p.id, u.nama, p.violation, p.punishment, p.points, p.detail, p.date
             FROM punishment p
@@ -635,13 +815,18 @@ def punish_list():
             ORDER BY p.date DESC
         """)
         punishments = cur.fetchall()
+        
+        # Ambil daftar user untuk pencarian
+        cur.execute("SELECT user_id as id, nama, email FROM user ORDER BY nama")
+        pengguna = cur.fetchall()
     except Exception as e:
         flash(f"Error mengambil data punish: {e}", "danger")
         punishments = []
+        pengguna = []
     finally:
         cur.close()
     
-    return render_template('admin/punish.html', punishments=punishments, halaman_aktif='punish')
+    return render_template('admin/punish.html', punishments=punishments, pengguna=pengguna, hukuman=punishments, halaman_aktif='punish')
 
 
 # ======================

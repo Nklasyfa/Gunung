@@ -1,0 +1,264 @@
+/**
+ * Interactive Calendar Styles
+ */
+
+/* Calendar Wrapper */
+.calendar-wrapper {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+/* Calendar Header */
+.calendar-header {
+    background: linear-gradient(135deg, #7A39E0 0%, #5c2db5 100%);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cal-nav-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.3s ease;
+}
+
+.cal-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.calendar-month {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.calendar-year {
+    font-size: 24px;
+    font-weight: 300;
+    margin-left: 8px;
+}
+
+/* Days Header */
+.calendar-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: #f8f9fa;
+    padding: 15px 10px;
+}
+
+.calendar-days-header > div {
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    color: #666;
+}
+
+.calendar-days-header > div:first-child,
+.calendar-days-header > div:last-child {
+    color: #dc3545;
+}
+
+/* Calendar Grid */
+#calendarGrid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    padding: 10px;
+}
+
+/* Day Cell Base */
+.cal-day {
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.cal-day-num {
+    font-size: 16px;
+}
+
+.cal-day-price {
+    font-size: 9px;
+    font-weight: 400;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+
+/* Past Days */
+.cal-day-past {
+    background: #f8f9fa;
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Available Days */
+.cal-day-available {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    cursor: pointer;
+}
+
+.cal-day-available:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+/* Selected Day */
+.cal-day-selected {
+    background: #7A39E0;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(122, 57, 224, 0.4);
+}
+
+/* Unavailable Days */
+.cal-day-unavailable {
+    background: #e9ecef;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* Legend */
+.calendar-legend {
+    padding: 15px;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+.legend-dot.available {
+    background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.legend-dot.selected {
+    background: #7A39E0;
+}
+
+.legend-dot.unavailable {
+    background: #e9ecef;
+}
+
+.legend-label {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Selected Date Display */
+.selected-date-display {
+    display: none;
+    padding: 15px;
+    background: linear-gradient(135deg, #f0f4ff, #e8f0ff);
+    border-left: 4px solid #7A39E0;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.selected-date-display.visible {
+    display: block;
+}
+
+/* Jalur Selection */
+.jalur-selection {
+    display: none;
+    margin-top: 15px;
+}
+
+.jalur-selection.visible {
+    display: block;
+}
+
+.jalur-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.jalur-option-btn {
+    padding: 15px 20px;
+    background: white;
+    border: 2px solid #7A39E0;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    min-width: 150px;
+    transition: all 0.2s ease;
+}
+
+.jalur-option-btn:hover {
+    background: #f0f4ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(122, 57, 224, 0.2);
+}
+
+.jalur-option-btn strong {
+    display: block;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.jalur-option-btn small {
+    color: #28a745;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .cal-day {
+        height: 45px;
+    }
+
+    .cal-day-num {
+        font-size: 14px;
+    }
+
+    .cal-day-price {
+        font-size: 8px;
+    }
+
+    .calendar-month,
+    .calendar-year {
+        font-size: 18px;
+    }
+
+    .cal-nav-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+
+    .jalur-option-btn {
+        min-width: 120px;
+        padding: 12px 15px;
+    }
+}

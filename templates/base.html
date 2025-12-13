@@ -629,6 +629,24 @@
             color: #fff;
         }
 
+        /* Dark mode for select dropdown and options */
+        body.dark-mode select.form-control,
+        body.dark-mode select {
+            background-color: #2a2a2e !important;
+            color: #e0e0e0 !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        }
+
+        body.dark-mode select option {
+            background-color: #2a2a2e !important;
+            color: #e0e0e0 !important;
+        }
+
+        body.dark-mode select option:checked {
+            background-color: #7A39E0 !important;
+            color: #fff !important;
+        }
+
         /* === END DARK MODE === */
     </style>
     <style>

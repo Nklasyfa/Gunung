@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Pemesanan Tiket - {{ gunung.nama_gunung }}{% endblock %}
 
@@ -6,6 +6,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/pemesanan.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calendar.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -22,42 +23,103 @@
     </header>
 
     <div class="pemesanan-grid" style="margin-top: 30px;">
-        
+
         <!-- Main Form -->
         <div class="content-card">
-            <form id="bookingForm" action="{{ url_for('user.pemesanan_tiket', gunung_id=gunung.gunung_id) }}" method="POST">
-                
+            <form id="bookingForm" action="{{ url_for('user.pemesanan_tiket', gunung_id=gunung.gunung_id) }}"
+                method="POST">
+
                 <!-- Pilih Tiket (tanggal + jalur) - HANYA TAMPIL JIKA TIDAK ADA JALUR_ID -->
                 {% set filtered_tiket = [] %}
                 {% if jalur_data %}
-                    <!-- Jalur sudah dipilih dari detail gunung, filter tiket untuk jalur ini saja -->
-                    {% set filtered_tiket = tiket_list | selectattr('jalur_id', 'equalto', jalur_data.jalur_id) | list %}
-                    
-                    <!-- Tampilkan info jalur yang dipilih -->
-                    <div style="padding: 15px; background: #f0f4ff; border-left: 4px solid #7A39E0; border-radius: 8px; margin-bottom: 20px;">
-                        <h5 style="margin: 0 0 8px 0; color: #7A39E0;">Jalur Pendakian Terpilih</h5>
-                        <p style="margin: 0; color: #333; font-weight: 600;">{{ jalur_data.nama_jalur }}</p>
-                        {% if jalur_data.estimasi %}
-                            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Estimasi: {{ jalur_data.estimasi }}</p>
-                        {% endif %}
+                <!-- Jalur sudah dipilih dari detail gunung, filter tiket untuk jalur ini saja -->
+                {% set filtered_tiket = tiket_list | selectattr('jalur_id', 'equalto', jalur_data.jalur_id) | list %}
+
+                <!-- Tampilkan info jalur yang dipilih -->
+                <div data-jalur-id="{{ jalur_data.jalur_id }}"
+                    style="padding: 15px; background: #f0f4ff; border-left: 4px solid #7A39E0; border-radius: 8px; margin-bottom: 20px;">
+                    <h5 style="margin: 0 0 8px 0; color: #7A39E0;">Jalur Pendakian Terpilih</h5>
+                    <p style="margin: 0; color: #333; font-weight: 600;">{{ jalur_data.nama_jalur }}</p>
+                    {% if jalur_data.estimasi %}
+                    <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Estimasi: {{ jalur_data.estimasi }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+
+                <!-- Kalender Interaktif untuk Pilih Tanggal -->
+                <div class="form-group">
+                    <label style="font-size: 16px; font-weight: 700; margin-bottom: 15px; display: block;">
+                        <i class="fas fa-calendar-alt" style="color: #7A39E0;"></i> PILIH TANGGAL PENDAKIAN
+                    </label>
+
+                    <div class="calendar-wrapper">
+                        <div class="calendar-header">
+                            <button type="button" id="prevMonth" class="cal-nav-btn">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div style="text-align: center;">
+                                <span id="calendarMonth" class="calendar-month"></span>
+                                <span id="calendarYear" class="calendar-year"></span>
+                            </div>
+                            <button type="button" id="nextMonth" class="cal-nav-btn">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <div class="calendar-days-header">
+                            <div>MIN</div>
+                            <div>SEN</div>
+                            <div>SEL</div>
+                            <div>RAB</div>
+                            <div>KAM</div>
+                            <div>JUM</div>
+                            <div>SAB</div>
+                        </div>
+
+                        <div id="calendarGrid"></div>
+
+                        <div class="calendar-legend">
+                            <div class="legend-item">
+                                <span class="legend-dot available"></span>
+                                <span class="legend-label">Tersedia</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot selected"></span>
+                                <span class="legend-label">Dipilih</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot unavailable"></span>
+                                <span class="legend-label">Tidak Tersedia</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Hidden input untuk tiket_id - ambil yang pertama dari filtered list -->
-                    {% if filtered_tiket %}
-                        <input type="hidden" name="tiket_id" value="{{ filtered_tiket[0].tiket_id }}">
-                    {% endif %}
-                {% else %}
-                    <!-- Tidak ada jalur dipilih, tampilkan dropdown untuk pilih tiket -->
-                    <div class="form-group">
-                        <label for="tiket_id">Pilih Tiket (Tanggal / Jalur)</label>
-                        <select id="tiket_id" name="tiket_id" class="form-control" onchange="updatePrice()" required>
-                            <option value="">-- Pilih Tiket --</option>
-                            {% for t in tiket_list %}
-                                <option value="{{ t.tiket_id }}">{{ t.tdate }} — {{ t.nama_jalur }} — Rp {{ "{:,.0f}".format(t.harga) }}</option>
-                            {% endfor %}
-                        </select>
+                    <div id="selectedDateDisplay" class="selected-date-display">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">Tanggal Dipilih</div>
+                                <div id="selectedDateText" style="font-size: 18px; font-weight: 700; color: #7A39E0;">
+                                </div>
+                                <div id="selectedJalurText" style="font-size: 14px; color: #333; margin-top: 4px;">
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 12px; color: #666;">Harga/orang</div>
+                                <div id="selectedPriceText" style="font-size: 18px; font-weight: 700; color: #28a745;">
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                {% endif %}
+
+                    <input type="hidden" id="tiket_id" name="tiket_id" value="">
+
+                    <div id="jalurSelection" class="jalur-selection">
+                        <label style="font-weight: 600; color: #333; margin-bottom: 10px; display: block;">Pilih Jalur
+                            Pendakian:</label>
+                        <div id="jalurOptions" class="jalur-options"></div>
+                    </div>
+                </div>
 
                 <!-- Durasi & Aktivitas -->
                 <div class="form-row">
@@ -66,15 +128,15 @@
                         <select id="durasi" name="durasi" class="form-control" onchange="updatePrice()" required>
                             <option value="">-- Pilih Durasi --</option>
                             {% for i in range(gunung.min_days, gunung.max_days + 1) %}
-                                {% if i == 1 %}
-                                    <option value="{{ i }}">{{ i }} Hari</option>
-                                {% else %}
-                                    <option value="{{ i }}">{{ i }} Hari {{ i - 1 }} Malam</option>
-                                {% endif %}
+                            {% if i == 1 %}
+                            <option value="{{ i }}">{{ i }} Hari</option>
+                            {% else %}
+                            <option value="{{ i }}">{{ i }} Hari {{ i - 1 }} Malam</option>
+                            {% endif %}
                             {% endfor %}
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Pilih Aktivitas</label>
                         <div style="display: flex; gap: 15px; margin-top: 10px;">
@@ -90,11 +152,14 @@
 
                 <!-- Anggota -->
                 <div class="form-group">
-                    <label style="font-size: 16px; font-weight: 700; margin-bottom: 15px; display: block;">ANGGOTA ROMBONGAN</label>
-                    
-                    <div id="anggotaContainer" style="border-left: 3px solid #7A39E0; padding: 20px; background: #f9f9f9;">
+                    <label style="font-size: 16px; font-weight: 700; margin-bottom: 15px; display: block;">ANGGOTA
+                        ROMBONGAN</label>
+
+                    <div id="anggotaContainer"
+                        style="border-left: 3px solid #7A39E0; padding: 20px; background: #f9f9f9;">
                         <!-- Header Row -->
-                        <div class="anggota-header" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #ddd;">
+                        <div class="anggota-header"
+                            style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #ddd;">
                             <div style="font-weight: 700; color: #333; font-size: 13px;">No.</div>
                             <div style="font-weight: 700; color: #333; font-size: 13px;">Kode Pendaki *</div>
                             <div style="font-weight: 700; color: #333; font-size: 13px;">Nama (Sesuai KTP)</div>
@@ -102,55 +167,64 @@
                             <div style="font-weight: 700; color: #333; font-size: 13px;">Email</div>
                             <div style="font-weight: 700; color: #333; font-size: 13px;">Alamat</div>
                         </div>
-                        
+
                         <!-- First Row (Required) -->
                         <div class="anggota-row">
                             <div style="padding-top: 8px; font-weight: 600; color: #666;">1</div>
                             <div>
-                                <input type="number" class="anggota-user-id" placeholder="Masukkan User ID" data-index="1" 
-                                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;" 
-                                       onblur="cariUserAnggota(this)">
+                                <input type="number" class="anggota-user-id" placeholder="Masukkan User ID"
+                                    data-index="1"
+                                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                                    onblur="cariUserAnggota(this)">
                                 <small style="color: #999; display: block; margin-top: 3px;">User ID dari sistem</small>
                             </div>
-                            <div class="anggota-nama" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px;">
+                            <div class="anggota-nama"
+                                style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px;">
                                 -
                             </div>
-                            <div class="anggota-nik" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px;">
+                            <div class="anggota-nik"
+                                style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px;">
                                 -
                             </div>
-                            <div class="anggota-email" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px; word-break: break-all;">
+                            <div class="anggota-email"
+                                style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px; word-break: break-all;">
                                 -
                             </div>
-                            <div class="anggota-alamat" style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px; word-break: break-word;">
+                            <div class="anggota-alamat"
+                                style="padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; min-height: 38px; display: flex; align-items: center; color: #999; font-size: 14px; word-break: break-word;">
                                 -
                             </div>
                             <input type="hidden" name="anggota_ids" class="anggota-id-hidden" value="">
                         </div>
-                        
+
                         <!-- Dynamic Rows -->
                         <div id="anggotaDynamicRows"></div>
                     </div>
-                    
-                    <button type="button" onclick="tambahBariAnggota()" 
-                            style="margin-top: 15px; padding: 10px 20px; background: #7A39E0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
+
+                    <button type="button" onclick="tambahBariAnggota()"
+                        style="margin-top: 15px; padding: 10px 20px; background: #7A39E0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px;">
                         + Tambah Anggota
                     </button>
-                    <small style="display: block; color: #666; margin-top: 10px;">Masukkan User ID untuk mencari anggota. Nama akan ditampilkan otomatis dari database.</small>
+                    <small style="display: block; color: #666; margin-top: 10px;">Masukkan User ID untuk mencari
+                        anggota. Nama akan ditampilkan otomatis dari database.</small>
                 </div>
 
                 <!-- Porter -->
                 <div class="form-group">
                     <label>Sewa Porter (Opsional)</label>
-                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; max-height: 250px; overflow-y: auto;">
+                    <div
+                        style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; max-height: 250px; overflow-y: auto;">
                         {% if porter_list %}
-                            {% for porter in porter_list %}
-                                <label style="display: block; margin-bottom: 10px; cursor: pointer;">
-                                    <input type="checkbox" name="porter_id" value="{{ porter.porter_id }}" onchange="updatePrice()">
-                                    <strong>{{ porter.nama_porter }}</strong> - Rp {{ "{:,.0f}".format(porter.harga_per_hari) }}/hari
-                                </label>
-                            {% endfor %}
+                        {% for porter in porter_list %}
+                        <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                            <input type="checkbox" name="porter_id" value="{{ porter.porter_id }}"
+                                onchange="updatePrice()">
+                            <strong>{{ porter.nama_porter }}</strong> - Rp {{ "{:,.0f}".format(porter.harga_per_hari)
+                            }}/hari
+                        </label>
+                        {% endfor %}
                         {% else %}
-                            <p style="color: #999;">Porter tidak tersedia untuk gunung ini.</p>
+                        <p style="color: #999;">Porter tidak tersedia untuk gunung ini.</p>
                         {% endif %}
                     </div>
                 </div>
@@ -158,52 +232,60 @@
                 <!-- Equipment -->
                 <div class="form-group">
                     <label>Sewa Peralatan Pendakian (Opsional)</label>
-                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; max-height: 300px; overflow-y: auto;">
+                    <div
+                        style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; max-height: 300px; overflow-y: auto;">
                         {% if alat_list %}
-                            {% for alat in alat_list %}
-                                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
-                                    <label style="display: block; margin-bottom: 8px; cursor: pointer;">
-                                        <input type="checkbox" class="alat-checkbox" value="{{ alat.peralatan_id }}" onchange="updatePrice()">
-                                        <strong>{{ alat.nama_peralatan }}</strong> - Rp {{ "{:,.0f}".format(alat.harga_sewa) }}/hari
-                                    </label>
-                                    <div style="margin-left: 20px;">
-                                        <label>Jumlah: </label>
-                                        <input type="number" class="alat-qty" data-alat-id="{{ alat.peralatan_id }}" name="alat_id" value="0" min="0" max="{{ alat.stok }}" onchange="updatePrice()" style="width: 60px;">
-                                        <span style="color: #999;">(Stok: {{ alat.stok }})</span>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                        {% for alat in alat_list %}
+                        <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                            <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                <input type="checkbox" class="alat-checkbox" value="{{ alat.peralatan_id }}"
+                                    onchange="updatePrice()">
+                                <strong>{{ alat.nama_peralatan }}</strong> - Rp {{ "{:,.0f}".format(alat.harga_sewa)
+                                }}/hari
+                            </label>
+                            <div style="margin-left: 20px;">
+                                <label>Jumlah: </label>
+                                <input type="number" class="alat-qty" data-alat-id="{{ alat.peralatan_id }}"
+                                    name="alat_id" value="0" min="0" max="{{ alat.stok }}" onchange="updatePrice()"
+                                    style="width: 60px;">
+                                <span style="color: #999;">(Stok: {{ alat.stok }})</span>
+                            </div>
+                        </div>
+                        {% endfor %}
                         {% else %}
-                            <p style="color: #999;">Tidak ada peralatan tersedia untuk disewa.</p>
+                        <p style="color: #999;">Tidak ada peralatan tersedia untuk disewa.</p>
                         {% endif %}
                     </div>
                 </div>
 
                 <!-- Submit -->
                 <div class="form-row" style="margin-top: 30px;">
-                    <button type="submit" class="btn primary" style="width: 100%; padding: 12px;">Lanjutkan Pemesanan</button>
-                    <a href="{{ url_for('user.user_dashboard') }}" class="btn secondary" style="width: 100%; padding: 12px; text-align: center;">Batal</a>
+                    <button type="submit" class="btn primary" style="width: 100%; padding: 12px;">Lanjutkan
+                        Pemesanan</button>
+                    <a href="{{ url_for('user.user_dashboard') }}" class="btn secondary"
+                        style="width: 100%; padding: 12px; text-align: center;">Batal</a>
                 </div>
             </form>
         </div>
 
-    <!-- Price Summary -->
-    <div class="content-card price-summary" style="height: fit-content; position: sticky; top: 20px;">
+        <!-- Price Summary -->
+        <div class="content-card price-summary" style="height: fit-content; position: sticky; top: 20px;">
             <h3>Ringkasan Harga</h3>
             <hr>
-            
+
             <div style="margin-bottom: 15px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                     <span>Harga Tiket/Orang:</span>
                     <span>Rp {{ "{:,.0f}".format(gunung.harga_tiket) }}</span>
                 </div>
-                
+
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                     <span>Jumlah Anggota:</span>
                     <span id="jumlahAnggota">0 orang</span>
                 </div>
-                
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; border-top: 1px solid #ddd; padding-top: 8px;">
+
+                <div
+                    style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; border-top: 1px solid #ddd; padding-top: 8px;">
                     <span>Subtotal Tiket:</span>
                     <span id="subtotalTiket">Rp 0</span>
                 </div>
@@ -242,96 +324,103 @@
 <!-- Store users data for lookup -->
 <div id="usersDataRaw" data-users='{{ users_data | tojson | safe }}' style="display:none"></div>
 
+<!-- Store tiket data for calendar -->
+<div id="tiketDataRaw" data-tiket='{{ tiket_list | tojson | safe }}' style="display:none"></div>
+
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
 <script>
-// Format currency
-function formatCurrency(value) {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }).format(value);
-}
-
-// Global data
-var priceData = {};
-var usersData = {};
-var anggotaCounter = 1;
-
-// Cari user anggota berdasarkan user_id
-function cariUserAnggota(input) {
-    const userId = input.value.trim();
-    const row = input.closest('.anggota-row');
-    const namaDiv = row.querySelector('.anggota-nama');
-    const nikDiv = row.querySelector('.anggota-nik');
-    const emailDiv = row.querySelector('.anggota-email');
-    const alamatDiv = row.querySelector('.anggota-alamat');
-    const hiddenInput = row.querySelector('.anggota-id-hidden');
-    
-    if (!userId) {
-        namaDiv.textContent = '-';
-        nikDiv.textContent = '-';
-        emailDiv.textContent = '-';
-        alamatDiv.textContent = '-';
-        namaDiv.style.color = '#999';
-        nikDiv.style.color = '#999';
-        emailDiv.style.color = '#999';
-        alamatDiv.style.color = '#999';
-        hiddenInput.value = '';
-        updatePrice();
-        return;
+    // Format currency
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
     }
-    
-    // Cari user dari data berdasarkan user_id
-    if (usersData[userId]) {
-        const user = usersData[userId];
-        namaDiv.textContent = user.nama || '-';
-        nikDiv.textContent = user.nik || '-';
-        emailDiv.textContent = user.email || '-';
-        alamatDiv.textContent = user.alamat || '-';
-        namaDiv.style.color = '#333';
-        nikDiv.style.color = '#333';
-        emailDiv.style.color = '#333';
-        alamatDiv.style.color = '#333';
-        namaDiv.style.background = '#f0f8ff';
-        nikDiv.style.background = '#f0f8ff';
-        emailDiv.style.background = '#f0f8ff';
-        alamatDiv.style.background = '#f0f8ff';
-        namaDiv.style.borderColor = '#7A39E0';
-        nikDiv.style.borderColor = '#7A39E0';
-        emailDiv.style.borderColor = '#7A39E0';
-        alamatDiv.style.borderColor = '#7A39E0';
-        hiddenInput.value = userId;
-        updatePrice();
-    } else {
-        namaDiv.textContent = '❌ Tidak ditemukan';
-        nikDiv.textContent = '-';
-        emailDiv.textContent = '-';
-        alamatDiv.textContent = '-';
-        namaDiv.style.color = '#dc3545';
-        nikDiv.style.color = '#dc3545';
-        emailDiv.style.color = '#dc3545';
-        alamatDiv.style.color = '#dc3545';
-        namaDiv.style.background = '#ffebee';
-        nikDiv.style.background = '#ffebee';
-        emailDiv.style.background = '#ffebee';
-        alamatDiv.style.background = '#ffebee';
-        namaDiv.style.borderColor = '#dc3545';
-        nikDiv.style.borderColor = '#dc3545';
-        emailDiv.style.borderColor = '#dc3545';
-        alamatDiv.style.borderColor = '#dc3545';
-        hiddenInput.value = '';
-        updatePrice();
-    }
-}
 
-// Tambah baris anggota baru
-function tambahBariAnggota() {
-    anggotaCounter++;
-    const dynamicRows = document.getElementById('anggotaDynamicRows');
-    const newRow = document.createElement('div');
-    newRow.className = 'anggota-row';
-    newRow.innerHTML = `
+    // Make formatCurrency globally available for calendar.js
+    window.formatCurrency = formatCurrency;
+
+    // Global data
+    var priceData = {};
+    var usersData = {};
+    var anggotaCounter = 1;
+
+    // Cari user anggota berdasarkan user_id
+    function cariUserAnggota(input) {
+        const userId = input.value.trim();
+        const row = input.closest('.anggota-row');
+        const namaDiv = row.querySelector('.anggota-nama');
+        const nikDiv = row.querySelector('.anggota-nik');
+        const emailDiv = row.querySelector('.anggota-email');
+        const alamatDiv = row.querySelector('.anggota-alamat');
+        const hiddenInput = row.querySelector('.anggota-id-hidden');
+
+        if (!userId) {
+            namaDiv.textContent = '-';
+            nikDiv.textContent = '-';
+            emailDiv.textContent = '-';
+            alamatDiv.textContent = '-';
+            namaDiv.style.color = '#999';
+            nikDiv.style.color = '#999';
+            emailDiv.style.color = '#999';
+            alamatDiv.style.color = '#999';
+            hiddenInput.value = '';
+            updatePrice();
+            return;
+        }
+
+        // Cari user dari data berdasarkan user_id
+        if (usersData[userId]) {
+            const user = usersData[userId];
+            namaDiv.textContent = user.nama || '-';
+            nikDiv.textContent = user.nik || '-';
+            emailDiv.textContent = user.email || '-';
+            alamatDiv.textContent = user.alamat || '-';
+            namaDiv.style.color = '#333';
+            nikDiv.style.color = '#333';
+            emailDiv.style.color = '#333';
+            alamatDiv.style.color = '#333';
+            namaDiv.style.background = '#f0f8ff';
+            nikDiv.style.background = '#f0f8ff';
+            emailDiv.style.background = '#f0f8ff';
+            alamatDiv.style.background = '#f0f8ff';
+            namaDiv.style.borderColor = '#7A39E0';
+            nikDiv.style.borderColor = '#7A39E0';
+            emailDiv.style.borderColor = '#7A39E0';
+            alamatDiv.style.borderColor = '#7A39E0';
+            hiddenInput.value = userId;
+            updatePrice();
+        } else {
+            namaDiv.textContent = '❌ Tidak ditemukan';
+            nikDiv.textContent = '-';
+            emailDiv.textContent = '-';
+            alamatDiv.textContent = '-';
+            namaDiv.style.color = '#dc3545';
+            nikDiv.style.color = '#dc3545';
+            emailDiv.style.color = '#dc3545';
+            alamatDiv.style.color = '#dc3545';
+            namaDiv.style.background = '#ffebee';
+            nikDiv.style.background = '#ffebee';
+            emailDiv.style.background = '#ffebee';
+            alamatDiv.style.background = '#ffebee';
+            namaDiv.style.borderColor = '#dc3545';
+            nikDiv.style.borderColor = '#dc3545';
+            emailDiv.style.borderColor = '#dc3545';
+            alamatDiv.style.borderColor = '#dc3545';
+            hiddenInput.value = '';
+            updatePrice();
+        }
+    }
+
+    // Tambah baris anggota baru
+    function tambahBariAnggota() {
+        anggotaCounter++;
+        const dynamicRows = document.getElementById('anggotaDynamicRows');
+        const newRow = document.createElement('div');
+        newRow.className = 'anggota-row';
+        newRow.innerHTML = `
         <div style="padding-top: 8px; font-weight: 600; color: #666;">${anggotaCounter}</div>
         <div>
             <input type="number" class="anggota-user-id" placeholder="Masukkan User ID" data-index="${anggotaCounter}" 
@@ -355,113 +444,115 @@ function tambahBariAnggota() {
         </div>
         <input type="hidden" name="anggota_ids" class="anggota-id-hidden" value="">
     `;
-    dynamicRows.appendChild(newRow);
-}
+        dynamicRows.appendChild(newRow);
+    }
 
-// Hapus baris anggota
-function hapusAnggota(btn) {
-    const row = btn.closest('.anggota-row');
-    row.remove();
-    updatePrice();
-}
+    // Hapus baris anggota
+    function hapusAnggota(btn) {
+        const row = btn.closest('.anggota-row');
+        row.remove();
+        updatePrice();
+    }
 
-// priceData will be read from the hidden element to keep editor linters happy
-// Update price calculation
-function updatePrice() {
-    const durasi = parseInt(document.getElementById('durasi').value) || 0;
+    // Update price calculation
+    function updatePrice() {
+        const durasi = parseInt(document.getElementById('durasi').value) || 0;
 
-    // Count members (dari hidden inputs yang punya value)
-    const anggotaHiddenInputs = document.querySelectorAll('input[name="anggota_ids"]:not([value=""])');
-    const jumlahAnggota = anggotaHiddenInputs.length;
+        // Count members (dari hidden inputs yang punya value)
+        const anggotaHiddenInputs = document.querySelectorAll('input[name="anggota_ids"]:not([value=""])');
+        const jumlahAnggota = anggotaHiddenInputs.length;
 
-    // Calculate ticket price (use selected tiket's price when available)
-    const tiketSel = document.getElementById('tiket_id');
-    const tiketId = tiketSel ? tiketSel.value : '';
-    const perPerson = (priceData.tiketPrices && priceData.tiketPrices[tiketId]) ? priceData.tiketPrices[tiketId] : (priceData.hargaTiket || 0);
-    const subtotalTiket = perPerson * jumlahAnggota;
-    document.getElementById('jumlahAnggota').textContent = jumlahAnggota + ' orang';
-    document.getElementById('subtotalTiket').textContent = formatCurrency(subtotalTiket);
+        // Calculate ticket price (use selected tiket's price when available)
+        const tiketSel = document.getElementById('tiket_id');
+        const tiketId = tiketSel ? tiketSel.value : '';
+        const perPerson = (priceData.tiketPrices && priceData.tiketPrices[tiketId]) ? priceData.tiketPrices[tiketId] : (priceData.hargaTiket || 0);
+        const subtotalTiket = perPerson * jumlahAnggota;
+        document.getElementById('jumlahAnggota').textContent = jumlahAnggota + ' orang';
+        document.getElementById('subtotalTiket').textContent = formatCurrency(subtotalTiket);
 
-    // Calculate porter price
-    const porterCheckboxes = document.querySelectorAll('input[name="porter_id"]:checked');
-    let totalPorter = 0;
-    porterCheckboxes.forEach(function(cb) {
-        const porterId = cb.value;
-        const pPrice = priceData.porters && priceData.porters[porterId] ? priceData.porters[porterId] : 0;
-        totalPorter += pPrice * durasi;
-    });
-    document.getElementById('jumlahPorter').textContent = porterCheckboxes.length;
-    document.getElementById('totalPorter').textContent = formatCurrency(totalPorter);
+        // Calculate porter price
+        const porterCheckboxes = document.querySelectorAll('input[name="porter_id"]:checked');
+        let totalPorter = 0;
+        porterCheckboxes.forEach(function (cb) {
+            const porterId = cb.value;
+            const pPrice = priceData.porters && priceData.porters[porterId] ? priceData.porters[porterId] : 0;
+            totalPorter += pPrice * durasi;
+        });
+        document.getElementById('jumlahPorter').textContent = porterCheckboxes.length;
+        document.getElementById('totalPorter').textContent = formatCurrency(totalPorter);
 
-    // Calculate equipment price
-    let totalAlat = 0;
-    document.querySelectorAll('.alat-qty').forEach(function(input) {
-        const alatId = input.dataset.alatId;
-        const qty = parseInt(input.value) || 0;
-        const aPrice = priceData.alats && priceData.alats[alatId] ? priceData.alats[alatId] : 0;
-        if (qty > 0) {
-            totalAlat += aPrice * qty * durasi;
+        // Calculate equipment price
+        let totalAlat = 0;
+        document.querySelectorAll('.alat-qty').forEach(function (input) {
+            const alatId = input.dataset.alatId;
+            const qty = parseInt(input.value) || 0;
+            const aPrice = priceData.alats && priceData.alats[alatId] ? priceData.alats[alatId] : 0;
+            if (qty > 0) {
+                totalAlat += aPrice * qty * durasi;
+            }
+        });
+        document.getElementById('totalAlat').textContent = formatCurrency(totalAlat);
+
+        // Calculate total
+        const total = subtotalTiket + totalPorter + totalAlat;
+        document.getElementById('totalHarga').textContent = formatCurrency(total);
+        document.getElementById('durasiDisplay').textContent = durasi;
+
+        // Update hidden input for equipment
+        const equipmentData = [];
+        document.querySelectorAll('.alat-qty').forEach(function (input) {
+            const qty = parseInt(input.value) || 0;
+            if (qty > 0) {
+                equipmentData.push(input.dataset.alatId + '_' + qty);
+            }
+        });
+
+        // Create or update hidden equipment input
+        let equipmentInput = document.getElementById('equipmentInput');
+        if (!equipmentInput) {
+            equipmentInput = document.createElement('input');
+            equipmentInput.type = 'hidden';
+            equipmentInput.id = 'equipmentInput';
+            equipmentInput.name = 'alat_id';
+            document.getElementById('bookingForm').appendChild(equipmentInput);
         }
-    });
-    document.getElementById('totalAlat').textContent = formatCurrency(totalAlat);
+        equipmentInput.value = JSON.stringify(equipmentData);
+    }
 
-    // Calculate total
-    const total = subtotalTiket + totalPorter + totalAlat;
-    document.getElementById('totalHarga').textContent = formatCurrency(total);
-    document.getElementById('durasiDisplay').textContent = durasi;
+    // Make updatePrice globally available for calendar.js
+    window.updatePrice = updatePrice;
 
-    // Update hidden input for equipment
-    const equipmentData = [];
-    document.querySelectorAll('.alat-qty').forEach(function(input) {
-        const qty = parseInt(input.value) || 0;
-        if (qty > 0) {
-            equipmentData.push(input.dataset.alatId + '_' + qty);
+    // Initialize and set minimum date to today
+    document.addEventListener('DOMContentLoaded', function () {
+        const today = new Date().toISOString().split('T')[0];
+        const tanggal = document.getElementById('tanggal_pesan');
+        if (tanggal) tanggal.min = today;
+
+        // read price data from hidden element
+        try {
+            var raw = document.getElementById('priceDataRaw').getAttribute('data-price');
+            priceData = raw ? JSON.parse(raw) : {};
+        } catch (e) {
+            priceData = {};
+            console.error('Invalid price data', e);
         }
+
+        // read users data from hidden element
+        try {
+            var usersRaw = document.getElementById('usersDataRaw').getAttribute('data-users');
+            usersData = usersRaw ? JSON.parse(usersRaw) : {};
+        } catch (e) {
+            usersData = {};
+            console.error('Invalid users data', e);
+        }
+
+        // attach event listeners to update price dynamically
+        document.querySelectorAll('#tiket_id, #durasi, input[name="aktivitas"], input[name="porter_id"], .alat-qty').forEach(function (el) {
+            el.addEventListener('change', updatePrice);
+        });
+        // initial price calc
+        updatePrice();
     });
-
-    // Create or update hidden equipment input
-    let equipmentInput = document.getElementById('equipmentInput');
-    if (!equipmentInput) {
-        equipmentInput = document.createElement('input');
-        equipmentInput.type = 'hidden';
-        equipmentInput.id = 'equipmentInput';
-        equipmentInput.name = 'alat_id';
-        document.getElementById('bookingForm').appendChild(equipmentInput);
-    }
-    equipmentInput.value = JSON.stringify(equipmentData);
-}
-
-// Initialize and set minimum date to today
-document.addEventListener('DOMContentLoaded', function() {
-    const today = new Date().toISOString().split('T')[0];
-    const tanggal = document.getElementById('tanggal_pesan');
-    if (tanggal) tanggal.min = today;
-
-    // read price data from hidden element
-    try {
-        var raw = document.getElementById('priceDataRaw').getAttribute('data-price');
-        priceData = raw ? JSON.parse(raw) : {};
-    } catch (e) {
-        priceData = {};
-        console.error('Invalid price data', e);
-    }
-    
-    // read users data from hidden element
-    try {
-        var usersRaw = document.getElementById('usersDataRaw').getAttribute('data-users');
-        usersData = usersRaw ? JSON.parse(usersRaw) : {};
-    } catch (e) {
-        usersData = {};
-        console.error('Invalid users data', e);
-    }
-
-    // attach event listeners to update price dynamically
-    document.querySelectorAll('#tiket_id, #durasi, input[name="aktivitas"], input[name="porter_id"], .alat-qty').forEach(function(el){
-        el.addEventListener('change', updatePrice);
-    });
-    // initial price calc
-    updatePrice();
-});
 </script>
 
 <style>
@@ -475,25 +566,25 @@ document.addEventListener('DOMContentLoaded', function() {
         cursor: pointer;
         transition: all 0.3s ease;
     }
-    
+
     .btn.primary {
         background-color: #007bff;
         color: white;
     }
-    
+
     .btn.primary:hover {
         background-color: #0056b3;
     }
-    
+
     .btn.secondary {
         background-color: #6c757d;
         color: white;
     }
-    
+
     .btn.secondary:hover {
         background-color: #545b62;
     }
-    
+
     .form-control {
         width: 100%;
         padding: 10px;
@@ -501,13 +592,13 @@ document.addEventListener('DOMContentLoaded', function() {
         border-radius: 5px;
         font-family: inherit;
     }
-    
+
     .form-control:focus {
         outline: none;
         border-color: #007bff;
         box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
-    
+
     .content-card {
         background: white;
         padding: 20px;

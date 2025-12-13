@@ -12,141 +12,154 @@
 
 <div class="dashboard-container">
 
-    <div class="dashboard-controls" style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; justify-content:flex-end;">
+    <div class="dashboard-controls"
+        style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; justify-content:flex-end;">
 
-        <button id="darkModeToggle" onclick="toggleDarkMode(); return false;" class="btn-dashboard btn-bantuan" style="background-color: #6f42c1;">
-            <i class="fas fa-moon"></i> <span id="darkModeText">Dark Mode</span>
-        </button>
+        <div class="content-card">
 
-        <button onclick="history.back()" class="btn-dashboard btn-bantuan" style="background-color: #6c757d;">
-            <i class="fas fa-arrow-left"></i> Kembali
-        </button>
+            <section class="help-section">
+                <h3><i class="fas fa-tools"></i> Manajemen Data Gunung</h3>
+                <ul>
+                    <li>Cara menambahkan gunung baru (+ Foto)</li>
+                    <li>Mengedit harga tiket & kuota</li>
+                    <li>Menghapus data gunung yang tidak aktif</li>
+                    <li>Mengatur status jalur (Buka/Tutup)</li>
+                </ul>
+            </section>
+
+            <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 20px 0;">
+
+            <section class="help-section">
+                <h3><i class="fas fa-shield-alt"></i> Kendala Teknis (FAQ)</h3>
+
+                <div class="faq-item">
+                    <p><strong>Q: Kenapa saya tidak bisa menghapus gunung?</strong></p>
+                    <p>A: Gunung tidak bisa dihapus jika masih ada pesanan aktif dari pendaki.</p>
+                </div>
+
+                <div class="faq-item">
+                    <p><strong>Q: Bagaimana cara verifikasi pembayaran?</strong></p>
+                    <p>A: Masuk ke menu 'Pesanan', cek bukti transfer, lalu klik tombol 'Terima'.</p>
+                </div>
+            </section>
+
+            <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 20px 0;">
+
+            <section class="help-section">
+                <h3><i class="fas fa-code"></i> Hubungi Tim IT / Developer</h3>
+                <p style="margin-bottom:15px;">Jika terjadi error sistem (Bug), segera laporkan ke developer:</p>
+
+                <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                    <a href="https://wa.me/6285791686412" target="_blank" class="btn-dashboard btn-contact whatsapp"><i
+                            class="fab fa-whatsapp"></i> Chat Developer</a>
+                    <a href="#" class="btn-dashboard btn-contact email"><i class="fas fa-bug"></i> Report Bug</a>
+                </div>
+            </section>
+
+        </div>
     </div>
 
-    <header style="text-align:center; margin-bottom:30px;">
-        <h1 class="page-title">Pusat Bantuan Administrator</h1>
-        <p class="page-subtitle">Panduan pengelolaan sistem dan manajemen data.</p>
-    </header>
-
-    <div class="content-card">
-
-        <section class="help-section">
-            <h3><i class="fas fa-tools"></i> Manajemen Data Gunung</h3>
-            <ul>
-                <li>Cara menambahkan gunung baru (+ Foto)</li>
-                <li>Mengedit harga tiket & kuota</li>
-                <li>Menghapus data gunung yang tidak aktif</li>
-                <li>Mengatur status jalur (Buka/Tutup)</li>
-            </ul>
-        </section>
-
-        <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 20px 0;">
-
-        <section class="help-section">
-            <h3><i class="fas fa-shield-alt"></i> Kendala Teknis (FAQ)</h3>
-
-            <div class="faq-item">
-                <p><strong>Q: Kenapa saya tidak bisa menghapus gunung?</strong></p>
-                <p>A: Gunung tidak bisa dihapus jika masih ada pesanan aktif dari pendaki.</p>
-            </div>
-
-            <div class="faq-item">
-                <p><strong>Q: Bagaimana cara verifikasi pembayaran?</strong></p>
-                <p>A: Masuk ke menu 'Pesanan', cek bukti transfer, lalu klik tombol 'Terima'.</p>
-            </div>
-        </section>
-
-        <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 20px 0;">
-
-        <section class="help-section">
-            <h3><i class="fas fa-code"></i> Hubungi Tim IT / Developer</h3>
-            <p style="margin-bottom:15px;">Jika terjadi error sistem (Bug), segera laporkan ke developer:</p>
-
-            <div style="display:flex; gap:15px; flex-wrap:wrap;">
-                <a href="#" class="btn-dashboard btn-contact whatsapp"><i class="fab fa-whatsapp"></i> Chat Developer</a>
-                <a href="#" class="btn-dashboard btn-contact email"><i class="fas fa-bug"></i> Report Bug</a>
-            </div>
-        </section>
-
-    </div>
-</div>
-
-<style>
-/* =======================================================
+    <style>
+        /* =======================================================
    SETTING BACKGROUND
    ======================================================= */
-body {
-    background-image: url("{{ url_for('static', filename='images/kunung.jpg') }}") !important;
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    transition: background-image 0.5s ease-in-out;
-    background-color: #ECE9F7;
-    font-family: 'Montserrat', sans-serif;
-}
+        body {
+            background-image: url("{{ url_for('static', filename='images/kunung.jpg') }}") !important;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            transition: background-image 0.5s ease-in-out;
+            background-color: #ECE9F7;
+            font-family: 'Montserrat', sans-serif;
+        }
 
-body.dark-mode {
-    background-image: url("{{ url_for('static', filename='images/bg htiam.jpg') }}") !important;
-    background-color: #121212 !important;
-}
+        body.dark-mode {
+            background-image: url("{{ url_for('static', filename='images/bg htiam.jpg') }}") !important;
+            background-color: #121212 !important;
+        }
 
-.dashboard-container, .main-wrapper, .content-area {
-    background: transparent !important;
-    padding: 20px;
-}
+        .dashboard-container,
+        .main-wrapper,
+        .content-area {
+            background: transparent !important;
+            padding: 20px;
+        }
 
-/* =======================================================
+        /* =======================================================
    KARTU KONTEN (GLASSMORPHISM)
    ======================================================= */
-.content-card {
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    max-width: 800px;
-    margin: 0 auto;
-    transition: all 0.3s ease;
-    border-top: 5px solid #7A39E0; /* Aksen Ungu di atas khusus Admin */
-}
+        .content-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+            transition: all 0.3s ease;
+            border-top: 5px solid #7A39E0;
+            /* Aksen Ungu di atas khusus Admin */
+        }
 
-.page-title {
-    color: #333;
-    text-shadow: 0 1px 3px rgba(255,255,255,0.5);
-    font-weight: 800;
-}
-.page-subtitle { color: #555; font-weight: 600; }
+        .page-title {
+            color: #333;
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.5);
+            font-weight: 800;
+        }
 
-.help-section h3 { margin-bottom: 15px; color: #7A39E0; }
+        .page-subtitle {
+            color: #555;
+            font-weight: 600;
+        }
 
-ul li { margin-bottom: 8px; font-weight: 500; }
-.faq-item { margin-bottom: 15px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+        .help-section h3 {
+            margin-bottom: 15px;
+            color: #7A39E0;
+        }
 
-/* =======================================================
+        ul li {
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .faq-item {
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.03);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        /* =======================================================
    TOMBOL & DROPDOWN
    ======================================================= */
-.btn-dashboard {
-    padding: 8px 16px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-    color: white;
-    text-decoration: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
+        .btn-dashboard {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            color: white;
+            text-decoration: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
 
-/* Warna Tombol Kontak Admin */
-.whatsapp { background-color: #25D366; }
-.email { background-color: #D44638; }
+        /* Warna Tombol Kontak Admin */
+        .whatsapp {
+            background-color: #25D366;
+        }
 
-.btn-dashboard:hover { transform: translateY(-2px); }
+        .email {
+            background-color: #D44638;
+        }
 
-</style>
+        .btn-dashboard:hover {
+            transform: translateY(-2px);
+        }
+    </style>
 
-{% endblock %}
+    {% endblock %}

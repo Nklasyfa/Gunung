@@ -9,41 +9,50 @@
     <h2>Riwayat Pemesanan</h2>
     <p>Daftar pemesanan tiket yang pernah Anda buat.</p>
     <div class="table-responsive">
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Gunung</th>
-                <th>Tanggal Pesan</th>
-                <th>Durasi</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if pemesanan_list %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Gunung</th>
+                    <th>Tanggal Pendakian</th>
+                    <th>Durasi</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if pemesanan_list %}
                 {% for p in pemesanan_list %}
-                    <tr>
-                        <td>{{ p.pemesanan_id }}</td>
-                        <td>{{ p.nama_gunung or p.gunung_id }}</td>
-                        <td>{{ p.tanggal_pesan }}</td>
-                        <td>{{ p.durasi }} hari</td>
-                        <td>Rp {{ "{:,.0f}".format(p.total_harga or 0) }}</td>
-                        <td>{{ p.status }}</td>
-                        <td>
-                            {% if p.status != 'berhasil' %}
-                                <a class="btn primary" href="{{ url_for('user.pembayaran', pemesanan_id=p.pemesanan_id) }}">Bayar</a>
-                            {% endif %}
-                            <a class="btn secondary" href="{{ url_for('user.download_ticket', pemesanan_id=p.pemesanan_id) }}">Download Tiket</a>
-                        </td>
-                    </tr>
+                <tr>
+                    <td>{{ p.pemesanan_id }}</td>
+                    <td>{{ p.nama_gunung or p.gunung_id }}</td>
+                    <td>{{ p.tanggal_berlaku or p.tanggal_pesan }}</td>
+                    <td>{{ p.durasi or 1 }} hari</td>
+                    <td>Rp {{ "{:,.0f}".format(p.total_harga or 0) }}</td>
+                    <td>{{ p.status }}</td>
+                    <td>
+                        {% if p.status != 'berhasil' %}
+                        <a class="btn primary"
+                            href="{{ url_for('user.pembayaran', pemesanan_id=p.pemesanan_id) }}">Bayar</a>
+                        {% endif %}
+                        <a class="btn secondary"
+                            href="{{ url_for('user.download_ticket', pemesanan_id=p.pemesanan_id) }}">Download Tiket</a>
+                        <form action="{{ url_for('user.hapus_pemesanan', pemesanan_id=p.pemesanan_id) }}" method="post"
+                            style="display:inline;" onsubmit="return confirm('Yakin ingin menghapus pemesanan ini?');">
+                            <button type="submit" class="btn danger"
+                                style="background:#dc3545; border-color:#dc3545;">Hapus</button>
+                        </form>
+                    </td>
+                </tr>
                 {% endfor %}
-            {% else %}
-                <tr><td colspan="7">Belum ada riwayat pemesanan.</td></tr>
-            {% endif %}
-        </tbody>
-    </table>
+                {% else %}
+                <tr>
+                    <td colspan="7">Belum ada riwayat pemesanan.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

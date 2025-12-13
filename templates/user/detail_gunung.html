@@ -122,35 +122,31 @@
                             {% endif %}
                             <p style="white-space: pre-wrap;">{{ jalur.deskripsi | default('Belum ada deskripsi jalur.', true) }}</p>
 
-                            <h5>Tiket Tersedia:</h5>
-                            {% set tiket_for_jalur = tiket_list | selectattr('nama_jalur', 'equalto', jalur.nama_jalur) | list %}
                             {% set gunung_open = (gunung.status_pendakian | default('') | lower) == 'dibuka' %}
                             {% set jalur_available = (jalur.tersedia is not defined) or ((jalur.tersedia | int) == 1) %}
 
-                            {% if tiket_for_jalur %}
-                                {% for tiket in tiket_for_jalur %}
-                                    <div class="tiket-info">
-                                        <p><strong>Harga:</strong> Rp {{ "{:,.0f}".format(tiket.harga) }}</p>
-                                        <p><strong>Kuota:</strong> {{ tiket.kuota_harian }}</p>
-                                        <p><strong>Valid:</strong> {{ tiket.tanggal_berlaku.strftime('%d-%m-%Y') if tiket.tanggal_berlaku else 'Seterusnya' }}</p>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                {# No tiket rows: show fallback price from jalur (if present) or from gunung #}
-                                {% set fallback_price = None %}
-                                {% if jalur.harga is defined and jalur.harga %}
-                                    {% set fallback_price = jalur.harga %}
-                                {% elif jalur.harga_tiket is defined and jalur.harga_tiket %}
-                                    {% set fallback_price = jalur.harga_tiket %}
+                            {# Display price range only - NO LIST #}
+                            {% if jalur_price_range and jalur.jalur_id in jalur_price_range %}
+                            {% set price = jalur_price_range[jalur.jalur_id] %}
+                            <div class="price-box">
+                                <p class="price-label">Harga Tiket:</p>
+                                {% if price.min == price.max %}
+                                <p class="price-value"><strong>Rp {{ "{:,.0f}".format(price.min) }}</strong></p>
                                 {% else %}
-                                    {% set fallback_price = gunung.harga_tiket if gunung.harga_tiket is defined else None %}
+                                <p class="price-value"><strong>Rp {{ "{:,.0f}".format(price.min) }} - Rp {{ "{:,.0f}".format(price.max) }}</strong></p>
+                                <p class="price-note">(Harga bervariasi sesuai tanggal)</p>
                                 {% endif %}
-                                {% if fallback_price %}
-                                    <p><strong>Harga (Jalur):</strong> Rp {{ "{:,.0f}".format(fallback_price) }}</p>
-                                {% else %}
-                                    <p><strong>Harga:</strong> -</p>
-                                {% endif %}
-                                <p><strong>Kuota:</strong> {{ jalur.kuota_harian if (jalur.kuota_harian is defined) else '-' }}</p>
+                            </div>
+                            {% elif jalur.harga is defined and jalur.harga %}
+                            <div class="price-box">
+                                <p class="price-label">Harga Tiket:</p>
+                                <p class="price-value"><strong>Rp {{ "{:,.0f}".format(jalur.harga) }}</strong></p>
+                            </div>
+                            {% elif gunung.harga_tiket is defined and gunung.harga_tiket %}
+                            <div class="price-box">
+                                <p class="price-label">Harga Tiket:</p>
+                                <p class="price-value"><strong>Rp {{ "{:,.0f}".format(gunung.harga_tiket) }}</strong></p>
+                            </div>
                             {% endif %}
 
                             {# Pesan button always available per jalur if gunung open and jalur available. #}
@@ -337,6 +333,39 @@ body.dark-mode .stat-item { background: rgba(255,255,255,0.15) !important; }
     .jalur-item img { height: 180px; }
     .detail-header { height: 220px; padding: 18px; }
     .detail-header h1 { font-size: 28px; }
+}
+
+/* Price Box Styling */
+.price-box {
+    margin-top: 15px;
+    padding: 12px;
+    background: #f0f4ff;
+    border-left: 4px solid #7A39E0;
+    border-radius: 5px;
+}
+.price-label {
+    margin: 0 0 8px 0;
+    font-weight: 600;
+    color: #7A39E0;
+}
+.price-value {
+    margin: 4px 0;
+}
+.price-note {
+    margin: 4px 0;
+    font-size: 12px;
+    color: #666;
+}
+body.dark-mode .price-box {
+    background: rgba(100, 60, 140, 0.4) !important;
+    border-left-color: #bb86fc !important;
+}
+body.dark-mode .price-label {
+    color: #bb86fc !important;
+}
+body.dark-mode .price-value,
+body.dark-mode .price-note {
+    color: #e0e0e0 !important;
 }
 </style>
 

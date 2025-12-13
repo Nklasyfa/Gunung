@@ -11,11 +11,13 @@
     <form action="{{ url_for('admin.punish_add') }}" method="post" style="max-width:600px; margin-bottom:20px;">
         <div class="form-group">
             <label for="user_id">Cari User (Masukkan User ID):</label>
-            <input type="number" id="user_id" name="user_id" class="form-control" placeholder="Masukkan User ID" onblur="cariUserPunish()" required>
+            <input type="number" id="user_id" name="user_id" class="form-control" placeholder="Masukkan User ID"
+                onblur="cariUserPunish()" required>
             <small style="color: #999; display: block; margin-top: 3px;">User ID dari sistem</small>
-            
+
             <!-- Tampilkan info user yang ditemukan -->
-            <div id="userInfo" style="margin-top: 15px; padding: 15px; background: #f0f4ff; border-left: 4px solid #7A39E0; border-radius: 8px; display: none;">
+            <div id="userInfo"
+                style="margin-top: 15px; padding: 15px; background: #f0f4ff; border-left: 4px solid #7A39E0; border-radius: 8px; display: none;">
                 <p style="margin: 0 0 5px 0;"><strong>Nama:</strong> <span id="userName">-</span></p>
                 <p style="margin: 0 0 5px 0;"><strong>Email:</strong> <span id="userEmail">-</span></p>
                 <p style="margin: 0;"><strong>ID:</strong> <span id="userIdDisplay">-</span></p>
@@ -57,22 +59,30 @@
                 <th>Punishment</th>
                 <th>Points</th>
                 <th>Tanggal</th>
+                <th>Aksi</th>
             </tr>
         </thead>
         <tbody>
             {% for p in hukuman %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ p.user.nama }}</td>
-                <td>{{ p.user.email }}</td>
+                <td>{{ p.nama }}</td>
+                <td>{{ p.email if p.email else '-' }}</td>
                 <td>{{ p.violation }}</td>
                 <td>{{ p.punishment }}</td>
                 <td>{{ p.points }}</td>
-                <td>{{ p.date.strftime('%d-%m-%Y %H:%M') }}</td>
+                <td>{{ p.date.strftime('%d-%m-%Y %H:%M') if p.date else '-' }}</td>
+                <td>
+                    <form action="{{ url_for('admin.hapus_punish', punish_id=p.id) }}" method="post"
+                        style="display:inline;" onsubmit="return confirm('Yakin hapus punishment ini?');">
+                        <button type="submit" class="btn danger"
+                            style="background:#dc3545; border-color:#dc3545; padding:5px 10px; font-size:12px;">Hapus</button>
+                    </form>
+                </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" style="text-align:center;">Belum ada data hukuman</td>
+                <td colspan="8" style="text-align:center;">Belum ada data hukuman</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -80,12 +90,9 @@
 </div>
 
 <script>
-    // Data user untuk pencarian - dibuat sebagai atribut data di form
     const usersDataPunish = {};
-    const userSelectElements = document.querySelectorAll('[data-user-id][data-user-name][data-user-email]');
-    
-    // Generate dari elemen tersembunyi (akan dibuat di bawah)
-    document.addEventListener('DOMContentLoaded', function() {
+
+    document.addEventListener('DOMContentLoaded', function () {
         const userDataElements = document.querySelectorAll('.user-data-item');
         userDataElements.forEach(el => {
             const id = el.getAttribute('data-id');

@@ -6,7 +6,6 @@ api_bp = Blueprint('api', __name__)
 def get_cuaca_gunung(gunung_id):
     """API endpoint untuk mendapatkan data cuaca gunung"""
     try:
-        # Mock data - bisa diganti dengan API cuaca nyata
         cuaca_data = {
             'suhu': 15,
             'kondisi': 'Cerah',

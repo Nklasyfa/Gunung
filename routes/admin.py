@@ -561,8 +561,10 @@ def edit_jalur(id):
 
     cur.execute("SELECT gunung_id, nama_gunung FROM gunung ORDER BY nama_gunung")
     gunung_list = cur.fetchall()
+    cur.execute("SELECT tiket_id, harga, kuota_harian, DATE_FORMAT(tanggal_berlaku, '%%Y-%%m-%%d') as tanggal FROM tiket WHERE jalur_id = %s ORDER BY tanggal_berlaku DESC", [id])
+    tiket_list = cur.fetchall()
     cur.close()
-    return render_template('admin/edit_jalur.html', jalur=jalur_data, gunung_list=gunung_list, active_page='jalur')
+    return render_template('admin/edit_jalur.html', jalur=jalur_data, gunung_list=gunung_list, tiket_list=tiket_list, active_page='jalur')
 
 
 @admin_bp.route('/jalur/hapus/<int:id>', methods=['POST'])
@@ -606,17 +608,47 @@ def tambah_porter():
     mysql = current_app.mysql
     
     if request.method == 'POST':
-        nama_porter = request.form['nama_porter']
-        no_hp = request.form['no_hp']
-        gunung_id = request.form['gunung_id']
-        tarif_harian = request.form['tarif_harian']
+        nama_porter = request.form.get('nama_porter')
+        # accept alternate field names from templates: 'kontak' or 'no_hp'
+        no_hp = request.form.get('no_hp') or request.form.get('kontak')
+        gunung_id = request.form.get('gunung_id')
+        # accept either 'tarif_harian' or 'harga_per_hari'
+        tarif_harian = request.form.get('tarif_harian') or request.form.get('harga_per_hari')
+        umur = request.form.get('umur')
+        pengalaman_tahun = request.form.get('pengalaman_tahun')
+        status = request.form.get('status', 'tersedia')
         
         cur = mysql.connection.cursor()
         try:
-            cur.execute("""
-                INSERT INTO porter (nama_porter, no_hp, gunung_id, tarif_harian, status) 
-                VALUES (%s, %s, %s, %s, 'tersedia')
-            """, (nama_porter, no_hp, gunung_id, tarif_harian))
+            # detect which columns exist in porter table to avoid referencing missing columns
+            cur.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'porter'")
+            cols = {r.get('COLUMN_NAME') for r in cur.fetchall()}
+
+            # determine column names for contact and price (schema may vary)
+            contact_col = 'no_hp' if 'no_hp' in cols else ('kontak' if 'kontak' in cols else None)
+            price_col = 'tarif_harian' if 'tarif_harian' in cols else ('harga_per_hari' if 'harga_per_hari' in cols else None)
+            has_umur = 'umur' in cols
+            has_pengalaman = 'pengalaman_tahun' in cols
+
+            # build insert dynamically based on available columns
+            insert_cols = ['nama_porter', 'gunung_id']
+            vals = [nama_porter, gunung_id]
+            if contact_col:
+                insert_cols.append(contact_col); vals.append(no_hp)
+            if has_umur and umur is not None:
+                insert_cols.append('umur'); vals.append(umur)
+            if has_pengalaman and pengalaman_tahun is not None:
+                insert_cols.append('pengalaman_tahun'); vals.append(pengalaman_tahun)
+            if price_col:
+                insert_cols.append(price_col); vals.append(tarif_harian)
+            # always include status if column exists
+            if 'status' in cols:
+                insert_cols.append('status'); vals.append(status)
+
+            placeholders = ', '.join(['%s'] * len(vals))
+            sql = f"INSERT INTO porter ({', '.join(insert_cols)}) VALUES ({placeholders})"
+            cur.execute(sql, tuple(vals))
+
             mysql.connection.commit()
             flash(f'Porter {nama_porter} berhasil ditambahkan!', 'success')
             return redirect(url_for('admin.porter'))
@@ -639,41 +671,69 @@ def tambah_porter():
 @admin_required
 def edit_porter(id):
     mysql = current_app.mysql
-    cur = mysql.connection.cursor()
-    
+
     if request.method == 'POST':
-        nama_porter = request.form['nama_porter']
-        no_hp = request.form['no_hp']
-        gunung_id = request.form['gunung_id']
-        tarif_harian = request.form['tarif_harian']
+        # collect form inputs (accept alternate names)
+        nama_porter = request.form.get('nama_porter')
+        no_hp = request.form.get('no_hp') or request.form.get('kontak')
+        gunung_id = request.form.get('gunung_id')
+        tarif_harian = request.form.get('tarif_harian') or request.form.get('harga_per_hari')
+        umur = request.form.get('umur')
+        pengalaman_tahun = request.form.get('pengalaman_tahun')
         status = request.form.get('status', 'tersedia')
-        
+
+        cur = mysql.connection.cursor()
         try:
-            cur.execute("""
-                UPDATE porter SET 
-                nama_porter=%s, no_hp=%s, gunung_id=%s, tarif_harian=%s, status=%s
-                WHERE porter_id=%s
-            """, (nama_porter, no_hp, gunung_id, tarif_harian, status, id))
+            # detect which columns exist in porter table
+            cur.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'porter'")
+            cols = {r.get('COLUMN_NAME') for r in cur.fetchall()}
+
+            contact_col = 'no_hp' if 'no_hp' in cols else ('kontak' if 'kontak' in cols else None)
+            price_col = 'tarif_harian' if 'tarif_harian' in cols else ('harga_per_hari' if 'harga_per_hari' in cols else None)
+            has_umur = 'umur' in cols
+            has_pengalaman = 'pengalaman_tahun' in cols
+
+            # build update statement dynamically
+            set_clauses = ['nama_porter=%s', 'gunung_id=%s']
+            params = [nama_porter, gunung_id]
+            if contact_col:
+                set_clauses.append(f"{contact_col}=%s"); params.append(no_hp)
+            if has_umur and (umur is not None):
+                set_clauses.append('umur=%s'); params.append(umur)
+            if has_pengalaman and (pengalaman_tahun is not None):
+                set_clauses.append('pengalaman_tahun=%s'); params.append(pengalaman_tahun)
+            if price_col:
+                set_clauses.append(f"{price_col}=%s"); params.append(tarif_harian)
+            if 'status' in cols:
+                set_clauses.append('status=%s'); params.append(status)
+
+            params.append(id)
+            sql = f"UPDATE porter SET {', '.join(set_clauses)} WHERE porter_id=%s"
+            cur.execute(sql, tuple(params))
+
             mysql.connection.commit()
             flash(f'Porter {nama_porter} berhasil diperbarui!', 'success')
+            cur.close()
             return redirect(url_for('admin.porter'))
         except Exception as e:
             mysql.connection.rollback()
-            flash(f'Gagal memperbarui porter: {str(e)}', 'danger')
-        finally:
             cur.close()
-    
+            flash(f'Gagal memperbarui porter: {str(e)}', 'danger')
+
+    # GET: show form with existing data
+    cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM porter WHERE porter_id = %s", [id])
     porter_data = cur.fetchone()
-    
+
     if not porter_data:
+        cur.close()
         flash('Porter tidak ditemukan.', 'danger')
         return redirect(url_for('admin.porter'))
-    
+
     cur.execute("SELECT * FROM gunung ORDER BY nama_gunung")
     gunung_list = cur.fetchall()
     cur.close()
-    
+
     return render_template('admin/edit_porter.html',
                            porter=porter_data,
                            gunung_list=gunung_list,
@@ -704,15 +764,23 @@ def tambah_peralatan():
     if request.method == 'POST':
         nama_peralatan = request.form['nama_peralatan']
         deskripsi = request.form.get('deskripsi', '')
-        harga_sewa = request.form['harga_sewa']
-        stok = request.form['stok']
+        harga_sewa = request.form.get('harga_sewa')
+        stok = request.form.get('stok')
         
         cur = mysql.connection.cursor()
         try:
-            cur.execute("""
-                INSERT INTO peralatan_sewa (nama_peralatan, deskripsi, harga_sewa, stok) 
-                VALUES (%s, %s, %s, %s)
-            """, (nama_peralatan, deskripsi, harga_sewa, stok))
+            # detect available columns in peralatan_sewa to avoid unknown column errors
+            cur.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'peralatan_sewa'")
+            cols = {r.get('COLUMN_NAME') for r in cur.fetchall()}
+
+            if 'deskripsi' in cols:
+                cur.execute("INSERT INTO peralatan_sewa (nama_peralatan, deskripsi, harga_sewa, stok) VALUES (%s, %s, %s, %s)",
+                            (nama_peralatan, deskripsi, harga_sewa, stok))
+            else:
+                # table doesn't have deskripsi column; insert without it
+                cur.execute("INSERT INTO peralatan_sewa (nama_peralatan, harga_sewa, stok) VALUES (%s, %s, %s)",
+                            (nama_peralatan, harga_sewa, stok))
+
             mysql.connection.commit()
             flash(f'Peralatan {nama_peralatan} berhasil ditambahkan!', 'success')
             return redirect(url_for('admin.peralatan'))
@@ -737,11 +805,17 @@ def edit_peralatan(id):
         stok = request.form['stok']
         
         try:
-            cur.execute("""
-                UPDATE peralatan_sewa SET 
-                nama_peralatan=%s, deskripsi=%s, harga_sewa=%s, stok=%s
-                WHERE peralatan_id=%s
-            """, (nama_peralatan, deskripsi, harga_sewa, stok, id))
+            # detect available columns and update accordingly
+            cur.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'peralatan_sewa'")
+            cols = {r.get('COLUMN_NAME') for r in cur.fetchall()}
+
+            if 'deskripsi' in cols:
+                cur.execute("UPDATE peralatan_sewa SET nama_peralatan=%s, deskripsi=%s, harga_sewa=%s, stok=%s WHERE peralatan_id=%s",
+                            (nama_peralatan, deskripsi, harga_sewa, stok, id))
+            else:
+                cur.execute("UPDATE peralatan_sewa SET nama_peralatan=%s, harga_sewa=%s, stok=%s WHERE peralatan_id=%s",
+                            (nama_peralatan, harga_sewa, stok, id))
+
             mysql.connection.commit()
             flash(f'Peralatan {nama_peralatan} berhasil diperbarui!', 'success')
             return redirect(url_for('admin.peralatan'))
@@ -809,7 +883,7 @@ def punish_list():
     try:
         # Ambil daftar punishment
         cur.execute("""
-            SELECT p.id, u.nama, p.violation, p.punishment, p.points, p.detail, p.date
+            SELECT p.id, u.nama, u.email, p.violation, p.punishment, p.points, p.detail, p.date
             FROM punishment p
             JOIN user u ON p.user_id = u.user_id
             ORDER BY p.date DESC
@@ -871,3 +945,85 @@ def punish_add():
         cur.close()
     
     return render_template('admin/punish_add.html', users=users, halaman_aktif='punish')
+
+@admin_bp.route('/punish/<int:punish_id>/hapus', methods=['POST'])
+@admin_required
+def hapus_punish(punish_id):
+    """Hapus punishment dari database"""
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM punishment WHERE id = %s", [punish_id])
+        mysql.connection.commit()
+        flash('Punishment berhasil dihapus.', 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Gagal menghapus punishment: {str(e)}', 'danger')
+    finally:
+        cur.close()
+    return redirect(url_for('admin.punish_list'))
+
+# ======================
+# TIKET MANAGEMENT
+# ======================
+@admin_bp.route('/jalur/<int:jalur_id>/tiket/tambah', methods=['POST'])
+@admin_required
+def tambah_tiket(jalur_id):
+    from datetime import datetime, timedelta
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    
+    # Get date range from form
+    tanggal_mulai = request.form.get('tanggal_mulai')
+    tanggal_akhir = request.form.get('tanggal_akhir')
+    harga = request.form.get('harga_tiket') or 0
+    kuota = request.form.get('kuota_tiket') or 100
+    
+    try:
+        # Parse dates
+        start_date = datetime.strptime(tanggal_mulai, '%Y-%m-%d')
+        end_date = datetime.strptime(tanggal_akhir, '%Y-%m-%d')
+        
+        if end_date < start_date:
+            flash('Tanggal akhir harus lebih besar atau sama dengan tanggal mulai!', 'danger')
+            return redirect(url_for('admin.edit_jalur', id=jalur_id))
+        
+        # Loop through date range and insert tickets
+        count = 0
+        current_date = start_date
+        while current_date <= end_date:
+            tanggal_str = current_date.strftime('%Y-%m-%d')
+            cur.execute("INSERT INTO tiket (jalur_id, harga, kuota_harian, tanggal_berlaku) VALUES (%s, %s, %s, %s)", 
+                       (jalur_id, harga, kuota, tanggal_str))
+            current_date += timedelta(days=1)
+            count += 1
+        
+        mysql.connection.commit()
+        
+        if count == 1:
+            flash(f'Tiket untuk tanggal {tanggal_mulai} berhasil ditambahkan!', 'success')
+        else:
+            flash(f'{count} tiket berhasil ditambahkan! (dari {tanggal_mulai} sampai {tanggal_akhir})', 'success')
+            
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Gagal menambah tiket: {str(e)}', 'danger')
+    finally:
+        cur.close()
+    return redirect(url_for('admin.edit_jalur', id=jalur_id))
+
+@admin_bp.route('/jalur/<int:jalur_id>/tiket/<int:tiket_id>/hapus', methods=['POST'])
+@admin_required
+def hapus_tiket(jalur_id, tiket_id):
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM tiket WHERE tiket_id = %s", [tiket_id])
+        mysql.connection.commit()
+        flash('Tiket berhasil dihapus.', 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Gagal menghapus tiket: {str(e)}', 'danger')
+    finally:
+        cur.close()
+    return redirect(url_for('admin.edit_jalur', id=jalur_id))

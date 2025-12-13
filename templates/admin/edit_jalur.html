@@ -14,19 +14,22 @@
             <label for="gunung_id">Pilih Gunung</label>
             <select id="gunung_id" name="gunung_id" class="form-control" required>
                 {% for g in gunung_list %}
-                    <option value="{{ g.gunung_id }}" {% if g.gunung_id == jalur.gunung_id %}selected{% endif %}>{{ g.nama_gunung }}</option>
+                <option value="{{ g.gunung_id }}" {% if g.gunung_id==jalur.gunung_id %}selected{% endif %}>{{
+                    g.nama_gunung }}</option>
                 {% endfor %}
             </select>
         </div>
 
         <div class="form-group">
             <label for="nama_jalur">Nama Jalur</label>
-            <input type="text" id="nama_jalur" name="nama_jalur" class="form-control" value="{{ jalur.nama_jalur }}" required>
+            <input type="text" id="nama_jalur" name="nama_jalur" class="form-control" value="{{ jalur.nama_jalur }}"
+                required>
         </div>
 
         <div class="form-group">
             <label for="deskripsi">Deskripsi Jalur</label>
-            <textarea id="deskripsi" name="deskripsi" class="form-control">{{ jalur.deskripsi | default('', true) }}</textarea>
+            <textarea id="deskripsi" name="deskripsi"
+                class="form-control">{{ jalur.deskripsi | default('', true) }}</textarea>
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
@@ -37,45 +40,110 @@
             <div class="form-group">
                 <label for="tingkat_kesulitan">Tingkat Kesulitan</label>
                 <select id="tingkat_kesulitan" name="tingkat_kesulitan" class="form-control">
-                    <option value="mudah" {% if jalur.tingkat_kesulitan == 'mudah' %}selected{% endif %}>Mudah</option>
-                    <option value="sedang" {% if jalur.tingkat_kesulitan == 'sedang' %}selected{% endif %}>Sedang</option>
-                    <option value="sulit" {% if jalur.tingkat_kesulitan == 'sulit' %}selected{% endif %}>Sulit</option>
+                    <option value="mudah" {% if jalur.tingkat_kesulitan=='mudah' %}selected{% endif %}>Mudah</option>
+                    <option value="sedang" {% if jalur.tingkat_kesulitan=='sedang' %}selected{% endif %}>Sedang</option>
+                    <option value="sulit" {% if jalur.tingkat_kesulitan=='sulit' %}selected{% endif %}>Sulit</option>
                 </select>
             </div>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;">
-            <div class="form-group">
-                <label for="kuota_harian">Kuota Harian Jalur</label>
-                <input type="number" id="kuota_harian" name="kuota_harian" class="form-control" value="{{ jalur.kuota_harian | default('') }}">
-            </div>
-            <div class="form-group">
-                <label for="harga">Harga Tiket per Orang</label>
-                <input type="number" id="harga" name="harga" step="0.01" class="form-control" value="{{ jalur.harga | default('') }}">
-            </div>
+
+        <div class="form-group" style="margin-top:8px;">
+            <label for="kuota_harian">Kuota Jalur</label>
+            <input type="number" id="kuota_harian" name="kuota_harian" class="form-control"
+                value="{{ jalur.kuota_harian | default(100) }}">
         </div>
 
         <div class="form-group">
             <label for="tersedia">Ketersediaan Jalur</label>
             <select id="tersedia" name="tersedia" class="form-control">
-                <option value="1" {% if jalur.tersedia == 1 %}selected{% endif %}>Tersedia</option>
-                <option value="0" {% if jalur.tersedia == 0 %}selected{% endif %}>Tidak Tersedia</option>
+                <option value="1" {% if jalur.tersedia==1 %}selected{% endif %}>Tersedia</option>
+                <option value="0" {% if jalur.tersedia==0 %}selected{% endif %}>Tidak Tersedia</option>
             </select>
         </div>
 
         <div class="form-group">
             <label for="gambar_jalur">Gambar Jalur (ubah jika perlu)</label>
             {% if jalur.gambar_jalur %}
-                <div style="margin-bottom:8px;">
-                    <img src="{{ url_for('static', filename='uploads/jalur/' ~ jalur.gambar_jalur) }}" alt="{{ jalur.nama_jalur }}" style="max-width:200px; display:block;" />
-                </div>
+            <div style="margin-bottom:8px;">
+                <img src="{{ url_for('static', filename='uploads/jalur/' ~ jalur.gambar_jalur) }}"
+                    alt="{{ jalur.nama_jalur }}" style="max-width:200px; display:block;" />
+            </div>
             {% endif %}
             <input type="file" id="gambar_jalur" name="gambar_jalur" accept="image/*" class="form-control">
         </div>
+
+        <input type="hidden" name="harga" value="{{ jalur.harga | default('') }}">
 
         <div class="button-group">
             <button class="btn primary" type="submit">Simpan Perubahan</button>
             <a class="btn secondary" href="{{ url_for('admin.jalur') }}">Batal</a>
         </div>
     </form>
+</div>
+
+<!-- Tiket Management Section -->
+<div class="content-card" style="max-width:800px; margin-top:20px;">
+    <h3 style="margin-bottom:15px;">📅 Kelola Tanggal Tiket Tersedia</h3>
+    <p style="color:#666; margin-bottom:15px;">Tambahkan tanggal kapan tiket jalur ini bisa dipesan oleh user.</p>
+
+    <!-- Form Tambah Tiket dengan Range Tanggal -->
+    <form action="{{ url_for('admin.tambah_tiket', jalur_id=jalur.jalur_id) }}" method="post"
+        style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:20px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto; gap:10px; align-items:end;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label for="tanggal_mulai">Tanggal Mulai</label>
+                <input type="date" id="tanggal_mulai" name="tanggal_mulai" class="form-control" required>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label for="tanggal_akhir">Tanggal Akhir</label>
+                <input type="date" id="tanggal_akhir" name="tanggal_akhir" class="form-control" required>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label for="harga_tiket">Harga (Rp)</label>
+                <input type="number" id="harga_tiket" name="harga_tiket" class="form-control"
+                    value="{{ jalur.harga | default(35000) }}" required>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label for="kuota_tiket">Kuota</label>
+                <input type="number" id="kuota_tiket" name="kuota_tiket" class="form-control" value="100" required>
+            </div>
+            <button class="btn primary" type="submit" style="height:38px;">+ Tambah</button>
+        </div>
+        <p style="color:#888; font-size:12px; margin-top:8px;">💡 Pilih range tanggal untuk menambah tiket beberapa hari
+            sekaligus (contoh: 12-18 Desember)</p>
+    </form>
+
+    <!-- Daftar Tiket -->
+    {% if tiket_list %}
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr style="background:#6366f1; color:white;">
+                <th style="padding:10px; text-align:left;">Tanggal</th>
+                <th style="padding:10px; text-align:right;">Harga</th>
+                <th style="padding:10px; text-align:center;">Kuota</th>
+                <th style="padding:10px; text-align:center;">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tiket_list %}
+            <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:10px;">{{ t.tanggal }}</td>
+                <td style="padding:10px; text-align:right;">Rp {{ "{:,.0f}".format(t.harga or 0) }}</td>
+                <td style="padding:10px; text-align:center;">{{ t.kuota_harian }}</td>
+                <td style="padding:10px; text-align:center;">
+                    <form action="{{ url_for('admin.hapus_tiket', jalur_id=jalur.jalur_id, tiket_id=t.tiket_id) }}"
+                        method="post" style="display:inline;" onsubmit="return confirm('Hapus tiket ini?');">
+                        <button type="submit" class="btn danger"
+                            style="padding:5px 10px; font-size:12px;">Hapus</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#999; text-align:center; padding:20px;">Belum ada tiket. Tambahkan tanggal di atas untuk membuka
+        pendaftaran.</p>
+    {% endif %}
 </div>
 {% endblock %}

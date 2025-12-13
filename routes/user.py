@@ -53,6 +53,20 @@ def detail_gunung(id):
             
         cur.execute("SELECT * FROM jalur_pendakian WHERE gunung_id = %s", [id])
         jalur_list = cur.fetchall()
+        
+        # Get price range (min-max) for each jalur from tiket table
+        jalur_price_range = {}
+        for j in jalur_list:
+            cur.execute("""
+                SELECT MIN(harga) as min_harga, MAX(harga) as max_harga
+                FROM tiket WHERE jalur_id = %s AND tanggal_berlaku >= CURDATE()
+            """, [j['jalur_id']])
+            price_data = cur.fetchone()
+            if price_data and price_data.get('min_harga'):
+                jalur_price_range[j['jalur_id']] = {
+                    'min': int(price_data['min_harga']),
+                    'max': int(price_data['max_harga'])
+                }
 
         cur.execute("""
             SELECT t.*, j.nama_jalur
@@ -77,6 +91,7 @@ def detail_gunung(id):
                            jalur_list=jalur_list,
                            tiket_list=tiket_list,
                            porter_list=porter_list,
+                           jalur_price_range=jalur_price_range,
                            active_page='home')
 
 @user_bp.route('/profile')
@@ -203,13 +218,20 @@ def pemesanan_tiket(gunung_id):
 
         # Get available tiket for this gunung (join with jalur name)
         cur.execute("""
-            SELECT t.tiket_id, t.jalur_id, t.harga, DATE(t.tanggal_berlaku) as tdate, j.nama_jalur
+            SELECT t.tiket_id, t.jalur_id, t.harga, DATE_FORMAT(t.tanggal_berlaku, '%%Y-%%m-%%d') as tdate, j.nama_jalur
             FROM tiket t
             JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id
             WHERE j.gunung_id = %s
             ORDER BY t.tanggal_berlaku
         """, [gunung_id])
-        tiket_list = cur.fetchall()
+        tiket_list = list(cur.fetchall())
+        # Sanitize for JSON serialization (Decimal -> float)
+        for t in tiket_list:
+            if 'harga' in t:
+                try:
+                    t['harga'] = float(t['harga'])
+                except:
+                    t['harga'] = 0.0
         
         # Allow optional jalur_id in querystring so front-end can deep-link from a specific jalur
         selected_jalur_id = request.args.get('jalur_id', type=int)
@@ -291,9 +313,14 @@ def pemesanan_tiket(gunung_id):
                     alat_data = [alat_data]
             
             # Validation
-            if not tiket_id or not aktivitas:
-                flash("Pilih tiket (tanggal/jalur) dan aktivitas.", "warning")
+            if not tiket_id:
+                flash("Silakan pilih tiket (tanggal/jalur) terlebih dahulu.", "warning")
                 return redirect(url_for('user.pemesanan_tiket', gunung_id=gunung_id))
+            
+            if not aktivitas:
+                flash("Silakan pilih jenis aktivitas (Tektok atau Camp).", "warning")
+                return redirect(url_for('user.pemesanan_tiket', gunung_id=gunung_id))
+
             
             # Use safe defaults if min/max not present
             min_days = int(gunung_data.get('min_days') or 1)
@@ -457,6 +484,15 @@ def pemesanan_tiket(gunung_id):
 
                     cols = ['user_id','tiket_id','tanggal_pesan','status']
                     vals = [user_id, tiket_id, tanggal_pesan_val, 'menunggu']
+                    
+                    # Check if durasi column exists and add it
+                    try:
+                        cur.execute("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'pemesanan' AND COLUMN_NAME = 'durasi'")
+                        if cur.fetchone():
+                            cols.append('durasi'); vals.append(durasi)
+                    except Exception:
+                        pass
+                    
                     if 'harga_tiket' in existing_cols:
                         cols.append('harga_tiket'); vals.append(harga_tiket)
                     if 'harga_porter' in existing_cols:
@@ -510,6 +546,10 @@ def pemesanan_tiket(gunung_id):
                                                 (pemesanan_id, alat_id, jumlah, subtotal))
                         except Exception:
                             continue
+
+                    # Kuota akan dihitung otomatis dari pemesanan yang ada
+                    # Tidak perlu update tiket.kuota_harian karena sistem menghitung dynamically
+
 
                     mysql.connection.commit()
                     # Redirect to pembayaran so user can complete payment
@@ -584,6 +624,7 @@ def pemesanan_tiket(gunung_id):
                            alat_list=alat_list,
                            tiket_list=locals().get('tiket_list', []),
                            selected_jalur_id=selected_jalur_id,
+                           jalur_data=jalur_data,
                            price_data=price_data,
                            users_data=users_data,
                            active_page='home')
@@ -678,7 +719,7 @@ def riwayat_pemesanan():
             cur.execute("SELECT pt.*, g.nama_gunung FROM pemesanan_tiket pt LEFT JOIN gunung g ON pt.gunung_id = g.gunung_id WHERE pt.user_id = %s ORDER BY pt.pemesanan_id DESC", [user_id])
             rows = cur.fetchall()
         else:
-            cur.execute("SELECT p.*, g.nama_gunung FROM pemesanan p LEFT JOIN tiket t ON p.tiket_id = t.tiket_id LEFT JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id LEFT JOIN gunung g ON j.gunung_id = g.gunung_id WHERE p.user_id = %s ORDER BY p.pemesanan_id DESC", [user_id])
+            cur.execute("SELECT p.*, g.nama_gunung, t.tanggal_berlaku FROM pemesanan p LEFT JOIN tiket t ON p.tiket_id = t.tiket_id LEFT JOIN jalur_pendakian j ON t.jalur_id = j.jalur_id LEFT JOIN gunung g ON j.gunung_id = g.gunung_id WHERE p.user_id = %s ORDER BY p.pemesanan_id DESC", [user_id])
             rows = cur.fetchall()
     except Exception as e:
         rows = []
@@ -710,7 +751,9 @@ def download_ticket(pemesanan_id):
                     anggota_cnt = int(r.get('cnt') or 0)
                 except Exception:
                     anggota_cnt = 0
-                pem['jumlah_anggota'] = 1 + anggota_cnt
+                # Use count directly - booker is already included in anggota_pemesanan
+                # If no records, default to 1 (the booker)
+                pem['jumlah_anggota'] = anggota_cnt if anggota_cnt > 0 else 1
                 try:
                     pem['durasi'] = int(pem.get('durasi') or 1)
                 except Exception:
@@ -736,13 +779,141 @@ def download_ticket(pemesanan_id):
         flash('Pemesanan tidak ditemukan atau Anda tidak berwenang.', 'danger')
         return redirect(url_for('user.riwayat_pemesanan'))
 
-    # Render ticket HTML and force download as attachment
-    rendered = render_template('user/ticket.html', pem=pem)
+    # Generate PDF ticket using fpdf2
+    from fpdf import FPDF
+    from io import BytesIO
     from flask import make_response
-    resp = make_response(rendered)
-    resp.headers['Content-Type'] = 'text/html; charset=utf-8'
-    resp.headers['Content-Disposition'] = f'attachment; filename=ticket_{pemesanan_id}.html'
+    
+    class TicketPDF(FPDF):
+        def header(self):
+            self.set_font('Helvetica', 'B', 20)
+            self.set_text_color(122, 57, 224)  # Purple color
+            self.cell(0, 15, 'TIKET PENDAKIAN', align='C', new_x="LMARGIN", new_y="NEXT")
+            self.set_font('Helvetica', '', 12)
+            self.set_text_color(100, 100, 100)
+            self.cell(0, 8, 'Sistem Pemesanan Tiket Gunung', align='C', new_x="LMARGIN", new_y="NEXT")
+            self.ln(10)
+        
+        def footer(self):
+            self.set_y(-25)
+            self.set_font('Helvetica', 'I', 9)
+            self.set_text_color(128, 128, 128)
+            self.cell(0, 5, 'Silakan bawa tiket ini dalam bentuk cetak atau digital', align='C', new_x="LMARGIN", new_y="NEXT")
+            self.cell(0, 5, 'saat melakukan registrasi di pos pendakian.', align='C', new_x="LMARGIN", new_y="NEXT")
+    
+    pdf = TicketPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=30)
+    
+    # Ticket Info Box
+    pdf.set_fill_color(240, 244, 255)  # Light purple background
+    pdf.set_draw_color(122, 57, 224)  # Purple border
+    pdf.rect(10, pdf.get_y(), 190, 80, style='DF')
+    
+    y_start = pdf.get_y() + 5
+    pdf.set_xy(15, y_start)
+    
+    # Ticket ID
+    pdf.set_font('Helvetica', 'B', 14)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(0, 10, f"Tiket #{pem.get('pemesanan_id', '-')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_x(15)
+    
+    pdf.ln(3)
+    pdf.set_x(15)
+    
+    # Details
+    pdf.set_font('Helvetica', '', 11)
+    details = [
+        ('Gunung', pem.get('nama_gunung') or str(pem.get('gunung_id', '-'))),
+        ('Jalur', pem.get('nama_jalur', '-')),
+        ('Tanggal Pesan', str(pem.get('tanggal_pesan', '-'))),
+        ('Durasi', f"{pem.get('durasi', 1)} hari"),
+        ('Jumlah Anggota', f"{pem.get('jumlah_anggota', 1)} orang"),
+        ('Total Harga', f"Rp {int(pem.get('total_harga', 0)):,}"),
+        ('Status', str(pem.get('status', '-')).upper()),
+    ]
+    
+    for label, value in details:
+        pdf.set_x(15)
+        pdf.set_font('Helvetica', 'B', 11)
+        pdf.cell(50, 7, f"{label}:", new_x="RIGHT")
+        pdf.set_font('Helvetica', '', 11)
+        pdf.cell(0, 7, str(value), new_x="LMARGIN", new_y="NEXT")
+    
+    # Output PDF
+    pdf_output = BytesIO()
+    pdf.output(pdf_output)
+    pdf_output.seek(0)
+    
+    resp = make_response(pdf_output.read())
+    resp.headers['Content-Type'] = 'application/pdf'
+    resp.headers['Content-Disposition'] = f'attachment; filename=tiket_{pemesanan_id}.pdf'
     return resp
+
+
+@user_bp.route('/pemesanan/<int:pemesanan_id>/hapus', methods=['POST'])
+@login_required
+def hapus_pemesanan(pemesanan_id):
+    """Hapus pemesanan dan kembalikan kuota"""
+    user_id = session['user_id']
+    mysql = current_app.mysql
+    cur = mysql.connection.cursor()
+    
+    try:
+        # Cek apakah pemesanan ada dan milik user ini
+        if _table_exists(cur, 'pemesanan_tiket'):
+            cur.execute("SELECT * FROM pemesanan_tiket WHERE pemesanan_id = %s AND user_id = %s", [pemesanan_id, user_id])
+        else:
+            cur.execute("SELECT p.*, t.jalur_id FROM pemesanan p LEFT JOIN tiket t ON p.tiket_id = t.tiket_id WHERE p.pemesanan_id = %s AND p.user_id = %s", [pemesanan_id, user_id])
+        
+        pemesanan = cur.fetchone()
+        
+        if not pemesanan:
+            flash('Pemesanan tidak ditemukan atau Anda tidak berwenang.', 'danger')
+            return redirect(url_for('user.riwayat_pemesanan'))
+        
+        # Kuota akan otomatis berkurang saat data pemesanan dihapus
+        # Tidak perlu restore kuota karena sistem menghitung dynamically dari pemesanan yang ada
+        
+        # Hapus relasi terlebih dahulu (urutan penting untuk foreign key constraints)
+        try:
+            cur.execute("DELETE FROM anggota_pemesanan WHERE pemesanan_id = %s", [pemesanan_id])
+        except Exception:
+            pass
+        
+        try:
+            cur.execute("DELETE FROM sewa_porter WHERE pemesanan_id = %s", [pemesanan_id])
+        except Exception:
+            pass
+        
+        try:
+            cur.execute("DELETE FROM detail_sewa WHERE pemesanan_id = %s", [pemesanan_id])
+        except Exception:
+            pass
+        
+        try:
+            # Hapus pembayaran jika ada
+            cur.execute("DELETE FROM pembayaran WHERE pemesanan_id = %s", [pemesanan_id])
+        except Exception:
+            pass
+        
+        # Hapus pemesanan
+        if _table_exists(cur, 'pemesanan_tiket'):
+            cur.execute("DELETE FROM pemesanan_tiket WHERE pemesanan_id = %s", [pemesanan_id])
+        else:
+            cur.execute("DELETE FROM pemesanan WHERE pemesanan_id = %s", [pemesanan_id])
+        
+        mysql.connection.commit()
+        flash('Pemesanan berhasil dihapus dan kuota telah dikembalikan.', 'success')
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Error menghapus pemesanan: {str(e)}', 'danger')
+    finally:
+        cur.close()
+    
+    return redirect(url_for('user.riwayat_pemesanan'))
 
 
 @user_bp.route('/kuota-bulanan')
@@ -807,13 +978,15 @@ def kuota_bulanan():
 
             tiket_ids = list(tickets_by_id.keys())
 
-            # fetch pemesanan for these tiket_ids
+            # fetch pemesanan for these tiket_ids (exclude only 'dibatalkan' status)
             pemesanan_rows = []
             if tiket_ids:
                 placeholders = ', '.join(['%s'] * len(tiket_ids))
-                query = f"SELECT pemesanan_id, tiket_id FROM pemesanan WHERE tiket_id IN ({placeholders}) AND status != 'gagal'"
+                # Include semua status kecuali dibatalkan/gagal
+                query = f"SELECT pemesanan_id, tiket_id, status FROM pemesanan WHERE tiket_id IN ({placeholders}) AND status NOT IN ('dibatalkan', 'gagal')"
                 cur.execute(query, tuple(tiket_ids))
                 pemesanan_rows = cur.fetchall()
+                print(f"DEBUG Kuota: Found {len(pemesanan_rows)} pemesanan for tiket_ids: {tiket_ids}")
 
             pemesanan_ids = [p['pemesanan_id'] for p in pemesanan_rows] if pemesanan_rows else []
 
@@ -826,6 +999,7 @@ def kuota_bulanan():
                 rows = cur.fetchall()
                 for r in rows:
                     anggota_count[r['pemesanan_id']] = int(r['cnt'] or 0)
+                print(f"DEBUG Kuota: anggota_count = {anggota_count}")
 
             # compute used seats per tiket
             used_per_tiket = {}
@@ -833,15 +1007,22 @@ def kuota_bulanan():
                 pid = p['pemesanan_id']
                 tid = p['tiket_id']
                 used_per_tiket.setdefault(tid, 0)
-                used_per_tiket[tid] += 1 + int(anggota_count.get(pid, 0))
+                # anggota_count already includes ALL members (from anggota_pemesanan table)
+                # Don't add 1, just use the count directly
+                count = int(anggota_count.get(pid, 0))
+                used_per_tiket[tid] += count
+                print(f"DEBUG Kuota: pemesanan_id={pid}, tiket_id={tid}, anggota={count}, total_used={used_per_tiket[tid]}")
 
-            # iterate dates
-            last_day = calendar.monthrange(year, month)[1]
-            for day in range(1, last_day + 1):
-                dt = datetime(year, month, day)
+
+            # Only show dates that have ticket entries (not all days in month)
+            # Collect all unique dates from tiket_map
+            unique_dates = sorted(set(key[1] for key in tiket_map.keys()))
+            
+            for date_str in unique_dates:
+                dt = datetime.strptime(date_str, '%Y-%m-%d')
                 row = {'date': dt.strftime('%d-%m-%Y'), 'cells': []}
                 for j in jalur_list:
-                    key = (j['jalur_id'], dt.strftime('%Y-%m-%d'))
+                    key = (j['jalur_id'], date_str)
                     if key in tiket_map:
                         t = tiket_map[key]
                         tiket_id = t['tiket_id']
@@ -852,8 +1033,7 @@ def kuota_bulanan():
                             remaining = 0
                         row['cells'].append(remaining)
                     else:
-                        k = int(j.get('kuota_harian') or 0)
-                        row['cells'].append(k if k > 0 else '-')
+                        row['cells'].append('-')
                 table_rows.append(row)
 
         months = [(i, datetime(year, i, 1).strftime('%B')) for i in range(1,13)]
